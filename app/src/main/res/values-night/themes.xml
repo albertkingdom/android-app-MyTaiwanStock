@@ -43,4 +43,9 @@
         <item name="boxStrokeWidth">2dp</item>
         <item name="hintTextColor">@color/white</item>
     </style>
+
+    <!--    following list-->
+    <style name="followingListItem" parent="">
+        <item name="android:backgroundTint">#808080</item>
+    </style>
 </resources>

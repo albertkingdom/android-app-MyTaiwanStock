@@ -132,7 +132,7 @@ class EditFollowingListFragment: Fragment(R.layout.fragment_edit_following_list)
         }
     }
     private fun setupOnClickAddListButton() {
-        binding.btnAddNewFollowingList.setOnClickListener { view ->
+        binding.floatingBtn.setOnClickListener { view ->
             // open dialog
             val dialog = AddFollowingListDialogFragment()
             dialog.show(parentFragmentManager,"a")

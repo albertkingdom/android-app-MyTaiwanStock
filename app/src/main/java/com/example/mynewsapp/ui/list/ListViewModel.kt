@@ -59,7 +59,7 @@ class ListViewModel(
         // Set list popup's content
         val listNameArrayAndEdit = mutableListOf<String>()
         listNameArrayAndEdit.addAll(listOfFollowingLists.map { followingList -> followingList.listName })
-        listNameArrayAndEdit.add("Edit...")
+        listNameArrayAndEdit.add("編輯列表")
         return@map listNameArrayAndEdit
     }
 

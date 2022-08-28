@@ -4,6 +4,7 @@ package com.example.mynewsapp.adapter
 
 
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,9 +15,9 @@ import androidx.core.content.ContextCompat.getColor
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.mynewsapp.model.MsgArray
 import com.example.mynewsapp.R
 import com.example.mynewsapp.databinding.ItemStockinfoBinding
+import com.example.mynewsapp.model.MsgArray
 
 
 class StockInfoAdapter(val onClick: (Stock: MsgArray)->Unit, val toCandleStickChart: (Stock: MsgArray)->Unit):ListAdapter<MsgArray, StockInfoAdapter.StockViewHolder>(DiffCallback), Filterable {
@@ -57,16 +58,20 @@ class StockInfoAdapter(val onClick: (Stock: MsgArray)->Unit, val toCandleStickCh
             val diff = handleStockPrice(currentStock).toFloat() - currentStock.lastDayPrice.toFloat()
 
             stockPriceDiff.setTextColor(getColor(this.stockPriceDiff.context, R.color.white))
+            val drawable =( ContextCompat.getDrawable(this.stockPriceDiff.context, R.drawable.price_diff_background) as GradientDrawable)
+
 
             if(diff<0f) {
-                stockPriceDiff.setBackgroundResource(R.color.green)
+                drawable.setColor(getColor(this.stockPriceDiff.context, R.color.green))
+                stockPriceDiff.background = drawable
                 stockPriceDiff.text = holder.itemView.context.getString(
                     R.string.stockprice_diff,
                     "",
                     String.format("%.2f", diff)
                 )
             }else if(diff>0f) {
-                stockPriceDiff.setBackgroundResource(R.color.red)
+                drawable.setColor(getColor(this.stockPriceDiff.context, R.color.red))
+                stockPriceDiff.background = drawable
                 stockPriceDiff.text = holder.itemView.context.getString(
                     R.string.stockprice_diff,
                     "+",

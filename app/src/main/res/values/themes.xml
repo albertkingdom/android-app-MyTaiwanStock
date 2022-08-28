@@ -15,6 +15,7 @@
         <!-- Customize your theme here. -->
         <item name="android:textColorPrimary">@color/black</item>
         <item name="android:dialogTheme">@style/CustomDialog</item>
+        <item name="android:colorBackground">#f5f5f5</item>
     </style>
     <style name="Theme.MyNewsApp.NoActionBar">
         <item name="windowActionBar">false</item>
@@ -62,5 +63,9 @@
     <style name="roundedImageView" parent="">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">8dp</item>
+    </style>
+<!--    following list-->
+    <style name="followingListItem" parent="">
+        <item name="android:backgroundTint">@color/white</item>
     </style>
 </resources>
