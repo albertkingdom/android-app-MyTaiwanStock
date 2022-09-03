@@ -16,4 +16,9 @@
         android:icon="@drawable/pie_chart_icon"
         android:title="Statistic" />
 
+    <item
+        android:id="@+id/settings"
+        android:icon="@drawable/ic_baseline_settings"
+        android:title="Setting" />
+
 </menu>

@@ -1,6 +1,7 @@
 package com.example.mynewsapp
 
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.ArrayAdapter
@@ -50,7 +51,7 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
 
 
-        appBarConfiguration = AppBarConfiguration(setOf(R.id.stockListFragment, R.id.news, R.id.statisticFragment))
+        appBarConfiguration = AppBarConfiguration(setOf(R.id.stockListFragment, R.id.news, R.id.statisticFragment, R.id.settings))
         setupActionBarWithNavController(navController, appBarConfiguration)
 
         setupOnClickBottomNav()
@@ -67,6 +68,8 @@ class MainActivity : AppCompatActivity() {
         // determine whether to reload tabs based on current selected bottom nav menu items
         navView.setOnItemSelectedListener(object : NavigationBarView.OnItemSelectedListener {
             override fun onNavigationItemSelected(item: MenuItem): Boolean {
+                Log.d("Activity", "onNavigationItemSelected")
+
                 // newly selected menu is the current one -> don't reload
                 if (item.itemId == navView.selectedItemId) {
                     return false
@@ -77,7 +80,15 @@ class MainActivity : AppCompatActivity() {
             }
 
         })
-
+        // pop up to default fragment when re-select bottom tab
+        /*
+        navView.setOnItemReselectedListener(object: NavigationBarView.OnItemReselectedListener {
+            override fun onNavigationItemReselected(item: MenuItem) {
+                Log.d("Activity", "onNavigationItemReselected")
+                navController.popBackStack(item.itemId, inclusive = false)
+            }
+        })
+        */
         showMenuSelectorBtn()
     }
 

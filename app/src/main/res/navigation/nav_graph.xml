@@ -10,4 +10,5 @@
         android:name="com.example.mynewsapp.ui.statistics.StatisticFragment"
         android:label="Statistic" />
     <include app:graph="@navigation/news" />
+    <include app:graph="@navigation/settings" />
 </navigation>

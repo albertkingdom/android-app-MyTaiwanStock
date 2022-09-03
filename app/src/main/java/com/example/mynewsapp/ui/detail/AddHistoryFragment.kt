@@ -4,12 +4,15 @@ import android.app.DatePickerDialog
 import android.graphics.Color
 import android.os.Bundle
 import android.text.InputType
+import android.util.Log
 import android.view.*
+import android.widget.AdapterView
 import android.widget.DatePicker
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import androidx.preference.PreferenceManager
 import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.R
 import com.example.mynewsapp.databinding.FragmentAddHistoryBinding
@@ -19,12 +22,13 @@ import com.example.mynewsapp.util.hideKeyboard
 import java.util.*
 
 
-class AddHistoryFragment: Fragment() {
+class AddHistoryFragment: Fragment(), AdapterView.OnItemSelectedListener {
     private lateinit var binding: FragmentAddHistoryBinding
     private lateinit var addHistoryViewModel: AddHistoryViewModel
     private val args: AddHistoryFragmentArgs by navArgs()
     var dateSelected: Long? = null
-
+    var defaultCustomFeeDiscount: String? = ""
+    var defaultCustomFee: String? = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,13 +43,15 @@ class AddHistoryFragment: Fragment() {
         (requireActivity() as AppCompatActivity).supportActionBar?.title = "新增一筆紀錄"
 
         setHasOptionsMenu(true)
+
+        loadSetting()
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.stockNo.editText?.setText(args.stockNo)
+        binding.stockNo.text = args.stockNo
 
         binding.date.editText?.inputType = InputType.TYPE_NULL
 
@@ -54,6 +60,10 @@ class AddHistoryFragment: Fragment() {
             it.hideKeyboard()
             showDatePickerDialog()
         }
+
+        binding.feeOptionSpinner.onItemSelectedListener = this
+
+
     }
     private fun showDatePickerDialog(){
         val calendar = Calendar.getInstance()
@@ -89,7 +99,7 @@ class AddHistoryFragment: Fragment() {
     }
 
     private fun addHistoryToDB() {
-        val stockNo = binding.stockNo.editText?.text.toString()
+        val stockNo = binding.stockNo.text.toString()
         val amount = binding.amount.editText?.text.toString().toIntOrNull()
         val price = binding.price.editText?.text.toString().toDoubleOrNull()
         val date = dateSelected
@@ -124,5 +134,50 @@ class AddHistoryFragment: Fragment() {
             }
         }
 
+    }
+    // For spinner
+    override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
+        Log.d("AddHistoryFragment","spinner onItemSelected pos $pos")
+        binding.feeDiscountSpinner.visibility = View.GONE
+        binding.feeOneDollar.visibility = View.GONE
+        binding.feeCustom.visibility = View.GONE
+        when(pos) {
+            0 -> {
+                binding.feeDiscountSpinner.visibility = View.VISIBLE
+            }
+            1 -> {
+                binding.feeOneDollar.visibility = View.VISIBLE
+            }
+            2 -> {
+                binding.feeCustom.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    override fun onNothingSelected(parent: AdapterView<*>?) {
+
+    }
+
+    // load preference
+    private fun loadSetting() {
+        val sp = PreferenceManager.getDefaultSharedPreferences(requireContext())
+
+        defaultCustomFeeDiscount = sp.getString("fee_discount", "")
+        defaultCustomFee = sp.getString("fee_custom", "")
+        Log.d("AddHistoryFragment fee discount index", defaultCustomFeeDiscount.toString())
+        Log.d("AddHistoryFragment fee custom", defaultCustomFee.toString())
+
+
+        binding.feeDiscountSpinner.post(object: Runnable{
+            override fun run() {
+                // set spinner default value
+                defaultCustomFeeDiscount?.let { str -> binding.feeDiscountSpinner.setSelection(str.toInt()/10 - 1) }
+            }
+        })
+        binding.feeCustom.post(object : Runnable {
+            override fun run() {
+                defaultCustomFee?.let { str -> binding.feeCustom.setText(str) }
+            }
+        })
     }
 }

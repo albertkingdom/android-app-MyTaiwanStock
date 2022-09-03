@@ -32,4 +32,8 @@
     <string name="add_stock_date_string">%1$d-%2$d-%3$d</string>
 <!--    widget -->
     <string name="widget_update_time">%1$s</string>
+<!--    fee -->
+    <string name="fee">手續費</string>
+    <string name="fee_custom_hint">自訂手續費</string>
+    <string name="fee_one_dollar">1元</string>
 </resources>

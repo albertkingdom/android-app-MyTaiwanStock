@@ -16,6 +16,8 @@
         <item name="android:textColorPrimary">@color/black</item>
         <item name="android:dialogTheme">@style/CustomDialog</item>
         <item name="android:colorBackground">#f5f5f5</item>
+        <!--    preference page dialog -->
+        <item name="alertDialogTheme">@style/MyPreferenceDialogTheme</item>
     </style>
     <style name="Theme.MyNewsApp.NoActionBar">
         <item name="windowActionBar">false</item>
@@ -67,5 +69,11 @@
 <!--    following list-->
     <style name="followingListItem" parent="">
         <item name="android:backgroundTint">@color/white</item>
+    </style>
+<!--    preference page dialog -->
+    <style name="MyPreferenceDialogTheme" parent="Theme.MaterialComponents.DayNight.Dialog">
+        <item name="colorPrimary">@color/black</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:windowMinWidthMinor">80%</item>
     </style>
 </resources>

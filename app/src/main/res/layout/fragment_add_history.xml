@@ -8,21 +8,18 @@
     android:paddingHorizontal="20dp"
     tools:context=".ui.detail.AddHistoryFragment">
 
-    <TableLayout
+    <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        >
+        android:orientation="vertical">
 
-        <TableRow
+        <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginVertical="0dp"
-            android:layout_weight="1"
-            android:paddingVertical="0dp"
-            >
+            android:layout_height="50dp">
 
             <TextView
                 android:id="@+id/stockNoLabel"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
@@ -30,32 +27,24 @@
                 android:textColor="?attr/colorOnPrimary"
                 android:textSize="18sp" />
 
-
-            <com.google.android.material.textfield.TextInputLayout
+            <TextView
                 android:id="@+id/stockNo"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="2"
-                android:hint=""
-                app:errorEnabled="true">
+                android:gravity="center"
+                android:textColor="?attr/colorOnPrimary"
+                android:textSize="18sp"
+                tools:text="123" />
+        </androidx.appcompat.widget.LinearLayoutCompat>
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="number" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-        </TableRow>
-
-        <TableRow
+        <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginVertical="0dp"
-            android:layout_weight="1"
-            android:paddingVertical="0dp">
+            android:layout_height="wrap_content">
 
             <TextView
                 android:id="@+id/amountLabel"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
@@ -66,6 +55,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/amount"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="2"
                 android:hint=""
@@ -77,18 +67,16 @@
                     android:inputType="number" />
 
             </com.google.android.material.textfield.TextInputLayout>
-        </TableRow>
+        </androidx.appcompat.widget.LinearLayoutCompat>
 
-        <TableRow
+        <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginVertical="0dp"
-            android:layout_weight="1"
-            android:paddingVertical="0dp">
+            android:layout_height="wrap_content">
+
 
             <TextView
                 android:id="@+id/priceLabel"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
@@ -98,6 +86,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/price"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="2"
                 android:hint=""
@@ -109,16 +98,14 @@
                     android:inputType="numberDecimal" />
 
             </com.google.android.material.textfield.TextInputLayout>
-        </TableRow>
+        </androidx.appcompat.widget.LinearLayoutCompat>
 
-        <TableRow
+        <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"
-            android:layout_height="20dp"
-            android:gravity="center"
-            android:paddingVertical="5dp">
+            android:layout_height="50dp">
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
@@ -129,8 +116,8 @@
 
             <RadioGroup
                 android:id="@+id/radioButtonGroup"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
                 android:layout_weight="2"
                 android:checkedButton="@id/radioButtonBuy"
                 android:orientation="horizontal">
@@ -147,17 +134,71 @@
                     android:layout_height="wrap_content"
                     android:text="賣" />
             </RadioGroup>
+        </androidx.appcompat.widget.LinearLayoutCompat>
 
-        </TableRow>
-
-        <TableRow
+        <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"
-            android:layout_height="20dp"
-            android:gravity="center"
-            android:paddingVertical="5dp">
+            android:layout_height="50dp">
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:text="@string/fee"
+                android:textColor="?attr/colorOnPrimary"
+                android:textSize="18sp" />
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:orientation="horizontal">
+
+                <androidx.appcompat.widget.AppCompatSpinner
+                    android:id="@+id/fee_option_spinner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:entries="@array/fee_option" />
+
+                <androidx.appcompat.widget.AppCompatSpinner
+                    android:id="@+id/fee_discount_spinner"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:entries="@array/fee_discount_option"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/fee_one_dollar"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="@string/fee_one_dollar"
+                    android:textSize="16sp"
+                    android:visibility="gone" />
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/fee_custom"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:hint="@string/fee_custom_hint"
+                    android:inputType="numberDecimal"
+                    android:visibility="gone" />
+
+            </androidx.appcompat.widget.LinearLayoutCompat>
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
@@ -167,6 +208,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/date"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="2"
                 android:hint="YYYY-MM-DD"
@@ -180,8 +222,8 @@
                     android:inputType="none" />
 
             </com.google.android.material.textfield.TextInputLayout>
+        </androidx.appcompat.widget.LinearLayoutCompat>
 
-        </TableRow>
-    </TableLayout>
+    </androidx.appcompat.widget.LinearLayoutCompat>
 
 </androidx.appcompat.widget.LinearLayoutCompat>
