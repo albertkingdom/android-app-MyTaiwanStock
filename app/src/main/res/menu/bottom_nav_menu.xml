@@ -21,4 +21,9 @@
         android:icon="@drawable/ic_baseline_settings"
         android:title="Setting" />
 
+    <item
+        android:id="@+id/account_page"
+        android:icon="@drawable/ic_baseline_person"
+        android:title="Account" />
+
 </menu>

@@ -11,14 +11,7 @@
             android:label="Setting"
             android:name="com.example.mynewsapp.ui.setting.SettingFragment"
             >
-
-                <action
-                    android:id="@+id/action_settingFragment_to_accountFragment"
-                    app:destination="@id/accountFragment" />
         </fragment>
-        <fragment
-            android:id="@+id/accountFragment"
-            android:name="com.example.mynewsapp.ui.setting.AccountFragment"
-            android:label="Account" />
+
 
 </navigation>

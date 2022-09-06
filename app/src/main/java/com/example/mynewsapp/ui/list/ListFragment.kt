@@ -7,7 +7,6 @@ import android.os.Bundle
 
 import android.util.Log
 import android.view.*
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -29,7 +28,6 @@ import com.example.mynewsapp.util.Resource
 import com.example.mynewsapp.widget.WidgetUtil.Companion.updateWidget
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
-import java.lang.RuntimeException
 
 
 class ListFragment : Fragment() {
@@ -49,7 +47,7 @@ class ListFragment : Fragment() {
         binding = FragmentListBinding.inflate(inflater, container, false)
         setHasOptionsMenu(true)
         (activity as MainActivity).showMenuSelectorBtn()
-        checkIfFirstTimeLoginAndGetOnlineData()
+        checkIfFirstTimeAfterLoginAndGetOnlineData()
 
         return binding.root
     }
@@ -261,13 +259,13 @@ class ListFragment : Fragment() {
             }
         }
     }
-    private fun checkIfFirstTimeLoginAndGetOnlineData() {
+    private fun checkIfFirstTimeAfterLoginAndGetOnlineData() {
         val sp = PreferenceManager.getDefaultSharedPreferences(requireContext())
         val editor = sp.edit()
-        val isFirstTimeLogin = sp.getBoolean("firstTimeLogin", false)
+        val firstTimeAfterLogin = sp.getBoolean("firstTimeAfterLogin", false)
         val isLogin = listViewModel.auth.currentUser?.email != null
-        if (isFirstTimeLogin && isLogin) {
-            Log.d(TAG, "isFirstTimeLogin true")
+        if (firstTimeAfterLogin && isLogin) {
+            Log.d(TAG, "isFirstTimeAfterLogin true")
             // show alert
             val alertBuilder = MaterialAlertDialogBuilder(requireContext(), R.style.AddFollowingListDialogTheme)
             alertBuilder
@@ -280,7 +278,7 @@ class ListFragment : Fragment() {
                 .show()
 
         }
-        editor.putBoolean("firstTimeLogin", false)
+        editor.putBoolean("firstTimeAfterLogin", false)
         editor.apply()
     }
     override fun onStop() {

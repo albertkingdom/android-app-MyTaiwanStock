@@ -23,7 +23,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
-                android:text="股票代號"
+                android:text="@string/add_history_stockNo"
                 android:textColor="?attr/colorOnPrimary"
                 android:textSize="18sp" />
 
@@ -48,7 +48,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
-                android:text="股數"
+                android:text="@string/add_history_amount"
                 android:textColor="?attr/colorOnPrimary"
                 android:textSize="18sp" />
 
@@ -80,7 +80,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
-                android:text="價位"
+                android:text="@string/add_history_pirce"
                 android:textColor="?attr/colorOnPrimary"
                 android:textSize="18sp" />
 
@@ -109,7 +109,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
-                android:text="買進/賣出"
+                android:text="@string/add_history_status"
                 android:textColor="?attr/colorOnPrimary"
                 android:textSize="18sp" />
 
@@ -202,7 +202,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
-                android:text="成交日期"
+                android:text="@string/add_history_date"
                 android:textColor="?attr/colorOnPrimary"
                 android:textSize="18sp" />
 

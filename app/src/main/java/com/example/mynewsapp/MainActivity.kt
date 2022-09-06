@@ -60,7 +60,7 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
 
 
-        appBarConfiguration = AppBarConfiguration(setOf(R.id.stockListFragment, R.id.news, R.id.statisticFragment, R.id.settings))
+        appBarConfiguration = AppBarConfiguration(setOf(R.id.stockListFragment, R.id.news, R.id.statisticFragment, R.id.settings, R.id.account_page))
         setupActionBarWithNavController(navController, appBarConfiguration)
 
         setupOnClickBottomNav()

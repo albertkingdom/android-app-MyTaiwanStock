@@ -126,7 +126,7 @@ class AccountFragment: Fragment() {
        // modify preference
        val sp = PreferenceManager.getDefaultSharedPreferences(requireContext())
        val editor = sp.edit()
-       editor.putBoolean("firstTimeLogin", true)
+       editor.putBoolean("firstTimeAfterLogin", true)
        editor.apply()
    }
     companion object {
