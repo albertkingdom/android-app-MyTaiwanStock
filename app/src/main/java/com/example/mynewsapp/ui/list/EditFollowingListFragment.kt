@@ -61,6 +61,7 @@ class EditFollowingListFragment: Fragment(R.layout.fragment_edit_following_list)
                     Snackbar.LENGTH_LONG
                 ).show()
 
+                listViewModel.deleteListFromOnlineDB(currentFollowingListItem.listName)
             }
 
             override fun getSwipeDirs(

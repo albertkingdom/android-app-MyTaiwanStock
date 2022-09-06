@@ -1,5 +1,7 @@
 package com.example.mynewsapp
 
+import android.content.Intent
+import android.content.IntentSender
 import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
@@ -19,7 +21,12 @@ import com.example.mynewsapp.ui.*
 import com.example.mynewsapp.ui.list.ListFragmentDirections
 import com.example.mynewsapp.ui.list.ListViewModel
 import com.example.mynewsapp.ui.list.ListViewModelFactory
+import com.google.android.gms.auth.api.identity.BeginSignInRequest
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.auth.api.identity.SignInClient
+import com.google.android.gms.common.api.ApiException
 import com.google.android.material.navigation.NavigationBarView
+import com.google.firebase.auth.GoogleAuthProvider
 
 
 class MainActivity : AppCompatActivity() {
@@ -30,7 +37,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var navController: NavController
     lateinit var navView: BottomNavigationView
-
+    //private lateinit var oneTapClient: SignInClient
+    //private lateinit var signInRequest: BeginSignInRequest
+    private val REQ_ONE_TAP = 2
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -58,6 +67,33 @@ class MainActivity : AppCompatActivity() {
 
         setupAppBarMenu()
 
+//        oneTapClient = Identity.getSignInClient(this)
+//        signInRequest = BeginSignInRequest.builder()
+//            .setGoogleIdTokenRequestOptions(
+//                BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+//                    .setSupported(true)
+//                    // Your server's client ID, not your Android client ID.
+//                    .setServerClientId(getString(R.string.google_signin_client_id))
+//                    // Only show accounts previously used to sign in.
+//                    .setFilterByAuthorizedAccounts(true)
+//                    .build())
+//            .build()
+//
+//        oneTapClient.beginSignIn(signInRequest)
+//            .addOnSuccessListener(this) { result ->
+//                try {
+//                    startIntentSenderForResult(
+//                        result.pendingIntent.intentSender, REQ_ONE_TAP,
+//                        null, 0, 0, 0, null)
+//                } catch (e: IntentSender.SendIntentException) {
+//                    Log.e(TAG, "Couldn't start One Tap UI: ${e.localizedMessage}")
+//                }
+//            }
+//            .addOnFailureListener(this) { e ->
+//                // No saved credentials found. Launch the One Tap sign-up flow, or
+//                // do nothing and continue presenting the signed-out UI.
+//                Log.d(TAG, e.localizedMessage)
+//            }
     }
     override fun onSupportNavigateUp(): Boolean {
 
@@ -142,7 +178,37 @@ class MainActivity : AppCompatActivity() {
             menuSelectorButton.text = title
         }
     }
-
-
+//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+//        super.onActivityResult(requestCode, resultCode, data)
+//
+//        when (requestCode) {
+//            REQ_ONE_TAP -> {
+//                try {
+//                    val credential = oneTapClient.getSignInCredentialFromIntent(data)
+//                    val idToken = credential.googleIdToken
+//                    when {
+//                        idToken != null -> {
+//                            // Got an ID token from Google. Use it to authenticate
+//                            // with Firebase.
+//                            Log.d(TAG, "Got ID token. $idToken")
+//
+//                            val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
+//                            Log.d(TAG, "Got ID token. $firebaseCredential")
+//                        }
+//                        else -> {
+//                            // Shouldn't happen.
+//                            Log.d(TAG, "No ID token!")
+//                        }
+//                    }
+//                } catch (e: ApiException) {
+//                    // ...
+//                    Log.e(TAG, e.localizedMessage)
+//                }
+//            }
+//        }
+//    }
+    companion object {
+        const val TAG = "MainActivity"
+    }
 
 }

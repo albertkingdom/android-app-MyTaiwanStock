@@ -36,4 +36,7 @@
     <string name="fee">手續費</string>
     <string name="fee_custom_hint">自訂手續費</string>
     <string name="fee_one_dollar">1元</string>
+
+<!--    google sigein in web client id-->
+    <string name="google_signin_client_id">735156971903-i0gu6itqm3frijgnvtms8d4vbgo5h86r.apps.googleusercontent.com</string>
 </resources>

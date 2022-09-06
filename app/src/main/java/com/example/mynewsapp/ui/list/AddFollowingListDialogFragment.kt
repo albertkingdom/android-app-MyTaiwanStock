@@ -22,6 +22,8 @@ class AddFollowingListDialogFragment: DialogFragment() {
                 val newListName = (dialog as Dialog).findViewById<EditText>(R.id.edit_text_new_list_name)?.text.toString()
                 val newFollowingList = FollowingList(followingListId = 0, listName = newListName)
                 listViewModel.createFollowingList(newFollowingList)
+
+                listViewModel.uploadListToOnlineDB(listName = newListName)
 //                dismiss()
             })
             .setNegativeButton("Cancel", DialogInterface.OnClickListener { dialog, id ->

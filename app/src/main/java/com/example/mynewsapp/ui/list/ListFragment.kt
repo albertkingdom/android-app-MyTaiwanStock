@@ -7,12 +7,14 @@ import android.os.Bundle
 
 import android.util.Log
 import android.view.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mynewsapp.MainActivity
@@ -25,6 +27,7 @@ import com.example.mynewsapp.model.WidgetStockData
 import com.example.mynewsapp.util.Constant.Companion.NO_INTERNET_CONNECTION
 import com.example.mynewsapp.util.Resource
 import com.example.mynewsapp.widget.WidgetUtil.Companion.updateWidget
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import java.lang.RuntimeException
 
@@ -46,6 +49,7 @@ class ListFragment : Fragment() {
         binding = FragmentListBinding.inflate(inflater, container, false)
         setHasOptionsMenu(true)
         (activity as MainActivity).showMenuSelectorBtn()
+        checkIfFirstTimeLoginAndGetOnlineData()
 
         return binding.root
     }
@@ -128,7 +132,7 @@ class ListFragment : Fragment() {
                 Snackbar.make(view, "追蹤股票代號已刪除",Snackbar.LENGTH_LONG).show()
 
                 stockAdapter.notifyItemChanged(viewHolder.layoutPosition)
-
+                listViewModel.deleteStockNoFromOnlineDB(currentStockItem.stockNo)
             }
 
 
@@ -256,6 +260,28 @@ class ListFragment : Fragment() {
                 binding.stockListRecyclerview.visibility = View.VISIBLE
             }
         }
+    }
+    private fun checkIfFirstTimeLoginAndGetOnlineData() {
+        val sp = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        val editor = sp.edit()
+        val isFirstTimeLogin = sp.getBoolean("firstTimeLogin", false)
+        val isLogin = listViewModel.auth.currentUser?.email != null
+        if (isFirstTimeLogin && isLogin) {
+            Log.d(TAG, "isFirstTimeLogin true")
+            // show alert
+            val alertBuilder = MaterialAlertDialogBuilder(requireContext(), R.style.AddFollowingListDialogTheme)
+            alertBuilder
+                .setMessage("第一次登入後，將加入雲端資料，是否同意？")
+                .setPositiveButton("Agree") { _, _ ->
+                    // sync from firebase
+                    listViewModel.getAllOnlineDBDataAndSaveToLocal()
+                }
+                .setNegativeButton("Disagree") { _, _ -> }
+                .show()
+
+        }
+        editor.putBoolean("firstTimeLogin", false)
+        editor.apply()
     }
     override fun onStop() {
         super.onStop()

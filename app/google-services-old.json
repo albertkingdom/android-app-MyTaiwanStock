@@ -14,14 +14,6 @@
       },
       "oauth_client": [
         {
-          "client_id": "735156971903-evh3aalj4srm3g68hanijqu7fks8j09q.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.albertkingdom.mystockapp",
-            "certificate_hash": "092af87ea62bf02c901bdba36d944d7d8ad760f9"
-          }
-        },
-        {
           "client_id": "735156971903-epnqjjvkmisp7ginl6cafq4sjiv90rbi.apps.googleusercontent.com",
           "client_type": 3
         }

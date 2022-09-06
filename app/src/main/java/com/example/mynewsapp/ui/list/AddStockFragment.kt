@@ -54,6 +54,7 @@ class AddStockFragment: Fragment() {
         adapter.onClickStarListener = object : ClickOnStarListener {
             override fun singleClick(stockId: String) {
                 listViewModel.addToStockList(stockId)
+                listViewModel.uploadNewStockNoToOnlineDB(stockNo = stockId)
                 //addStockViewModel.filterSearchQuery()
             }
 

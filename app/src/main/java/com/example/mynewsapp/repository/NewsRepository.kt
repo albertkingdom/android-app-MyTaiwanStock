@@ -1,5 +1,6 @@
 package com.example.mynewsapp.repository
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import com.example.mynewsapp.model.NewsResponse
 import com.example.mynewsapp.model.StockPriceInfoResponse
@@ -51,8 +52,10 @@ class NewsRepository(val stockDao: StockDao) {
     fun getOneListWithStocksRx(followingListId: Int): Flowable<FollowingListWithStock> {
         return stockDao.getListsWithStocksRx(followingListId)
     }
-    suspend fun insertFollowingList(followingList: FollowingList) {
-        stockDao.insertFollowingList(followingList = followingList)
+    suspend fun insertFollowingList(followingList: FollowingList): Int {
+        val primaryKey = stockDao.insertFollowingList(followingList = followingList)
+        Log.d("repo insertFollowingList primary key", "$primaryKey")
+        return primaryKey.toInt()
     }
 
     suspend fun deleteFollowingList(followingListId: Int) {

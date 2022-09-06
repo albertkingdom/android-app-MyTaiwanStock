@@ -129,7 +129,7 @@ class AddHistoryFragment: Fragment(), AdapterView.OnItemSelectedListener {
                 val newHistory = InvestHistory(0, stockNo = stockNo, amount = amount!!, price = price!!, status = isBuy, date = date!!)
 
                 addHistoryViewModel.insertHistory(newHistory)
-
+                addHistoryViewModel.uploadHistoryToOnlineDB(price = price, amount = amount, date = date, stockNo = stockNo, status = isBuy)
                 findNavController().popBackStack()
             }
         }
@@ -171,7 +171,12 @@ class AddHistoryFragment: Fragment(), AdapterView.OnItemSelectedListener {
         binding.feeDiscountSpinner.post(object: Runnable{
             override fun run() {
                 // set spinner default value
-                defaultCustomFeeDiscount?.let { str -> binding.feeDiscountSpinner.setSelection(str.toInt()/10 - 1) }
+                Log.d("AddHistoryFragment", "defaultCustomFeeDiscount $defaultCustomFeeDiscount")
+                defaultCustomFeeDiscount?.let { str ->
+                    if (str.isNotEmpty()) {
+                        binding.feeDiscountSpinner.setSelection(str.toInt() / 10 - 1)
+                    }
+                }
             }
         })
         binding.feeCustom.post(object : Runnable {
