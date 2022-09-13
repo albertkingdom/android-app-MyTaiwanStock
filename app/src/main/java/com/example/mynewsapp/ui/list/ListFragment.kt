@@ -269,7 +269,7 @@ class ListFragment : Fragment() {
             // show alert
             val alertBuilder = MaterialAlertDialogBuilder(requireContext(), R.style.AddFollowingListDialogTheme)
             alertBuilder
-                .setMessage("第一次登入後，將加入雲端資料，是否同意？")
+                .setMessage("您剛才登入，將下載備份在雲端的資料，是否同意？")
                 .setPositiveButton("Agree") { _, _ ->
                     // sync from firebase
                     listViewModel.getAllOnlineDBDataAndSaveToLocal()

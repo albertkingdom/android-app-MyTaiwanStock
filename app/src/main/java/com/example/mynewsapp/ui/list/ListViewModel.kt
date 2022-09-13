@@ -309,7 +309,13 @@ class ListViewModel(
             }
 
     }
-
+    private fun getLocalListIdByListNameOrNull(newListName: String) : Int? {
+        return allFollowingList.value?.find { it.listName == newListName }?.followingListId
+    }
+    private suspend fun isStockNumberInFollowingList(followingListId: Int, newStockNo: String): Boolean {
+        val result = repository.getOneListWithStocks(followingListId = followingListId).stocks.find { it.stockNo == newStockNo }
+        return result != null
+    }
     private fun getAllListAndStocksFromOnlineDBAndSaveToLocal() {
         val accountEmail = auth.currentUser?.email ?: return
         Log.d(TAG, "getAllListAndStocksFromOnlineDBAndSaveToLocal email $accountEmail")
@@ -319,8 +325,24 @@ class ListViewModel(
             .addOnSuccessListener { documents ->
                 for (document in documents) {
                     val favList = document.toObject<FavList>()
-                    Log.d(TAG, "favlist $favList")
+                    val existedFollowingListId = getLocalListIdByListNameOrNull(newListName = favList.name!!)
+                    // list name exist in local database
+                    if (existedFollowingListId != null) {
+                        viewModelScope.launch {
 
+                            val stockNos = favList.stocks ?: return@launch
+
+                            for (stockNo in stockNos) {
+                                if (isStockNumberInFollowingList(followingListId = existedFollowingListId, newStockNo = stockNo)) {
+                                    return@launch
+                                }
+                                val newStock = Stock(0, stockNo, existedFollowingListId)
+                                repository.insert(newStock)
+                            }
+                        }
+                        return@addOnSuccessListener
+                    }
+                    // list name not exist in local database, to create new list
                     val newFollowingList = FollowingList(followingListId = 0, listName = favList.name!!)
                     viewModelScope.launch {
                         val followingListId = repository.insertFollowingList(newFollowingList)
