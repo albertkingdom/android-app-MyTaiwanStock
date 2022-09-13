@@ -4,17 +4,22 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.*
 import androidx.work.*
+import com.albertkingdom.mystockapp.model.FavList
+import com.albertkingdom.mystockapp.model.History
 import com.example.mynewsapp.widget.UpdateWidgetPeriodicTask
 import com.example.mynewsapp.MyApplication
-import com.example.mynewsapp.db.FollowingList
-import com.example.mynewsapp.db.FollowingListWithStock
-import com.example.mynewsapp.db.Stock
+import com.example.mynewsapp.db.*
 import com.example.mynewsapp.model.StockPriceInfoResponse
 import com.example.mynewsapp.repository.NewsRepository
 import com.example.mynewsapp.util.Constant.Companion.NO_INTERNET_CONNECTION
 import com.example.mynewsapp.util.Constant.Companion.WORKER_INPUT_DATA_KEY
 import com.example.mynewsapp.util.Resource
 import com.example.mynewsapp.util.isNetworkAvailable
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.firestore.ktx.toObject
+import com.google.firebase.ktx.Firebase
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
@@ -24,9 +29,7 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.*
-import retrofit2.HttpException
 import retrofit2.Response
-import retrofit2.Retrofit
 import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
 
@@ -59,7 +62,7 @@ class ListViewModel(
         // Set list popup's content
         val listNameArrayAndEdit = mutableListOf<String>()
         listNameArrayAndEdit.addAll(listOfFollowingLists.map { followingList -> followingList.listName })
-        listNameArrayAndEdit.add("Edit...")
+        listNameArrayAndEdit.add("編輯列表")
         return@map listNameArrayAndEdit
     }
 
@@ -69,6 +72,8 @@ class ListViewModel(
 
     val compositeDisposable = CompositeDisposable()
 
+    val db = Firebase.firestore
+    var auth: FirebaseAuth = FirebaseAuth.getInstance()
     init {
         println("ListViewModel INIT")
     }
@@ -247,6 +252,179 @@ class ListViewModel(
     override fun onCleared() {
         super.onCleared()
         compositeDisposable.clear()
+    }
+
+
+    // ===========================================================
+    fun uploadListToOnlineDB(listName: String) {
+        val email = auth.currentUser?.email ?: return
+        val favList = FavList(name = listName, email = email, stocks = null)
+
+        checkIfSignInAccountDataExist(favList = favList, listName = listName)
+    }
+
+    fun checkIfSignInAccountDataExist(favList: FavList, listName: String) {
+        val accountEmail = auth.currentUser?.email ?: return
+
+        val ref = db.collection("followingList").document()
+        //
+        db.collection("followingList")
+            .whereEqualTo("email", accountEmail)
+            .whereEqualTo("name",listName)
+            .get()
+            .addOnSuccessListener { documents ->
+                Log.d(TAG, "document ${documents.documents}")
+                for (document in documents) {
+                    Log.d(TAG, "${document.id} => ${document.data}")
+                }
+
+                if (documents.isEmpty) {
+                    // create new document
+                    ref.set(favList)
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.w(TAG, "Error getting documents: ", exception)
+            }
+    }
+    fun uploadNewStockNoToOnlineDB(stockNo: String) {
+        val accountEmail = auth.currentUser?.email ?: return
+        val listName = appBarMenuButtonTitle.value ?: return
+
+        db.collection("followingList")
+            .whereEqualTo("email", accountEmail)
+            .whereEqualTo("name",listName)
+            .get()
+            .addOnSuccessListener { documents ->
+                Log.d(TAG, "document ${documents.documents}")
+                if (documents.documents.isNotEmpty()) {
+                    var documentId = documents.documents[0].id
+                    Log.d(TAG, "doc id $documentId")
+                    val ref = db.collection("followingList").document(documentId)
+                    ref.update("stocks", FieldValue.arrayUnion(stockNo))
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.w(TAG, "Error getting documents: ", exception)
+            }
+
+    }
+    private fun getLocalListIdByListNameOrNull(newListName: String) : Int? {
+        return allFollowingList.value?.find { it.listName == newListName }?.followingListId
+    }
+    private suspend fun isStockNumberInFollowingList(followingListId: Int, newStockNo: String): Boolean {
+        val result = repository.getOneListWithStocks(followingListId = followingListId).stocks.find { it.stockNo == newStockNo }
+        return result != null
+    }
+    private fun getAllListAndStocksFromOnlineDBAndSaveToLocal() {
+        val accountEmail = auth.currentUser?.email ?: return
+        Log.d(TAG, "getAllListAndStocksFromOnlineDBAndSaveToLocal email $accountEmail")
+        db.collection("followingList")
+            .whereEqualTo("email", accountEmail)
+            .get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    val favList = document.toObject<FavList>()
+                    val existedFollowingListId = getLocalListIdByListNameOrNull(newListName = favList.name!!)
+                    // list name exist in local database
+                    if (existedFollowingListId != null) {
+                        viewModelScope.launch {
+
+                            val stockNos = favList.stocks ?: return@launch
+
+                            for (stockNo in stockNos) {
+                                if (isStockNumberInFollowingList(followingListId = existedFollowingListId, newStockNo = stockNo)) {
+                                    return@launch
+                                }
+                                val newStock = Stock(0, stockNo, existedFollowingListId)
+                                repository.insert(newStock)
+                            }
+                        }
+                        return@addOnSuccessListener
+                    }
+                    // list name not exist in local database, to create new list
+                    val newFollowingList = FollowingList(followingListId = 0, listName = favList.name!!)
+                    viewModelScope.launch {
+                        val followingListId = repository.insertFollowingList(newFollowingList)
+                        val stockNos = favList.stocks ?: return@launch
+                        for (stockNo in stockNos) {
+                            val newStock = Stock(0, stockNo, followingListId)
+                            repository.insert(newStock)
+                        }
+                    }
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.w(TAG, "Error getting documents: ", exception)
+            }
+    }
+    private fun getAllHistoryFromOnlineDBAndSaveToLocal() {
+        val accountEmail = auth.currentUser?.email ?: return
+        db.collection("history")
+            .whereEqualTo("email", accountEmail)
+            .get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    val history = document.toObject<History>()
+                    Log.d(TAG, "history $history")
+
+                    val newHistory = InvestHistory(0, stockNo = history.stockNo!!,
+                        amount = history.amount!!,
+                        price = history.price!!,
+                        status = history.status!!,
+                        date = history.time!!)
+
+                    viewModelScope.launch {
+                        repository.insertHistory(newHistory)
+                    }
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.w(TAG, "Error getting documents: ", exception)
+            }
+    }
+    fun deleteStockNoFromOnlineDB(stockNo: String) {
+        val accountEmail = auth.currentUser?.email ?: return
+        val listName = appBarMenuButtonTitle.value ?: return
+
+        db.collection("followingList")
+            .whereEqualTo("email", accountEmail)
+            .whereEqualTo("name", listName)
+            .get()
+            .addOnSuccessListener { documents ->
+                Log.d(TAG, "document ${documents.documents}")
+                val documentId = documents.documents[0].id
+                Log.d(TAG, "doc id $documentId")
+                val ref = db.collection("followingList").document(documentId)
+                ref.update("stocks", FieldValue.arrayRemove(stockNo))
+
+            }
+            .addOnFailureListener { exception ->
+                Log.w(TAG, "Error getting documents: ", exception)
+            }
+    }
+    fun deleteListFromOnlineDB(listName: String) {
+        val accountEmail = auth.currentUser?.email ?: return
+
+        db.collection("followingList")
+            .whereEqualTo("email", accountEmail)
+            .whereEqualTo("name", listName)
+            .get()
+            .addOnSuccessListener { documents ->
+                Log.d(TAG, "document ${documents.documents}")
+                val documentId = documents.documents[0].id
+                Log.d(TAG, "doc id $documentId")
+                val ref = db.collection("followingList").document(documentId)
+                ref.delete()
+
+            }
+            .addOnFailureListener { exception ->
+                Log.w(TAG, "Error getting documents: ", exception)
+            }
+    }
+    fun getAllOnlineDBDataAndSaveToLocal() {
+        getAllListAndStocksFromOnlineDBAndSaveToLocal()
+        getAllHistoryFromOnlineDBAndSaveToLocal()
     }
 }
 

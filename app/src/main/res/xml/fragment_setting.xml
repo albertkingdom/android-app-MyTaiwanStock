@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory
+        app:title="手續費"
+        app:icon="@drawable/ic_baseline_attach_money">
+        <ListPreference
+            app:entries="@array/fee_discount_option"
+            app:entryValues="@array/fee_discount_option"
+            app:key="fee_discount"
+            app:title="手續費預設折扣(%)"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            app:key="fee_custom"
+            app:title="自訂手續費(元)"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+</PreferenceScreen>

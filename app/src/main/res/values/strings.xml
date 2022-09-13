@@ -32,4 +32,16 @@
     <string name="add_stock_date_string">%1$d-%2$d-%3$d</string>
 <!--    widget -->
     <string name="widget_update_time">%1$s</string>
+<!--    fee -->
+    <string name="fee">手續費</string>
+    <string name="fee_custom_hint">自訂手續費</string>
+    <string name="fee_one_dollar">1元</string>
+
+<!--    google sigein in web client id-->
+    <string name="google_signin_client_id">735156971903-i0gu6itqm3frijgnvtms8d4vbgo5h86r.apps.googleusercontent.com</string>
+    <string name="add_history_pirce">價位(NT$)</string>
+    <string name="add_history_amount">股數(股)</string>
+    <string name="add_history_stockNo">股票代號</string>
+    <string name="add_history_status">買進/賣出</string>
+    <string name="add_history_date">成交日期</string>
 </resources>

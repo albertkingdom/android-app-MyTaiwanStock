@@ -27,7 +27,8 @@ class CandleStickChartViewModel(val repository: NewsRepository): ViewModel() {
     }
     private val _xLabels = MutableLiveData<List<String>>()
     val xLabels: LiveData<List<String>> = _xLabels//x axis label list
-    var investHistoryList: LiveData<List<InvestHistory>> = MutableLiveData()
+    private var _investHistoryList: MutableLiveData<List<InvestHistory>> = MutableLiveData()
+    var investHistoryList: LiveData<List<InvestHistory>> = _investHistoryList
     private val _originalCandleData = MutableLiveData<List<List<String>>>()
     val originalCandleData: LiveData<List<List<String>>> = _originalCandleData
 
@@ -138,11 +139,8 @@ class CandleStickChartViewModel(val repository: NewsRepository): ViewModel() {
         }
     }
     fun queryHistoryByStockNo(stockNo: String) {
-
         investHistoryList = repository.queryHistoryByStockNo(stockNo).asLiveData()
-
     }
-
     fun clearCandleStickData() {
         //candleStickData.value = null
     }

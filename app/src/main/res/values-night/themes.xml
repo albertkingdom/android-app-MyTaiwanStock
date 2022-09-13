@@ -14,7 +14,8 @@
         <!-- Customize your theme here. -->
 
         <item name="android:dialogTheme">@style/CustomDialog</item>
-
+        <!--    preference page dialog -->
+        <item name="alertDialogTheme">@style/MyPreferenceDialogTheme</item>
 
     </style>
 
@@ -42,5 +43,16 @@
 
         <item name="boxStrokeWidth">2dp</item>
         <item name="hintTextColor">@color/white</item>
+    </style>
+
+    <!--    following list-->
+    <style name="followingListItem" parent="">
+        <item name="android:backgroundTint">#808080</item>
+    </style>
+    <!--    preference page dialog -->
+    <style name="MyPreferenceDialogTheme" parent="Theme.MaterialComponents.DayNight.Dialog">
+        <item name="colorPrimary">@color/white</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:windowMinWidthMinor">80%</item>
     </style>
 </resources>

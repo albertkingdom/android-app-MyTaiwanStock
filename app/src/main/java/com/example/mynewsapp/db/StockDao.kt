@@ -37,7 +37,7 @@ interface StockDao {
     fun getAllFollowingList(): Flow<List<FollowingList>>
 
     @Insert
-    suspend fun insertFollowingList(followingList: FollowingList)
+    suspend fun insertFollowingList(followingList: FollowingList): Long
 
     @Query("DELETE FROM followingList WHERE followingListId = :followingListId")
     suspend fun deleteFollowingList(followingListId: Int)
