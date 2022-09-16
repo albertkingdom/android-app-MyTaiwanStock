@@ -7,24 +7,23 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import android.widget.RemoteViews
 import com.example.mynewsapp.MainActivity
 import com.example.mynewsapp.R
+import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 
 class StockAppWidgetProvider: AppWidgetProvider() {
-    private val TAG = "ExampleAppWidgetProvider"
-    val ACTION_CLICK_LIST_VIEW = "CLICK_LIST_VIEW"
+
     override fun onUpdate(
         context: Context?,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
-        Log.d(TAG, "onUpdate")
+        Timber.d("onUpdate")
         // Perform this loop procedure for each widget that belongs to this
         // provider.
         appWidgetIds.forEach { appWidgetId ->
@@ -33,17 +32,13 @@ class StockAppWidgetProvider: AppWidgetProvider() {
                 /* context = */ context,
                 /* requestCode = */  0,
                 /* intent = */ Intent(context, MainActivity::class.java),
-                /* flags = */ PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                /* flags = */ PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             )
 
             val serviceIntent = Intent(context, WidgetService::class.java)
             serviceIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             // system can distinguish different widget instance
             serviceIntent.setData(Uri.parse(serviceIntent.toUri(Intent.URI_INTENT_SCHEME)))
-            //onclick list view
-//            val clickIntent = Intent(context, ExampleAppWidgetProvider::class.java)
-//            clickIntent.setAction(ACTION_CLICK_LIST_VIEW)
-//            val clickPendingIntent = PendingIntent.getBroadcast(context, 0, clickIntent, 0)
 
             // Get the layout for the widget and attach an on-click listener
             // to the button.
@@ -51,15 +46,15 @@ class StockAppWidgetProvider: AppWidgetProvider() {
                 context?.packageName,
                 R.layout.widget
             ).apply {
-                setOnClickPendingIntent(R.id.widget_container, pendingIntent)
+                setOnClickPendingIntent(R.id.widget_layout, pendingIntent)
                 setRemoteAdapter(R.id.widget_list_view, serviceIntent) //set adapter for list view
                 setEmptyView(R.id.widget_list_view, R.id.example_widget_empty_view)
                 setTextViewText(
                     R.id.widget_update_time,
                     context?.getString(R.string.widget_update_time, updateTime())
                 )
-                //onclick list view
-//                setPendingIntentTemplate(R.id.widget_list_view, clickPendingIntent)
+                //onclick list view item
+                setPendingIntentTemplate(R.id.widget_list_view, pendingIntent)
             }
 
             // Tell the AppWidgetManager to perform an update on the current
@@ -87,7 +82,7 @@ class StockAppWidgetProvider: AppWidgetProvider() {
         val zoneId = ZoneId.of("Asia/Taipei")
         val localTime = LocalDateTime.now(zoneId)
         val timeString = localTime.format(timeFormatter)
-        //println("localTime..$timeString")
+
         return timeString
     }
 }
