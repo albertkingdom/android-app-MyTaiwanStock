@@ -60,6 +60,7 @@ class MainActivity : AppCompatActivity() {
 
         checkIntentExtra()
     }
+
     fun checkIntentExtra() {
         val stockNumberSelectedOnWidget = intent.getStringExtra("stockNo")
     }
@@ -135,7 +136,7 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     listViewModel.changeCurrentFollowingList(position)
                     listPopupWindow.dismiss()
-
+                    saveCurrentViewedList(position = position)
                 }
 
             }
@@ -149,6 +150,13 @@ class MainActivity : AppCompatActivity() {
         listViewModel.appBarMenuButtonTitle.observe(this) { title ->
             menuSelectorButton.text = title
         }
+    }
+
+    private fun saveCurrentViewedList(position: Int) {
+
+        getSharedPreferences("sharedPref", MODE_PRIVATE).edit()
+            .putInt("currentList", position)
+            .apply()
     }
 
 }

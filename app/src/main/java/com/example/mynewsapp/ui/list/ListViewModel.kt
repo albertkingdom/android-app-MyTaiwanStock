@@ -1,7 +1,6 @@
 package com.example.mynewsapp.ui.list
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.*
 import androidx.work.*
 import com.albertkingdom.mystockapp.model.FavList
@@ -30,6 +29,7 @@ import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.*
 import retrofit2.Response
+import timber.log.Timber
 import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
 
@@ -42,6 +42,7 @@ class ListViewModel(
     companion object {
         const val TAG = "ListViewModel"
     }
+    private var lastViewedListIndex = 0
     val currentSelectedFollowingListId: MutableLiveData<Int> = MutableLiveData(0)
 
     val allFollowingList: LiveData<List<FollowingList>> = repository.allFollowingList.asLiveData()
@@ -56,7 +57,7 @@ class ListViewModel(
             createFollowingList(followingList)
         }
         if (listOfFollowingLists.isNotEmpty()) {
-            changeCurrentFollowingList(0)
+            changeCurrentFollowingList(lastViewedListIndex)
         }
 
         // Set list popup's content
@@ -77,6 +78,9 @@ class ListViewModel(
     init {
         println("ListViewModel INIT")
     }
+    fun changeLastViewedListIndex(index: Int) {
+        lastViewedListIndex = index
+    }
     /*
     1. change following list id
     2. fetch single list -> followingListWithStocks
@@ -88,7 +92,6 @@ class ListViewModel(
 
         val observer = object : Observer<Resource<StockPriceInfoResponse>> {
             override fun onSubscribe(d: Disposable) {
-                //Log.d(TAG, "onSubscribe")
                 compositeDisposable.add(d)
             }
 
@@ -97,12 +100,10 @@ class ListViewModel(
             }
 
             override fun onError(e: Throwable) {
-                //Log.d(TAG, "onError $e")
                 stockPriceInfo.value = e.message?.let { Resource.Error(it) }
             }
 
             override fun onComplete() {
-                //Log.d(TAG, "onComplete")
             }
         }
         // repeat every 5 min
@@ -273,9 +274,9 @@ class ListViewModel(
             .whereEqualTo("name",listName)
             .get()
             .addOnSuccessListener { documents ->
-                Log.d(TAG, "document ${documents.documents}")
+                Timber.d("document ${documents.documents}")
                 for (document in documents) {
-                    Log.d(TAG, "${document.id} => ${document.data}")
+                    Timber.d("${document.id} => ${document.data}")
                 }
 
                 if (documents.isEmpty) {
@@ -284,7 +285,7 @@ class ListViewModel(
                 }
             }
             .addOnFailureListener { exception ->
-                Log.w(TAG, "Error getting documents: ", exception)
+                Timber.w("Error getting documents: ", exception)
             }
     }
     fun uploadNewStockNoToOnlineDB(stockNo: String) {
@@ -296,16 +297,16 @@ class ListViewModel(
             .whereEqualTo("name",listName)
             .get()
             .addOnSuccessListener { documents ->
-                Log.d(TAG, "document ${documents.documents}")
+                Timber.d("document ${documents.documents}")
                 if (documents.documents.isNotEmpty()) {
                     var documentId = documents.documents[0].id
-                    Log.d(TAG, "doc id $documentId")
+                    Timber.d("doc id $documentId")
                     val ref = db.collection("followingList").document(documentId)
                     ref.update("stocks", FieldValue.arrayUnion(stockNo))
                 }
             }
             .addOnFailureListener { exception ->
-                Log.w(TAG, "Error getting documents: ", exception)
+                Timber.w("Error getting documents: ", exception)
             }
 
     }
@@ -318,7 +319,7 @@ class ListViewModel(
     }
     private fun getAllListAndStocksFromOnlineDBAndSaveToLocal() {
         val accountEmail = auth.currentUser?.email ?: return
-        Log.d(TAG, "getAllListAndStocksFromOnlineDBAndSaveToLocal email $accountEmail")
+        Timber.d("getAllListAndStocksFromOnlineDBAndSaveToLocal email $accountEmail")
         db.collection("followingList")
             .whereEqualTo("email", accountEmail)
             .get()
@@ -355,7 +356,7 @@ class ListViewModel(
                 }
             }
             .addOnFailureListener { exception ->
-                Log.w(TAG, "Error getting documents: ", exception)
+                Timber.w("Error getting documents: ", exception)
             }
     }
     private fun getAllHistoryFromOnlineDBAndSaveToLocal() {
@@ -366,7 +367,7 @@ class ListViewModel(
             .addOnSuccessListener { documents ->
                 for (document in documents) {
                     val history = document.toObject<History>()
-                    Log.d(TAG, "history $history")
+                    Timber.d("history $history")
 
                     val newHistory = InvestHistory(0, stockNo = history.stockNo!!,
                         amount = history.amount!!,
@@ -380,7 +381,7 @@ class ListViewModel(
                 }
             }
             .addOnFailureListener { exception ->
-                Log.w(TAG, "Error getting documents: ", exception)
+                Timber.w("Error getting documents: ", exception)
             }
     }
     fun deleteStockNoFromOnlineDB(stockNo: String) {
@@ -392,15 +393,15 @@ class ListViewModel(
             .whereEqualTo("name", listName)
             .get()
             .addOnSuccessListener { documents ->
-                Log.d(TAG, "document ${documents.documents}")
+
                 val documentId = documents.documents[0].id
-                Log.d(TAG, "doc id $documentId")
+
                 val ref = db.collection("followingList").document(documentId)
                 ref.update("stocks", FieldValue.arrayRemove(stockNo))
 
             }
             .addOnFailureListener { exception ->
-                Log.w(TAG, "Error getting documents: ", exception)
+                Timber.w("Error getting documents: ", exception)
             }
     }
     fun deleteListFromOnlineDB(listName: String) {
@@ -411,15 +412,13 @@ class ListViewModel(
             .whereEqualTo("name", listName)
             .get()
             .addOnSuccessListener { documents ->
-                Log.d(TAG, "document ${documents.documents}")
                 val documentId = documents.documents[0].id
-                Log.d(TAG, "doc id $documentId")
                 val ref = db.collection("followingList").document(documentId)
                 ref.delete()
 
             }
             .addOnFailureListener { exception ->
-                Log.w(TAG, "Error getting documents: ", exception)
+                Timber.w("Error getting documents: ", exception)
             }
     }
     fun getAllOnlineDBDataAndSaveToLocal() {
