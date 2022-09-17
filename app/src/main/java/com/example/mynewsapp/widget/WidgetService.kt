@@ -80,7 +80,10 @@ class WidgetService: RemoteViewsService() {
             if (diffPrice != "-" && diffPrice.toFloat() < 0) {
                 remoteViews.setTextColor(R.id.widget_item_stock_diff, Color.GREEN)
             }
-
+            val intent = Intent().apply {
+                putExtra("stockNo", dataList[position].stockNo)
+            }
+            remoteViews.setOnClickFillInIntent(R.id.widget_item, intent)
 
             return remoteViews
         }

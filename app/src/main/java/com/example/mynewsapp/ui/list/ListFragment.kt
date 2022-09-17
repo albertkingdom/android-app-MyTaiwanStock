@@ -4,9 +4,8 @@ import android.graphics.Canvas
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-
-import android.util.Log
 import android.view.*
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -17,7 +16,6 @@ import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mynewsapp.MainActivity
-
 import com.example.mynewsapp.R
 import com.example.mynewsapp.adapter.StockInfoAdapter
 import com.example.mynewsapp.databinding.FragmentListBinding
@@ -28,6 +26,7 @@ import com.example.mynewsapp.util.Resource
 import com.example.mynewsapp.widget.WidgetUtil.Companion.updateWidget
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import timber.log.Timber
 
 
 class ListFragment : Fragment() {
@@ -46,7 +45,7 @@ class ListFragment : Fragment() {
     ): View? {
         binding = FragmentListBinding.inflate(inflater, container, false)
         setHasOptionsMenu(true)
-        (activity as MainActivity).showMenuSelectorBtn()
+
         checkIfFirstTimeAfterLoginAndGetOnlineData()
 
         return binding.root
@@ -54,7 +53,6 @@ class ListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.d(TAG, "onViewCreated")
         val recyclerView: RecyclerView = binding.stockListRecyclerview
         //change toolbar title
 //        (requireActivity() as AppCompatActivity).supportActionBar?.title = "自選股"
@@ -62,14 +60,14 @@ class ListFragment : Fragment() {
 
         stockAdapter = StockInfoAdapter(getStockNameToGetRelatedNews, navigateToCandelStickChartFragment)
         recyclerView.adapter = stockAdapter
-
+        changeToLastViewedList()
         listViewModel.stockPriceInfo.observe(viewLifecycleOwner, Observer { response ->
-            println("Observe TestStockPrice $response")
+            Timber.d("Observe TestStockPrice $response")
 
             when (response) {
                 is Resource.Success -> {
                     response.data?.let { stockInfoResponse ->
-                        Log.d("stock list fragment", stockInfoResponse.toString())
+                        Timber.d(stockInfoResponse.toString())
 
                         val listOfMsgArray = stockInfoResponse.msgArray
                         stockAdapter.setData(listOfMsgArray)
@@ -86,7 +84,7 @@ class ListFragment : Fragment() {
                 }
                 is Resource.Error -> {
                     response.message?.let { message ->
-                        Log.e("stock list fragment", "An error occured: $message")
+                        Timber.e("An error occured: $message")
                         Snackbar.make(view, "An error occured: $message", Snackbar.LENGTH_LONG).show()
                         binding.swipeRefresh.isRefreshing = false
                         when (message) {
@@ -104,7 +102,7 @@ class ListFragment : Fragment() {
 
         // observe selected list id and get
         listViewModel.currentSelectedFollowingListId.observe(viewLifecycleOwner) { listId ->
-            println("currentSelectedFollowingListId  $listId")
+            Timber.d("currentSelectedFollowingListId $listId")
 
         }
 
@@ -192,6 +190,11 @@ class ListFragment : Fragment() {
 
     }
 
+    override fun onStart() {
+        super.onStart()
+        (activity as MainActivity).showMenuSelectorBtn()
+    }
+
     private fun setupSwipeRefresh() {
         binding.swipeRefresh.setOnRefreshListener {
             listViewModel.changeCurrentFollowingListId()
@@ -235,7 +238,7 @@ class ListFragment : Fragment() {
                 }
 
                 override fun onQueryTextChange(text: String?): Boolean {
-                    Log.d("query text", text.toString())
+                    Timber.d("query text $text")
                     stockAdapter.filter.filter(text)
                     return true
                 }
@@ -265,7 +268,7 @@ class ListFragment : Fragment() {
         val firstTimeAfterLogin = sp.getBoolean("firstTimeAfterLogin", false)
         val isLogin = listViewModel.auth.currentUser?.email != null
         if (firstTimeAfterLogin && isLogin) {
-            Log.d(TAG, "isFirstTimeAfterLogin true")
+            Timber.d("isFirstTimeAfterLogin true")
             // show alert
             val alertBuilder = MaterialAlertDialogBuilder(requireContext(), R.style.AddFollowingListDialogTheme)
             alertBuilder
@@ -281,9 +284,15 @@ class ListFragment : Fragment() {
         editor.putBoolean("firstTimeAfterLogin", false)
         editor.apply()
     }
+
+    private fun changeToLastViewedList() {
+        val index = requireContext().getSharedPreferences("sharedPref", AppCompatActivity.MODE_PRIVATE).getInt("currentList", 0)
+        Timber.d("last viewed list: $index")
+        listViewModel.changeLastViewedListIndex(index = index)
+    }
     override fun onStop() {
         super.onStop()
-        Log.d(TAG, "onstop")
+        Timber.d("onstop")
 
         (activity as MainActivity).hideMenuSelectorBtn()
     }
