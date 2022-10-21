@@ -1,4 +1,4 @@
-package com.example.mynewsapp.adapter
+package com.example.mynewsapp.ui.adapter
 
 
 import android.util.Log
@@ -12,11 +12,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.mynewsapp.R
 import com.example.mynewsapp.databinding.ItemStockIdNameBinding
 import com.example.mynewsapp.model.StockIdNameStar
+import timber.log.Timber
 
 
-
-class StockIdAndNameAdapter: ListAdapter<StockIdNameStar,StockIdAndNameAdapter.StockIdAndNameViewHolder>(
-    DiffCallback) {
+class StockIdAndNameAdapter: ListAdapter<StockIdNameStar, StockIdAndNameAdapter.StockIdAndNameViewHolder>(
+    DiffCallback
+) {
     companion object {
         private val DiffCallback = object : DiffUtil.ItemCallback<StockIdNameStar>(){
             override fun areItemsTheSame(oldItem: StockIdNameStar, newItem: StockIdNameStar): Boolean {
@@ -28,7 +29,6 @@ class StockIdAndNameAdapter: ListAdapter<StockIdNameStar,StockIdAndNameAdapter.S
             }
 
         }
-        val TAG = "StockIdAndNameAdapter"
     }
     lateinit var onClickStarListener: ClickOnStarListener
 
@@ -38,7 +38,7 @@ class StockIdAndNameAdapter: ListAdapter<StockIdNameStar,StockIdAndNameAdapter.S
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
-    ): StockIdAndNameAdapter.StockIdAndNameViewHolder {
+    ): StockIdAndNameViewHolder {
         return StockIdAndNameViewHolder(
             ItemStockIdNameBinding.inflate(
                 LayoutInflater.from(
@@ -49,7 +49,7 @@ class StockIdAndNameAdapter: ListAdapter<StockIdNameStar,StockIdAndNameAdapter.S
     }
 
     override fun onBindViewHolder(
-        holder: StockIdAndNameAdapter.StockIdAndNameViewHolder,
+        holder: StockIdAndNameViewHolder,
         position: Int
     ) {
         val currentItem = getItem(position)
@@ -57,7 +57,7 @@ class StockIdAndNameAdapter: ListAdapter<StockIdNameStar,StockIdAndNameAdapter.S
             stockIdName.text = currentItem.stockName
             // change star icon if stockId is already in following list
             if (currentItem.isFollowing) {
-                Log.d(TAG, "is following current item= $currentItem")
+                Timber.d("is following current item= $currentItem")
                 starIcon.setImageDrawable(
                    ResourcesCompat.getDrawable(
                        this.starIcon.resources,

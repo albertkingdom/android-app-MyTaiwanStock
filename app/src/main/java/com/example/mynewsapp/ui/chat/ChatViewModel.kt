@@ -1,9 +1,6 @@
 package com.example.mynewsapp.ui.chat
 
-import android.util.Log
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import com.example.mynewsapp.model.Message
 import com.example.mynewsapp.model.User
@@ -15,6 +12,7 @@ import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import timber.log.Timber
 import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
@@ -32,10 +30,6 @@ class ChatViewModel: ViewModel() {
 
 
 
-    companion object {
-        val TAG = "ChatViewModel"
-    }
-
 
     fun checkIsExistingChannel(channelName: String) {
         var channelReference: CollectionReference = db.collection("channels")
@@ -47,7 +41,7 @@ class ChatViewModel: ViewModel() {
             .addOnSuccessListener { snapshot ->
 
                 for (document in snapshot) {
-                    Log.d(TAG, "${document.id} => ${document.data}")
+                    Timber.d("${document.id} => ${document.data}")
 
                 }
 
@@ -55,7 +49,7 @@ class ChatViewModel: ViewModel() {
                 if (snapshot.size() > 0) {
                     isExisting = true
                     channelID = snapshot.documents[0].id
-                    Log.d(TAG, "checkIsExistingChannel channel id...$channelID")
+                    Timber.d("checkIsExistingChannel channel id...$channelID")
                     getMessages()
                     return@addOnSuccessListener
                 } else {
@@ -63,7 +57,7 @@ class ChatViewModel: ViewModel() {
                 }
             }
             .addOnFailureListener { exception ->
-                Log.w(TAG, "Error getting documents: ", exception)
+                Timber.w("Error getting documents: ", exception)
             }
     }
     private fun createChannel(channelName: String) {
@@ -76,34 +70,34 @@ class ChatViewModel: ViewModel() {
         )
         channelReference.add(data)
             .addOnSuccessListener { documentRef ->
-                Log.d(TAG, "${documentRef.id}")
+                Timber.d(documentRef.id)
                 channelID = documentRef.id
                 getMessages()
             }
             .addOnFailureListener { e ->
-                Log.w(TAG, "create channel error:", e)
+                Timber.w("create channel error:", e)
             }
 
 
     }
     private fun getMessages() {
-        println("getMessages")
+        Timber.d("getMessages")
         val reference = db.collection("channels/$channelID/thread")
         val messageList = mutableListOf<Message>()
-        Log.d(TAG, "channel id...$channelID")
+        Timber.d("channel id...$channelID")
         reference.addSnapshotListener { snapshot, e ->
             if (e != null) {
-                Log.w(TAG, "Listen failed.", e)
+                Timber.w("Listen failed.", e)
                 return@addSnapshotListener
             }
             snapshot?.documentChanges?.forEach {
                 val message = handleDocumentChange(it)
                 messageList.add(message)
-                Log.d(TAG, "message...$message")
+                Timber.d("message...$message")
 //                messageListLiveDate.value?.add(message)
             }
             messageList.sortBy { message ->  message.createdAt}
-            Log.d(TAG, "messageList... $messageList")
+            Timber.d("messageList... $messageList")
 
             messageListLiveData.value = messageList
 
@@ -133,9 +127,9 @@ class ChatViewModel: ViewModel() {
         auth.signInAnonymously().addOnCompleteListener() { authResult ->
             if (authResult.isSuccessful) {
                 currentLoginUser.value = auth.currentUser
-                Log.d(TAG, "sign in successfully")
+                Timber.d("sign in successfully")
             } else {
-                Log.w(TAG, "signInAnonymously:failure", authResult.exception)
+                Timber.w("signInAnonymously:failure", authResult.exception)
             }
         }
     }
@@ -153,10 +147,10 @@ class ChatViewModel: ViewModel() {
         val reference = db.collection("channels/$channelID/thread")
         reference.add(message)
             .addOnSuccessListener { documentRef ->
-                Log.d(TAG, "successfully add new document: ${documentRef.id}")
+                Timber.d("successfully add new document: ${documentRef.id}")
             }
             .addOnFailureListener { e ->
-                Log.w(TAG, "Error adding document", e)
+                Timber.w("Error adding document", e)
             }
     }
 }

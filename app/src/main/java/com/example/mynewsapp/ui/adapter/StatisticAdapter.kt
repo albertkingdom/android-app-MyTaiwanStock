@@ -1,4 +1,4 @@
-package com.example.mynewsapp.adapter
+package com.example.mynewsapp.ui.adapter
 
 import android.view.LayoutInflater
 import android.view.View
@@ -14,7 +14,8 @@ import java.util.*
 import kotlin.math.roundToInt
 
 class StatisticAdapter: ListAdapter<StockStatistic, StatisticAdapter.StatisticViewHolder>(
-    DIFF_CALLBACK) {
+    DIFF_CALLBACK
+) {
     class StatisticViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
         val stockNoView: TextView = itemView.findViewById(R.id.stockNo)
         val assetView: TextView = itemView.findViewById(R.id.total_assets)

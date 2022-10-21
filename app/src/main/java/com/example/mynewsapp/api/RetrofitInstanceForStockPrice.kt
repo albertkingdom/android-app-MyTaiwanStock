@@ -20,7 +20,7 @@ object RetrofitInstanceForStockPrice {
         .addConverterFactory(MoshiConverterFactory.create())
         .client(client)
         .build()
-    val retrofitService:StockInfoApi by lazy {
+    val retrofitService: StockInfoApi by lazy {
         retrofit.create(StockInfoApi::class.java)
     }
 }

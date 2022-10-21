@@ -15,15 +15,15 @@ import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
-import com.example.mynewsapp.MainActivity
+import com.example.mynewsapp.ui.MainActivity
 import com.example.mynewsapp.R
-import com.example.mynewsapp.adapter.StockInfoAdapter
+import com.example.mynewsapp.ui.adapter.StockInfoAdapter
 import com.example.mynewsapp.databinding.FragmentListBinding
 import com.example.mynewsapp.model.MsgArray
 import com.example.mynewsapp.model.WidgetStockData
 import com.example.mynewsapp.util.Constant.Companion.NO_INTERNET_CONNECTION
 import com.example.mynewsapp.util.Resource
-import com.example.mynewsapp.widget.WidgetUtil.Companion.updateWidget
+import com.example.mynewsapp.ui.widget.WidgetUtil.Companion.updateWidget
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import timber.log.Timber
@@ -37,7 +37,6 @@ class ListFragment : Fragment() {
     private lateinit var swipeBackground: ColorDrawable
     private lateinit var deleteIcon: Drawable
 
-    val TAG = "ListFragment"
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,

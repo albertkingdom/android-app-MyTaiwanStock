@@ -17,13 +17,13 @@ object RetrofitInstanceForGeneralUse {
         .client(client)
         .build()
 
-    val retrofitServiceForCandleStickData:CandleStickDataApi by lazy {
+    val retrofitServiceForCandleStickData: CandleStickDataApi by lazy {
         retrofit.create(CandleStickDataApi::class.java)
     }
-    val retrofitServiceForStockInfo:StockInfoApi by lazy {
+    val retrofitServiceForStockInfo: StockInfoApi by lazy {
         retrofit.create(StockInfoApi::class.java)
     }
-    val retrofitServiceForNews:NewsAPI by lazy {
+    val retrofitServiceForNews: NewsAPI by lazy {
         retrofit.create(NewsAPI::class.java)
     }
 }

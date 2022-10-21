@@ -14,7 +14,7 @@ object RetrofitInstance {
         .addConverterFactory(MoshiConverterFactory.create())
         .client(client)
         .build()
-   val retrofitService:NewsAPI by lazy {
+   val retrofitService: NewsAPI by lazy {
        retrofit.create(NewsAPI::class.java)
    }
 }

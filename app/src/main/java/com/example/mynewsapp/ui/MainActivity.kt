@@ -1,8 +1,7 @@
-package com.example.mynewsapp
+package com.example.mynewsapp.ui
 
 
 import android.os.Bundle
-import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.ArrayAdapter
@@ -14,6 +13,8 @@ import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.*
+import com.example.mynewsapp.MyApplication
+import com.example.mynewsapp.R
 import com.example.mynewsapp.databinding.ActivityMainBinding
 import com.example.mynewsapp.ui.list.ListFragmentDirections
 import com.example.mynewsapp.ui.list.ListViewModel
@@ -33,7 +34,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Timber.d("onCreate")
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(findViewById(R.id.my_toolbar))
@@ -51,7 +52,13 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
 
 
-        appBarConfiguration = AppBarConfiguration(setOf(R.id.stockListFragment, R.id.news, R.id.statisticFragment, R.id.settings, R.id.account_page))
+        appBarConfiguration = AppBarConfiguration(setOf(
+            R.id.stockListFragment,
+            R.id.news,
+            R.id.statisticFragment,
+            R.id.settings,
+            R.id.account_page
+        ))
         setupActionBarWithNavController(navController, appBarConfiguration)
 
         setupOnClickBottomNav()
@@ -74,7 +81,7 @@ class MainActivity : AppCompatActivity() {
         // determine whether to reload tabs based on current selected bottom nav menu items
         navView.setOnItemSelectedListener(object : NavigationBarView.OnItemSelectedListener {
             override fun onNavigationItemSelected(item: MenuItem): Boolean {
-                Log.d("Activity", "onNavigationItemSelected")
+                Timber.d("onNavigationItemSelected")
 
                 // newly selected menu is the current one -> don't reload
                 if (item.itemId == navView.selectedItemId) {

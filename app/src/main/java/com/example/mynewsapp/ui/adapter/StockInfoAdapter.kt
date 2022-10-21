@@ -1,4 +1,4 @@
-package com.example.mynewsapp.adapter
+package com.example.mynewsapp.ui.adapter
 
 
 
@@ -20,7 +20,9 @@ import com.example.mynewsapp.databinding.ItemStockinfoBinding
 import com.example.mynewsapp.model.MsgArray
 
 
-class StockInfoAdapter(val onClick: (Stock: MsgArray)->Unit, val toCandleStickChart: (Stock: MsgArray)->Unit):ListAdapter<MsgArray, StockInfoAdapter.StockViewHolder>(DiffCallback), Filterable {
+class StockInfoAdapter(val onClick: (Stock: MsgArray)->Unit, val toCandleStickChart: (Stock: MsgArray)->Unit):ListAdapter<MsgArray, StockInfoAdapter.StockViewHolder>(
+    DiffCallback
+), Filterable {
     private var list = listOf<MsgArray>()
 
     companion object {

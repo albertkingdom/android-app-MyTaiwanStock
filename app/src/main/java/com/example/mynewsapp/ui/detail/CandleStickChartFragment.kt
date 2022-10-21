@@ -12,7 +12,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.R
-import com.example.mynewsapp.adapter.StockHistoryAdapter
+import com.example.mynewsapp.ui.adapter.StockHistoryAdapter
 import com.example.mynewsapp.databinding.FragmentCandleStickChartBinding
 import com.github.mikephil.charting.charts.CombinedChart
 import com.github.mikephil.charting.components.XAxis
@@ -21,6 +21,7 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.formatter.LargeValueFormatter
 import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
+import timber.log.Timber
 
 class CandleStickChartFragment: Fragment() {
 
@@ -37,7 +38,6 @@ class CandleStickChartFragment: Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d("candle fragment","onCreate")
         setHasOptionsMenu(true)
     }
     override fun onCreateView(
@@ -57,14 +57,13 @@ class CandleStickChartFragment: Fragment() {
 
         chartViewModel.queryHistoryByStockNo(args.stockNo)
 
-        Log.d("candle fragment","on create view ${args.stockNo}")
+        Timber.d("on create view ${args.stockNo}")
 
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.d("candle fragment","onViewCreated")
 
         binding.stockNo.text = args.stockNo
         binding.stockName.text = args.stockName
@@ -90,9 +89,9 @@ class CandleStickChartFragment: Fragment() {
         historyAdapter.setStockPrice(args.stockPrice)
         historyAdapter.setListener { targetDate ->
             // when clicked record, highlight the day of investing record on chart
-            //Log.d("targetDate", targetDate)
+
             chartViewModel.xLabels.value?.forEachIndexed { index, dateString ->
-                //Log.d("CandleStickChartFragment", dateString)
+
                 if(dateString == targetDate){
                     try {
                         val highlight = Highlight(index.toFloat(), 0, -1)
@@ -235,6 +234,5 @@ class CandleStickChartFragment: Fragment() {
     override fun onDestroyView() {
         chartViewModel.clearCandleStickData()
         super.onDestroyView()
-        //Log.d("candle fragment","on destroy view")
     }
 }

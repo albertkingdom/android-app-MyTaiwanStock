@@ -13,7 +13,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.R
-import com.example.mynewsapp.adapter.NewsAdapter
+import com.example.mynewsapp.ui.adapter.NewsAdapter
 import com.example.mynewsapp.databinding.FragmentNewsBinding
 import com.example.mynewsapp.util.Resource
 import com.google.android.material.snackbar.Snackbar
@@ -70,7 +70,6 @@ class NewsFragment : Fragment(R.layout.fragment_news) {
                 }
                 is Resource.Error -> {
                     response.message?.let { message ->
-                        //Log.e("newsfragment", "An error occured: $message")
                         Snackbar.make(view, "An error occured: $message", Snackbar.LENGTH_LONG).show()
                     }
                 }
@@ -81,9 +80,7 @@ class NewsFragment : Fragment(R.layout.fragment_news) {
         })
 
         binding.swipeRefresh.setOnRefreshListener {
-            //Log.d("list fragment", "pull to refresh")
             newsViewModel.getHeadlines()
-
         }
     }
 

@@ -11,16 +11,16 @@ import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.R
-import com.example.mynewsapp.adapter.StatisticAdapter
+import com.example.mynewsapp.ui.adapter.StatisticAdapter
 import com.example.mynewsapp.databinding.FragmentStatisticBinding
 import com.example.mynewsapp.ui.list.ListViewModel
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.Description
 import com.github.mikephil.charting.formatter.PercentFormatter
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import timber.log.Timber
 
 class StatisticFragment: Fragment() {
-    val TAG = "StatisticFragment"
     lateinit var binding: FragmentStatisticBinding
 
     lateinit var statisticViewModel: StatisticViewModel
@@ -72,6 +72,7 @@ class StatisticFragment: Fragment() {
 
     private fun setupListAdapter() {
         statisticViewModel.investStatisticsList.observe(viewLifecycleOwner) { listOfStockStatistic ->
+            Timber.d("listOfStockStatistic $listOfStockStatistic")
             if(listOfStockStatistic.isEmpty()){
                 textRemind.visibility = View.VISIBLE
                 pieChart.visibility = View.GONE

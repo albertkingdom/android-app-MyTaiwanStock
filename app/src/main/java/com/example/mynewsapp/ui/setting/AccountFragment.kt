@@ -2,7 +2,6 @@ package com.example.mynewsapp.ui.setting
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,6 +17,7 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import timber.log.Timber
 
 class AccountFragment: Fragment() {
     lateinit var googleSignInClient: GoogleSignInClient
@@ -53,11 +53,11 @@ class AccountFragment: Fragment() {
     }
     private fun bindingView() {
         binding.googleSignInButton.setOnClickListener {
-            Log.d(TAG, "click google sign in button")
+            Timber.d("click google sign in button")
             signIn()
         }
         binding.signOutButton.setOnClickListener {
-            Log.d(TAG, "click sign out button")
+            Timber.d("click sign out button")
             signOut()
         }
     }
@@ -74,10 +74,10 @@ class AccountFragment: Fragment() {
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             try {
                 val account = task.getResult(ApiException::class.java)
-                Log.d(TAG, "${account.id}")
+                Timber.d("${account.id}")
                 fireBaseAuthWithGoogle(account.idToken!!)
             } catch (e: ApiException) {
-                Log.w(TAG, "google sign in failed. $e")
+                Timber.w("google sign in failed. $e")
             }
         }
     }
@@ -87,13 +87,13 @@ class AccountFragment: Fragment() {
             .addOnCompleteListener {  task ->
                 if (task.isSuccessful) {
                     val user = auth.currentUser
-                    Log.d(TAG, "fireBaseAuthWithGoogle success $user")
+                    Timber.d("fireBaseAuthWithGoogle success $user")
                     if (user != null) {
                         updateUI(user)
                         editPreference()
                     }
                 } else {
-                    Log.w(TAG, "fireBaseAuthWithGoogle failure ${task.exception}")
+                    Timber.w("fireBaseAuthWithGoogle failure ${task.exception}")
                 }
             }
 
@@ -104,7 +104,7 @@ class AccountFragment: Fragment() {
             val email = user.email
             val userImageUrl = user.photoUrl
 
-            Log.d(TAG, "user name $name, email $email, image $userImageUrl")
+            Timber.d("user name $name, email $email, image $userImageUrl")
             binding.username.text = email
             binding.googleSignInButton.visibility = View.INVISIBLE
             binding.signOutButton.visibility = View.VISIBLE
@@ -130,7 +130,6 @@ class AccountFragment: Fragment() {
        editor.apply()
    }
     companion object {
-        const val TAG = "AccountFragment"
         const val RC_SIGN_IN = 9001
     }
 }

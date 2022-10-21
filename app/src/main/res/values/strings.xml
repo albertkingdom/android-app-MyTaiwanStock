@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">台股追蹤</string>
+    <string name="app_name">台股日記</string>
     <string name="title_home">自選股</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>

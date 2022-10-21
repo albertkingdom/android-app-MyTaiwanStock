@@ -12,7 +12,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mynewsapp.R
-import com.example.mynewsapp.adapter.FollowingListAdapter
+import com.example.mynewsapp.ui.adapter.FollowingListAdapter
 import com.example.mynewsapp.databinding.FragmentEditFollowingListBinding
 import com.example.mynewsapp.ui.list.AddFollowingListDialogFragment
 import com.example.mynewsapp.ui.list.ListViewModel

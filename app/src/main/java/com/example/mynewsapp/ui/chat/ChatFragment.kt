@@ -1,7 +1,6 @@
 package com.example.mynewsapp.ui.chat
 
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -13,8 +12,7 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.example.mynewsapp.R
-import com.example.mynewsapp.adapter.MessageListAdapter
+import com.example.mynewsapp.ui.adapter.MessageListAdapter
 import com.example.mynewsapp.databinding.FragmentChatBinding
 import com.example.mynewsapp.model.Message
 import com.example.mynewsapp.model.User
@@ -31,9 +29,7 @@ class ChatFragment : Fragment() {
     lateinit var sendMsgButton: Button
     lateinit var msgInput: EditText
     lateinit var swipeRefresh: SwipeRefreshLayout
-    companion object {
-        val TAG = "ChatFragment"
-    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -71,7 +67,6 @@ class ChatFragment : Fragment() {
 
 
         chatViewModel.messageListLiveData.observe(viewLifecycleOwner) {
-            Log.d(TAG, it.toString())
             swipeRefresh.isRefreshing = false
             //adapter.messageList = it
             //adapter.notifyDataSetChanged()

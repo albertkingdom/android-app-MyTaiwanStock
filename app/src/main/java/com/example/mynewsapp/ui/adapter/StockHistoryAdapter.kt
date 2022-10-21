@@ -1,4 +1,4 @@
-package com.example.mynewsapp.adapter
+package com.example.mynewsapp.ui.adapter
 
 
 import android.graphics.Color
@@ -22,7 +22,9 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 
-class StockHistoryAdapter: ListAdapter<InvestHistory, StockHistoryAdapter.StockHistoryViewHolder>(DiffCallback) {
+class StockHistoryAdapter: ListAdapter<InvestHistory, StockHistoryAdapter.StockHistoryViewHolder>(
+    DiffCallback
+) {
     private var stockPrice: String? = null
     private var clickItemListener: ((String) -> Unit)? = null
 

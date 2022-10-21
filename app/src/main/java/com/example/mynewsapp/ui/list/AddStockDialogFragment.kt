@@ -15,7 +15,6 @@ class AddStockDialogFragment : DialogFragment() {
     /**
      * this dialog is for adding new stockNo
      */
-    val TAG = "CustomDialogFragment"
     private val listViewModel: ListViewModel by activityViewModels()
 
 

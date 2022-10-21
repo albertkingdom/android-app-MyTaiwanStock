@@ -1,4 +1,4 @@
-package com.example.mynewsapp.widget
+package com.example.mynewsapp.ui.widget
 
 import android.appwidget.AppWidgetManager
 import android.content.Context

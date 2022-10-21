@@ -1,4 +1,4 @@
-package com.example.mynewsapp.adapter
+package com.example.mynewsapp.ui.adapter
 
 import android.util.Log
 import android.view.LayoutInflater
@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.mynewsapp.R
 import com.example.mynewsapp.model.Message
 import com.example.mynewsapp.model.User
+import timber.log.Timber
 import java.time.format.DateTimeFormatter
 
 class MessageListAdapter(): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -35,7 +36,7 @@ class MessageListAdapter(): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             dateText.text = dateString
             timeText.text = timeString
             senderName.text = message.sender.nickname
-            Log.d("adapter", "bind ReceivedMessageHolder")
+            Timber.d("bind ReceivedMessageHolder")
 
         }
     }
@@ -52,7 +53,7 @@ class MessageListAdapter(): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             timeText.text = timeString
             messageText.text = message.messageContent
 
-            Log.d("adapter", "bind SentMessageHolder")
+            Timber.d("bind SentMessageHolder")
         }
     }
 
@@ -81,7 +82,7 @@ class MessageListAdapter(): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val message = messageList[position]
-        Log.d("adapter", message.toString())
+
         when (holder.itemViewType) {
             VIEW_TYPE_MESSAGE_RECEIVED -> {
                (holder as ReceivedMessageHolder).bind(message)

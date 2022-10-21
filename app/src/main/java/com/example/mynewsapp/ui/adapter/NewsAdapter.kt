@@ -1,4 +1,4 @@
-package com.example.mynewsapp.adapter
+package com.example.mynewsapp.ui.adapter
 
 import android.graphics.drawable.Drawable
 import com.example.mynewsapp.model.Article

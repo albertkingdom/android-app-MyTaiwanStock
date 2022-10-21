@@ -14,7 +14,7 @@
         android:theme="@style/Theme.MyNewsApp"
         >
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -24,7 +24,7 @@
 
 
         </activity>
-        <receiver android:name=".widget.StockAppWidgetProvider"
+        <receiver android:name=".ui.widget.StockAppWidgetProvider"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -34,7 +34,7 @@
         </receiver>
 
         <service
-            android:name=".widget.WidgetService"
+            android:name=".ui.widget.WidgetService"
             android:permission="android.permission.BIND_REMOTEVIEWS" />
     </application>
 

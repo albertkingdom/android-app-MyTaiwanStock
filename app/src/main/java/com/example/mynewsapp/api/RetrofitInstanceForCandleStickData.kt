@@ -15,7 +15,7 @@ object RetrofitInstanceForCandleStickData {
         .client(client)
         .build()
 
-    val retrofitService:CandleStickDataApi by lazy {
+    val retrofitService: CandleStickDataApi by lazy {
         retrofit.create(CandleStickDataApi::class.java)
     }
 }

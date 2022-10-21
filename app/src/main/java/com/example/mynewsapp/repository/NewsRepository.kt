@@ -19,6 +19,7 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Response
+import timber.log.Timber
 
 class NewsRepository(val stockDao: StockDao) {
     suspend fun searchNews(stockName:String="台積電", page:Int):Response<NewsResponse>{
@@ -54,7 +55,7 @@ class NewsRepository(val stockDao: StockDao) {
     }
     suspend fun insertFollowingList(followingList: FollowingList): Int {
         val primaryKey = stockDao.insertFollowingList(followingList = followingList)
-        Log.d("repo insertFollowingList primary key", "$primaryKey")
+        Timber.d("repo insertFollowingList primary key $primaryKey")
         return primaryKey.toInt()
     }
 

@@ -9,7 +9,4 @@ class SettingFragment: PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.fragment_setting, rootKey)
     }
 
-    companion object {
-        const val TAG = "SettingFragment"
-    }
 }

@@ -1,20 +1,18 @@
 package com.example.mynewsapp.ui.detail
 
-import android.graphics.Color
-import android.graphics.Paint
 import androidx.lifecycle.*
 import com.example.mynewsapp.db.InvestHistory
 import com.example.mynewsapp.repository.NewsRepository
+import com.example.mynewsapp.use_case.CalculateChartDataUseCase
 import com.example.mynewsapp.util.GetDateString
-import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.NumberFormat
+
 
 class CandleStickChartViewModel(val repository: NewsRepository): ViewModel() {
-
+    val calculateChartDataUseCase = CalculateChartDataUseCase()
     private val _candleData = MutableLiveData<CandleData>()
     private val candleData: LiveData<CandleData> = _candleData
     private val _barData = MutableLiveData<BarData>()
@@ -74,9 +72,9 @@ class CandleStickChartViewModel(val repository: NewsRepository): ViewModel() {
                     } else {
                         withContext(Dispatchers.Main) {
                             //candleStickData.value = Resource.Success(candleStickDataList)
-                            generateCandleDataSet(candleStickDataList, stockNo)
-                            generateBarData(candleStickDataList)
-                            generateXLabels(candleStickDataList)
+                            _candleData.value = calculateChartDataUseCase.generateCandleDataSet(candleStickDataList, stockNo)
+                            _barData.value = calculateChartDataUseCase.generateBarData(candleStickDataList)
+                            _xLabels.value = calculateChartDataUseCase.generateXLabels(candleStickDataList)
                             _originalCandleData.value = candleStickDataList
                         }
                     }
@@ -87,57 +85,7 @@ class CandleStickChartViewModel(val repository: NewsRepository): ViewModel() {
     }
 
 
-    private fun generateCandleDataSet(data: List<List<String>>, stockNo: String): CandleData {
-        val candleStickEntry = data.mapIndexed { index, day ->
 
-            CandleEntry(
-                index.toFloat(),
-                day[4].toFloat(),//high
-                day[5].toFloat(), //low
-                day[3].toFloat(), //open
-                day[6].toFloat() //close
-            )
-
-        }
-        val candleDataSet = CandleDataSet(candleStickEntry, stockNo)
-        candleDataSet.apply {
-            decreasingColor = Color.parseColor("#008000")
-            increasingColor = Color.RED
-            decreasingPaintStyle = Paint.Style.FILL
-            increasingPaintStyle = Paint.Style.FILL
-            setDrawValues(false)
-            shadowColorSameAsCandle = true
-            axisDependency = YAxis.AxisDependency.LEFT
-        }
-        val candleData = CandleData(candleDataSet)
-
-        _candleData.value = candleData
-
-        return candleData
-    }
-
-    private fun generateBarData(data: List<List<String>>): BarData {
-        val barEntries = data.mapIndexed { index, day ->
-            BarEntry(index.toFloat(), NumberFormat.getInstance().parse(day[2]).toFloat())
-        }
-        val barDataSet = BarDataSet(barEntries, "volume")
-        barDataSet.apply {
-            axisDependency = YAxis.AxisDependency.RIGHT
-            setDrawValues(false)
-            color = Color.LTGRAY
-
-        }
-        val barData = BarData(barDataSet)
-        _barData.value = barData
-        return barData
-    }
-
-    private fun generateXLabels(data: List<List<String>>) {
-
-        _xLabels.value = data.map { day->
-            day[0]
-        }
-    }
     fun queryHistoryByStockNo(stockNo: String) {
         investHistoryList = repository.queryHistoryByStockNo(stockNo).asLiveData()
     }

@@ -1,7 +1,6 @@
 package com.example.mynewsapp.ui.list
 
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
@@ -11,15 +10,12 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mynewsapp.R
-import com.example.mynewsapp.adapter.ClickOnStarListener
-import com.example.mynewsapp.adapter.StockIdAndNameAdapter
+import com.example.mynewsapp.ui.adapter.ClickOnStarListener
+import com.example.mynewsapp.ui.adapter.StockIdAndNameAdapter
 import com.example.mynewsapp.databinding.FragmentAddStockToListBinding
 
 class AddStockFragment: Fragment() {
 
-    companion object {
-        val TAG = "AddStockFragment"
-    }
     private val addStockViewModel: AddStockViewModel by viewModels()
     private val listViewModel: ListViewModel by activityViewModels()
     lateinit var binding: FragmentAddStockToListBinding

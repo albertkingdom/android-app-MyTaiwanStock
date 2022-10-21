@@ -5,7 +5,7 @@ import androidx.lifecycle.*
 import androidx.work.*
 import com.albertkingdom.mystockapp.model.FavList
 import com.albertkingdom.mystockapp.model.History
-import com.example.mynewsapp.widget.UpdateWidgetPeriodicTask
+import com.example.mynewsapp.ui.widget.UpdateWidgetPeriodicTask
 import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.db.*
 import com.example.mynewsapp.model.StockPriceInfoResponse
@@ -39,9 +39,7 @@ class ListViewModel(
     val repository: NewsRepository,
     application: Application
 ) : AndroidViewModel(application) {
-    companion object {
-        const val TAG = "ListViewModel"
-    }
+
     private var lastViewedListIndex = 0
     val currentSelectedFollowingListId: MutableLiveData<Int> = MutableLiveData(0)
 
@@ -75,9 +73,7 @@ class ListViewModel(
 
     val db = Firebase.firestore
     var auth: FirebaseAuth = FirebaseAuth.getInstance()
-    init {
-        println("ListViewModel INIT")
-    }
+
     fun changeLastViewedListIndex(index: Int) {
         lastViewedListIndex = index
     }
@@ -155,7 +151,7 @@ class ListViewModel(
 
     private fun fetchStockPriceInfoRx(followingListWithStocks: FollowingListWithStock): Single<Resource<StockPriceInfoResponse>> {
         val stockNoStringList = followingListWithStocks.stocks.map { stock -> stock.stockNo }
-        println("stockNoStringList $stockNoStringList")
+        Timber.d("stockNoStringList $stockNoStringList")
         // setup workmanager
         setupWorkManagerForUpdateWidget(stockNoStringList)
         return getStockPriceInfoRx(stockNoStringList)

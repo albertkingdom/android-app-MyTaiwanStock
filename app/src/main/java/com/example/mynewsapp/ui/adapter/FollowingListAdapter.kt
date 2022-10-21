@@ -1,4 +1,4 @@
-package com.example.mynewsapp.adapter
+package com.example.mynewsapp.ui.adapter
 
 import android.view.LayoutInflater
 import android.view.View
@@ -9,7 +9,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.mynewsapp.databinding.ItemFollowingListBinding
 import com.example.mynewsapp.db.FollowingList
 
-class FollowingListAdapter: ListAdapter<FollowingList, FollowingListAdapter.FollowingListViewHolder>(DIFF_CALLBACK) {
+class FollowingListAdapter: ListAdapter<FollowingList, FollowingListAdapter.FollowingListViewHolder>(
+    DIFF_CALLBACK
+) {
     class FollowingListViewHolder(view: View): RecyclerView.ViewHolder(view)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FollowingListViewHolder {

@@ -18,10 +18,6 @@ class NewsViewModel(
     val news: MutableLiveData<Resource<NewsResponse>> = MutableLiveData()
 
 
-    companion object {
-        const val TAG = "NewsViewModel"
-    }
-
     init {
         getHeadlines()
     }

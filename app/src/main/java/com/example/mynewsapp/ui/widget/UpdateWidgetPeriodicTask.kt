@@ -1,4 +1,4 @@
-package com.example.mynewsapp.widget
+package com.example.mynewsapp.ui.widget
 
 import android.content.Context
 import androidx.work.CoroutineWorker
@@ -7,7 +7,7 @@ import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.model.WidgetStockData
 import com.example.mynewsapp.repository.NewsRepository
 import com.example.mynewsapp.util.Constant.Companion.WORKER_INPUT_DATA_KEY
-import com.example.mynewsapp.widget.WidgetUtil.Companion.updateWidget
+import com.example.mynewsapp.ui.widget.WidgetUtil.Companion.updateWidget
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types

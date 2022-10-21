@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.albertkingdom.mystockapp.model.History
 import com.example.mynewsapp.db.InvestHistory
 import com.example.mynewsapp.repository.NewsRepository
+import com.example.mynewsapp.use_case.CheckUserInputHistoryDataUseCase
 import com.example.mynewsapp.util.InputDataStatus
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 class AddHistoryViewModel(val repository: NewsRepository): ViewModel() {
     var auth: FirebaseAuth = FirebaseAuth.getInstance()
     val db = Firebase.firestore
+    val checkUserInputHistoryDataUseCase = CheckUserInputHistoryDataUseCase()
 
     fun insertHistory(investHistory: InvestHistory) {
         viewModelScope.launch {
@@ -22,19 +24,7 @@ class AddHistoryViewModel(val repository: NewsRepository): ViewModel() {
     }
 
     fun checkDataInput(stockNo: String, amount: Int?, price: Double?, date: Long?): InputDataStatus {
-        if (stockNo.isEmpty()) {
-            return InputDataStatus.InvalidStockNo
-
-        } else if (amount == 0 || amount == null) {
-           return InputDataStatus.InvalidAmount
-
-        } else if (price == 0.0 || price == null) {
-            return InputDataStatus.InvalidPrice
-
-        } else if (date == null) {
-            return InputDataStatus.InvalidDate
-        }
-        return InputDataStatus.OK
+       return checkUserInputHistoryDataUseCase.checkDataInput(stockNo, amount, price, date)
     }
 
     fun uploadHistoryToOnlineDB(price: Double, amount: Int, date: Long, stockNo: String, status: Int) {

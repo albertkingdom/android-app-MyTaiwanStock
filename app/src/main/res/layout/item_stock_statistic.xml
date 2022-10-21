@@ -12,6 +12,7 @@
         android:id="@+id/stockNo"
         tools:text="0050"
         android:gravity="center"
+        android:textSize="20sp"
         />
     <TextView
         android:layout_width="0dp"
@@ -19,5 +20,6 @@
         android:layout_height="match_parent"
         android:id="@+id/total_assets"
         tools:text="10000"
-        android:gravity="center"/>
+        android:gravity="center"
+        android:textSize="20sp"/>
 </androidx.appcompat.widget.LinearLayoutCompat>

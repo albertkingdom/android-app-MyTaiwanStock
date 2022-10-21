@@ -19,6 +19,7 @@ import com.example.mynewsapp.databinding.FragmentAddHistoryBinding
 import com.example.mynewsapp.db.InvestHistory
 import com.example.mynewsapp.util.InputDataStatus
 import com.example.mynewsapp.util.hideKeyboard
+import timber.log.Timber
 import java.util.*
 
 
@@ -137,7 +138,7 @@ class AddHistoryFragment: Fragment(), AdapterView.OnItemSelectedListener {
     }
     // For spinner
     override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
-        Log.d("AddHistoryFragment","spinner onItemSelected pos $pos")
+        Timber.d("spinner onItemSelected pos $pos")
         binding.feeDiscountSpinner.visibility = View.GONE
         binding.feeOneDollar.visibility = View.GONE
         binding.feeCustom.visibility = View.GONE
@@ -164,14 +165,14 @@ class AddHistoryFragment: Fragment(), AdapterView.OnItemSelectedListener {
 
         defaultCustomFeeDiscount = sp.getString("fee_discount", "")
         defaultCustomFee = sp.getString("fee_custom", "")
-        Log.d("AddHistoryFragment fee discount index", defaultCustomFeeDiscount.toString())
-        Log.d("AddHistoryFragment fee custom", defaultCustomFee.toString())
+        Timber.d("fee discount index $defaultCustomFeeDiscount")
+        Timber.d("fee custom $defaultCustomFee")
 
 
         binding.feeDiscountSpinner.post(object: Runnable{
             override fun run() {
                 // set spinner default value
-                Log.d("AddHistoryFragment", "defaultCustomFeeDiscount $defaultCustomFeeDiscount")
+                Timber.d("defaultCustomFeeDiscount $defaultCustomFeeDiscount")
                 defaultCustomFeeDiscount?.let { str ->
                     if (str.isNotEmpty()) {
                         binding.feeDiscountSpinner.setSelection(str.toInt() / 10 - 1)
