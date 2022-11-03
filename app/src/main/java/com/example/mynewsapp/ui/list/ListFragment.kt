@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -24,8 +25,11 @@ import com.example.mynewsapp.model.WidgetStockData
 import com.example.mynewsapp.util.Constant.Companion.NO_INTERNET_CONNECTION
 import com.example.mynewsapp.util.Resource
 import com.example.mynewsapp.ui.widget.WidgetUtil.Companion.updateWidget
+import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 
@@ -36,6 +40,7 @@ class ListFragment : Fragment() {
     private lateinit var stockAdapter: StockInfoAdapter
     private lateinit var swipeBackground: ColorDrawable
     private lateinit var deleteIcon: Drawable
+    private lateinit var shimmerLayout: ShimmerFrameLayout
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -53,16 +58,15 @@ class ListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val recyclerView: RecyclerView = binding.stockListRecyclerview
-        //change toolbar title
-//        (requireActivity() as AppCompatActivity).supportActionBar?.title = "自選股"
+
+        shimmerLayout = binding.shimmerFrameLayout
 
 
-        stockAdapter = StockInfoAdapter(getStockNameToGetRelatedNews, navigateToCandelStickChartFragment)
+        stockAdapter = StockInfoAdapter(getStockNameToGetRelatedNews, navigateToCandleStickChartFragment)
         recyclerView.adapter = stockAdapter
         changeToLastViewedList()
         listViewModel.stockPriceInfo.observe(viewLifecycleOwner, Observer { response ->
             Timber.d("Observe TestStockPrice $response")
-
             when (response) {
                 is Resource.Success -> {
                     response.data?.let { stockInfoResponse ->
@@ -80,6 +84,8 @@ class ListFragment : Fragment() {
                     }
                     binding.swipeRefresh.isRefreshing = false
                     toggleNetworkConnectionLostIcon(false)
+
+                    toggleShimmerLoadingEffect(false)
                 }
                 is Resource.Error -> {
                     response.message?.let { message ->
@@ -90,6 +96,7 @@ class ListFragment : Fragment() {
                             NO_INTERNET_CONNECTION -> toggleNetworkConnectionLostIcon(true)
                         }
                     }
+                   toggleShimmerLoadingEffect(false)
                 }
                 is Resource.Loading -> {
                     binding.swipeRefresh.isRefreshing = true
@@ -194,6 +201,11 @@ class ListFragment : Fragment() {
         (activity as MainActivity).showMenuSelectorBtn()
     }
 
+    override fun onResume() {
+        super.onResume()
+        Timber.d("onResume")
+        toggleShimmerLoadingEffect(true)
+    }
     private fun setupSwipeRefresh() {
         binding.swipeRefresh.setOnRefreshListener {
             listViewModel.changeCurrentFollowingListId()
@@ -209,12 +221,9 @@ class ListFragment : Fragment() {
     }
     private val getStockNameToGetRelatedNews:(stockContent: MsgArray)->Unit = { stockContent->
 
-//        val stockName = stockContent.stockName
-//        viewModel.getRelatedNews(stockName)
-//        findNavController().navigate(ListFragmentDirections.actionListFragmentToNewsFragment())
     }
 
-    private val navigateToCandelStickChartFragment:(stockContent: MsgArray) -> Unit = {
+    private val navigateToCandleStickChartFragment:(stockContent: MsgArray) -> Unit = {
 
         val stockNo = it.stockNo
         val stockPrice:String = if(it.currentPrice != "-") it.currentPrice else it.lastDayPrice
@@ -224,6 +233,19 @@ class ListFragment : Fragment() {
 
     }
 
+    private fun toggleShimmerLoadingEffect(show:Boolean) {
+        if (!show) {
+            lifecycleScope.launch {
+                delay(500) // show shimmer animation fo 0.5s
+                shimmerLayout.stopShimmer()
+                shimmerLayout.visibility = View.GONE
+                binding.swipeRefresh.visibility = View.VISIBLE
+            }
+        } else {
+            shimmerLayout.startShimmer()
+            binding.swipeRefresh.visibility = View.GONE
+        }
+    }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)

@@ -118,4 +118,7 @@ dependencies {
 
     // Timber
     implementation 'com.jakewharton.timber:timber:5.0.1'
+
+    // recyclerview loading effect
+    implementation 'com.facebook.shimmer:shimmer:0.5.0'
 }

@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
             R.id.news,
             R.id.statisticFragment,
             R.id.settings,
-            R.id.account_page
+            //R.id.account_page
         ))
         setupActionBarWithNavController(navController, appBarConfiguration)
 

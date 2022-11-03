@@ -11,5 +11,4 @@
         android:label="Statistic" />
     <include app:graph="@navigation/news" />
     <include app:graph="@navigation/settings" />
-    <include app:graph="@navigation/account" />
 </navigation>
