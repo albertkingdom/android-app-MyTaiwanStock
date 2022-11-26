@@ -48,7 +48,8 @@ class CalculateAssetUseCase {
 
 
         val listOfStockStatistic: List<StockStatistic> = mapOfStockNoToTotalMoney.map { entry ->
-            StockStatistic(entry.key, entry.value)
+            val amount = mapOfStockNoToAmount[entry.key] ?: 0
+            StockStatistic(entry.key, amount, entry.value)
         }
 
         return listOfStockStatistic

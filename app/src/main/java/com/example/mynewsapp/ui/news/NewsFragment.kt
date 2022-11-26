@@ -42,7 +42,6 @@ class NewsFragment : Fragment(R.layout.fragment_news) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         //change toolbar title
-        (requireActivity() as AppCompatActivity).supportActionBar?.title = "News"
         binding = FragmentNewsBinding.bind(view)
 
         val recyclerView: RecyclerView = binding.newsRecyclerview

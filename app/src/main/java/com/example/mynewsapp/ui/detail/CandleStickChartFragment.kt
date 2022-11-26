@@ -6,8 +6,12 @@ import android.util.Log
 import android.view.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat.getColor
+import androidx.core.content.ContextCompat.getDrawable
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.mynewsapp.MyApplication
@@ -21,7 +25,17 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.formatter.LargeValueFormatter
 import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.*
+import kotlin.math.abs
 
 class CandleStickChartFragment: Fragment() {
 
@@ -48,7 +62,7 @@ class CandleStickChartFragment: Fragment() {
         binding = FragmentCandleStickChartBinding.inflate(inflater)
         chart = binding.candleStickChart
         //change toolbar title
-        (requireActivity() as AppCompatActivity).supportActionBar?.title = args.stockNo
+        (requireActivity() as AppCompatActivity).supportActionBar?.title = "${args.stockName} ${args.stockNo}"
 
         val repository = (activity?.application as MyApplication).repository
         chartViewModel = CandleStickChartViewModel(repository)
@@ -65,23 +79,41 @@ class CandleStickChartFragment: Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.stockNo.text = args.stockNo
-        binding.stockName.text = args.stockName
-        binding.stockPrice.text = String.format("%.2f",args.stockPrice.toFloat())
+        binding.stockPrice.text = String.format("%.2f", args.stockPrice.toFloat())
+        //binding.dateStockPrice.text = DateTimeFormatter.ofPattern("MM-dd HH:mm").withZone(ZoneId.systemDefault()).format(Instant.now())
+        binding.dateStockPrice.text = args.time
 
 
         setupListAdapter()
         setupChart()
         setupXLabelFormat()
 
-
-
-
         chartViewModel.originalCandleData.observe(viewLifecycleOwner) { data ->
             setupOnClickChart(data)
             initOpenCloseHighLowValue(data.last()[7])
         }
 
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    chartViewModel.totalHistoryAmount.collect {
+                        binding.textTotalAmount.text = it.toString()
+                        binding.totalAssetValue.text = (it*args.stockPrice.toFloat()).toString()
+                    }
+                }
+                launch {
+                    chartViewModel.historyBuyAvgPrice.collect {
+                        binding.avgBuyPrice.text = if (it > 0) it.toString() else "-"
+                    }
+                }
+                launch {
+                    chartViewModel.historySellAvgPrice.collect {
+                        binding.avgSellPrice.text = if (it > 0) it.toString() else "-"
+                    }
+                }
+            }
+        }
     }
 
     private fun setupListAdapter() {
@@ -191,15 +223,31 @@ class CandleStickChartFragment: Fragment() {
         })
     }
     private fun initOpenCloseHighLowValue(stockpriceDiff:String){
+        val priceDiffFloat = stockpriceDiff.toFloat()
+        Timber.d("stockpriceDiff $priceDiffFloat")
         binding.apply {
             open.text = getString(R.string.stockprice_open, "")
             close.text = getString(R.string.stockprice_close, "")
             high.text = getString(R.string.stockprice_high, "")
             low.text = getString(R.string.stockprice_low, "")
             date.text = getString(R.string.stockprice_date, "")
-            priceDiff.text = stockpriceDiff
-            priceDiff.setTextColor(if (stockpriceDiff.toFloat() > 0f ) Color.RED else getColor(requireContext(),R.color.green))
+            priceDiff.text = "${abs(priceDiffFloat)}"
 
+            if (stockpriceDiff.toFloat() > 0f){
+                stockInfo.setBackgroundColor(getColor(requireContext(),R.color.light_red))
+                stockPrice.setTextColor(Color.RED)
+                priceDiff.setTextColor(Color.RED)
+                arrow.setColorFilter(Color.RED)
+                arrow.setImageDrawable(getDrawable(requireContext(),R.drawable.ic_arrow_drop_up))
+            } else if (stockpriceDiff.toFloat() < 0f) {
+                val greenColor = getColor(requireContext(),R.color.green)
+                stockInfo.setBackgroundColor(getColor(requireContext(),R.color.celadon))
+                stockPrice.setTextColor(greenColor)
+                priceDiff.setTextColor(greenColor)
+                arrow.setColorFilter(greenColor)
+                arrow.setImageDrawable(getDrawable(requireContext(),R.drawable.ic_arrow_drop_down))
+
+            }
         }
     }
     private fun navigateToAddHistoryFragment() {
@@ -219,7 +267,6 @@ class CandleStickChartFragment: Fragment() {
 
         return when (item.itemId) {
             R.id.addButton -> {
-                print("go to add history")
                 navigateToAddHistoryFragment()
                 true
             }

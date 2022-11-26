@@ -14,5 +14,7 @@ data class MsgArray(
     @Json(name = "z")
     val currentPrice: String,
     @Json(name = "n")
-    val stockName: String
+    val stockName: String,
+    @Json(name ="t")
+    val time: String
 )

@@ -7,8 +7,12 @@ import com.example.mynewsapp.use_case.CalculateChartDataUseCase
 import com.example.mynewsapp.util.GetDateString
 import com.github.mikephil.charting.data.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 
 class CandleStickChartViewModel(val repository: NewsRepository): ViewModel() {
@@ -29,6 +33,15 @@ class CandleStickChartViewModel(val repository: NewsRepository): ViewModel() {
     var investHistoryList: LiveData<List<InvestHistory>> = _investHistoryList
     private val _originalCandleData = MutableLiveData<List<List<String>>>()
     val originalCandleData: LiveData<List<List<String>>> = _originalCandleData
+
+    private val _totalHistoryAmount = MutableStateFlow<Int>(0)
+    val totalHistoryAmount = _totalHistoryAmount.asStateFlow()
+
+    private val _historyBuyAvgPrice = MutableStateFlow(0.0)
+    val historyBuyAvgPrice = _historyBuyAvgPrice.asStateFlow()
+
+    private val _historySellAvgPrice = MutableStateFlow(0.0)
+    val historySellAvgPrice = _historySellAvgPrice.asStateFlow()
 
     // helper method to combine two liveData
     fun <A, B, C> combine(
@@ -88,8 +101,22 @@ class CandleStickChartViewModel(val repository: NewsRepository): ViewModel() {
 
     fun queryHistoryByStockNo(stockNo: String) {
         investHistoryList = repository.queryHistoryByStockNo(stockNo).asLiveData()
+        viewModelScope.launch {
+            repository.queryHistoryByStockNo(stockNo).collect { list->
+                val totalBuyAmount = list.filter { it.status==0 }.map { it.amount }.reduce { acc, i ->  acc+i }
+                val totalSellAmount = list.filter { it.status==1 }.map { it.amount }.reduce { acc, i ->  acc+i }
+                val avgBuyPrice = list.filter { it.status==0 }.map { it.amount*it.price }.reduce {acc, d -> acc+d } / totalBuyAmount
+                val avgSellPrice = list.filter { it.status==1 }.map { it.amount*it.price }.reduce {acc, d -> acc+d } / totalSellAmount
+
+                _totalHistoryAmount.value = totalBuyAmount - totalSellAmount
+                _historyBuyAvgPrice.value = avgBuyPrice
+                _historySellAvgPrice.value = avgSellPrice
+            }
+        }
+
     }
     fun clearCandleStickData() {
         //candleStickData.value = null
     }
+
 }

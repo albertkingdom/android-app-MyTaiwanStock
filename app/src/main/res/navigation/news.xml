@@ -8,8 +8,8 @@
     <fragment
         android:id="@+id/newsFragment"
         android:name="com.example.mynewsapp.ui.news.NewsFragment"
-        android:label="fragment_news"
-        tools:layout="@layout/fragment_news" >
+        android:label="新聞"
+        tools:layout="@layout/fragment_news">
         <action
             android:id="@+id/action_newsFragment2_to_newsArticleFragment"
             app:destination="@id/newsArticleFragment" />

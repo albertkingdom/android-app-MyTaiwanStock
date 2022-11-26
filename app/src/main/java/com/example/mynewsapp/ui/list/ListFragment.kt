@@ -228,8 +228,9 @@ class ListFragment : Fragment() {
         val stockNo = it.stockNo
         val stockPrice:String = if(it.currentPrice != "-") it.currentPrice else it.lastDayPrice
         val stockName = it.stockName
+        val time = it.time
 
-        findNavController().navigate(ListFragmentDirections.actionListFragmentToCandleStickChartFragment(stockNo,stockName,stockPrice))
+        findNavController().navigate(ListFragmentDirections.actionListFragmentToCandleStickChartFragment(stockNo,stockName,stockPrice,time))
 
     }
 

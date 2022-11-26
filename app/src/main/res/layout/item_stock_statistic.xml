@@ -12,8 +12,16 @@
         android:id="@+id/stockNo"
         tools:text="0050"
         android:gravity="center"
-        android:textSize="20sp"
+        android:textSize="18sp"
         />
+    <TextView
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:id="@+id/stockAmount"
+        tools:text="%1$s 股"
+        android:gravity="center"
+        android:textSize="18sp" />
     <TextView
         android:layout_width="0dp"
         android:layout_weight="1"
@@ -21,5 +29,5 @@
         android:id="@+id/total_assets"
         tools:text="10000"
         android:gravity="center"
-        android:textSize="20sp"/>
+        android:textSize="18sp"/>
 </androidx.appcompat.widget.LinearLayoutCompat>

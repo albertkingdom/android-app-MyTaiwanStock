@@ -19,6 +19,7 @@ class StatisticAdapter: ListAdapter<StockStatistic, StatisticAdapter.StatisticVi
     class StatisticViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
         val stockNoView: TextView = itemView.findViewById(R.id.stockNo)
         val assetView: TextView = itemView.findViewById(R.id.total_assets)
+        val amountView: TextView = itemView.findViewById(R.id.stockAmount)
 
         fun setData(data: StockStatistic){
             stockNoView.text = data.stockNo
@@ -28,6 +29,7 @@ class StatisticAdapter: ListAdapter<StockStatistic, StatisticAdapter.StatisticVi
             format.currency = Currency.getInstance("TWD")
 
             assetView.text = format.format(data.totalAssets.roundToInt())
+            amountView.text = amountView.context.getString(R.string.stock_amount, data.amount)
         }
     }
 

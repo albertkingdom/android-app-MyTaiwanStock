@@ -33,6 +33,9 @@
         <argument android:name="stockNo" />
         <argument android:name="stockName" />
         <argument android:name="stockPrice" />
+        <argument
+            android:name="time"
+            app:argType="string" />
     </fragment>
     <dialog
         android:id="@+id/addFollowingListDialogFragment"
@@ -41,8 +44,8 @@
     <fragment
         android:id="@+id/addHistoryFragment"
         android:name="com.example.mynewsapp.ui.detail.AddHistoryFragment"
-        android:label="fragment_add_history"
-        tools:layout="@layout/fragment_add_history" >
+        android:label="新增一筆紀錄"
+        tools:layout="@layout/fragment_add_history">
         <argument android:name="stockNo" />
     </fragment>
     <fragment
