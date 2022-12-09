@@ -12,12 +12,12 @@
         android:layout_height="match_parent"
         android:gravity="center_vertical"
         android:textSize="20sp"
-        android:textColor="@color/black"
         android:text="123"/>
     <ImageButton
         android:id="@+id/star_icon"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:src="@drawable/ic_baseline_star_border"
-        android:background="@android:color/transparent" />
+        android:background="@android:color/transparent"
+        app:tint="@color/gold" />
 </androidx.appcompat.widget.LinearLayoutCompat>

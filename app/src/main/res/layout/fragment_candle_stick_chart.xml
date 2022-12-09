@@ -121,7 +121,7 @@
             android:layout_height="wrap_content"
             android:paddingHorizontal="10dp"
             android:text="Overview"
-            android:textColor="@color/black"
+            android:textColor="?android:textColorPrimary"
             android:textSize="18sp"
             android:textStyle="bold"/>
 
@@ -224,7 +224,7 @@
             android:paddingHorizontal="10dp"
             android:layout_height="wrap_content"
             android:text="投資紀錄"
-            android:textColor="@color/black"
+            android:textColor="?android:textColorPrimary"
             android:textSize="18sp"
             android:textStyle="bold" />
 
@@ -237,7 +237,7 @@
 
             <TextView
                 style="@style/candle_stick_chart_label"
-                android:text="買/賣" />
+                android:text="@string/buy_or_sell_text" />
 
             <TextView
                 style="@style/candle_stick_chart_label"

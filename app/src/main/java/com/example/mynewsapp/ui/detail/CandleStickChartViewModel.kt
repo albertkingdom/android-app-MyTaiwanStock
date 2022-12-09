@@ -9,6 +9,7 @@ import com.github.mikephil.charting.data.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -102,16 +103,23 @@ class CandleStickChartViewModel(val repository: NewsRepository): ViewModel() {
     fun queryHistoryByStockNo(stockNo: String) {
         investHistoryList = repository.queryHistoryByStockNo(stockNo).asLiveData()
         viewModelScope.launch {
-            repository.queryHistoryByStockNo(stockNo).collect { list->
-                val totalBuyAmount = list.filter { it.status==0 }.map { it.amount }.reduce { acc, i ->  acc+i }
-                val totalSellAmount = list.filter { it.status==1 }.map { it.amount }.reduce { acc, i ->  acc+i }
-                val avgBuyPrice = list.filter { it.status==0 }.map { it.amount*it.price }.reduce {acc, d -> acc+d } / totalBuyAmount
-                val avgSellPrice = list.filter { it.status==1 }.map { it.amount*it.price }.reduce {acc, d -> acc+d } / totalSellAmount
+            repository.queryHistoryByStockNo(stockNo)
+                .catch { exception -> Timber.w(exception) }
+                .collect { list ->
+                    if (list.isEmpty()) return@collect
+                    val totalBuyAmount = list.filter { it.status == 0 }.map { it.amount }
+                        .reduce { acc, i -> acc + i }
+                    val totalSellAmount = list.filter { it.status == 1 }.map { it.amount }
+                        .reduce { acc, i -> acc + i }
+                    val avgBuyPrice = list.filter { it.status == 0 }.map { it.amount * it.price }
+                        .reduce { acc, d -> acc + d } / totalBuyAmount
+                    val avgSellPrice = list.filter { it.status == 1 }.map { it.amount * it.price }
+                        .reduce { acc, d -> acc + d } / totalSellAmount
 
-                _totalHistoryAmount.value = totalBuyAmount - totalSellAmount
-                _historyBuyAvgPrice.value = avgBuyPrice
-                _historySellAvgPrice.value = avgSellPrice
-            }
+                    _totalHistoryAmount.value = totalBuyAmount - totalSellAmount
+                    _historyBuyAvgPrice.value = avgBuyPrice
+                    _historySellAvgPrice.value = avgSellPrice
+                }
         }
 
     }

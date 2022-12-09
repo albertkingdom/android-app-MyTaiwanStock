@@ -16,7 +16,7 @@
         <item name="android:dialogTheme">@style/CustomDialog</item>
         <!--    preference page dialog -->
         <item name="alertDialogTheme">@style/MyPreferenceDialogTheme</item>
-
+        <item name="android:textColorPrimary">@color/white</item>
     </style>
 
     <style name="CustomDialog" parent="@style/Theme.AppCompat.Light.Dialog">

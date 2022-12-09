@@ -7,7 +7,6 @@ import android.view.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat.getColor
 import androidx.core.content.ContextCompat.getDrawable
-import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -18,6 +17,7 @@ import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.R
 import com.example.mynewsapp.ui.adapter.StockHistoryAdapter
 import com.example.mynewsapp.databinding.FragmentCandleStickChartBinding
+import com.example.mynewsapp.util.getColorThemeRes
 import com.github.mikephil.charting.charts.CombinedChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.*
@@ -25,16 +25,8 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.formatter.LargeValueFormatter
 import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
-import java.util.*
 import kotlin.math.abs
 
 class CandleStickChartFragment: Fragment() {
@@ -49,6 +41,7 @@ class CandleStickChartFragment: Fragment() {
 
     private lateinit var historyAdapter: StockHistoryAdapter
 
+    var chartLabelColor = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,6 +76,7 @@ class CandleStickChartFragment: Fragment() {
         //binding.dateStockPrice.text = DateTimeFormatter.ofPattern("MM-dd HH:mm").withZone(ZoneId.systemDefault()).format(Instant.now())
         binding.dateStockPrice.text = args.time
 
+        chartLabelColor = requireContext().getColorThemeRes(android.R.attr.textColorPrimary)
 
         setupListAdapter()
         setupChart()
@@ -142,7 +136,7 @@ class CandleStickChartFragment: Fragment() {
     }
     private fun setupChart() {
         chartViewModel.combinedData.observe(viewLifecycleOwner) { pair ->
-            println("combinedData $pair")
+
             if (pair.first == null || pair.second == null) {
                 println("pair is not completed")
                 return@observe
@@ -167,7 +161,8 @@ class CandleStickChartFragment: Fragment() {
                 position = XAxis.XAxisPosition.BOTTOM
                 labelRotationAngle = -25f
                 setDrawGridLines(false)
-            }
+                textColor = chartLabelColor
+             }
 
         }
 
@@ -192,6 +187,9 @@ class CandleStickChartFragment: Fragment() {
             barData.isHighlightEnabled = false
             candleData.isHighlightEnabled = true
             setDrawBorders(true)
+
+            axisLeft.textColor = chartLabelColor
+            axisRight.textColor = chartLabelColor
         }
     }
     /**

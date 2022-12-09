@@ -6,6 +6,7 @@
         android:title="chatroom"
         android:icon="@drawable/ic_baseline_chat_bubble"
         app:showAsAction="always"
+        app:iconTint="?android:textColorPrimary"
         />
     <item
         android:id="@+id/addButton"
