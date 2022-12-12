@@ -19,6 +19,9 @@
         <!--    preference page dialog -->
         <item name="alertDialogTheme">@style/MyPreferenceDialogTheme</item>
         <item name="textInputStyle">@style/Widget.App.TextInputLayout</item>
+        <!-- Preference page icon       -->
+        <item name="preferenceTheme">@style/MyPreference</item>
+        <item name="android:tint">@null</item>
     </style>
     <style name="Theme.MyNewsApp.NoActionBar">
         <item name="windowActionBar">false</item>
@@ -92,5 +95,9 @@
     <style name="MyChipStyle" parent="Widget.MaterialComponents.Chip.Choice">
         <item name="chipBackgroundColor">@color/purple_200</item>
         <item name="colorOnSurface">@color/black</item>
+    </style>
+    
+    <style name="MyPreference" parent="@style/PreferenceThemeOverlay">
+        <item name="android:tint">@color/black</item>
     </style>
 </resources>
