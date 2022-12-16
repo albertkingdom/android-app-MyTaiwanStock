@@ -108,17 +108,25 @@ class CandleStickChartViewModel(val repository: NewsRepository): ViewModel() {
                 .collect { list ->
                     if (list.isEmpty()) return@collect
                     val totalBuyAmount = list.filter { it.status == 0 }.map { it.amount }
-                        .reduce { acc, i -> acc + i }
+                        .fold(0) { acc, i -> acc + i }
                     val totalSellAmount = list.filter { it.status == 1 }.map { it.amount }
-                        .reduce { acc, i -> acc + i }
-                    val avgBuyPrice = list.filter { it.status == 0 }.map { it.amount * it.price }
-                        .reduce { acc, d -> acc + d } / totalBuyAmount
-                    val avgSellPrice = list.filter { it.status == 1 }.map { it.amount * it.price }
-                        .reduce { acc, d -> acc + d } / totalSellAmount
+                        .fold(0) { acc, i -> acc + i }
+                    val avgBuyPrice = if (totalBuyAmount > 0) {
+                        list.filter { it.status == 0 }.map { it.amount * it.price }
+                            .reduce { acc, d -> acc + d } / totalBuyAmount
+                    } else {
+                        0
+                    }
+                    val avgSellPrice = if (totalSellAmount > 0) {
+                        list.filter { it.status == 1 }.map { it.amount * it.price }
+                            .reduce { acc, d -> acc + d } / totalSellAmount
+                    } else {
+                        0
+                    }
 
                     _totalHistoryAmount.value = totalBuyAmount - totalSellAmount
-                    _historyBuyAvgPrice.value = avgBuyPrice
-                    _historySellAvgPrice.value = avgSellPrice
+                    _historyBuyAvgPrice.value = avgBuyPrice.toDouble()
+                    _historySellAvgPrice.value = avgSellPrice.toDouble()
                 }
         }
 
