@@ -56,4 +56,18 @@ interface StockDao {
     @Transaction
     @Query("SELECT * FROM followingList")
     suspend fun getAllListsWithStocks(): List<FollowingListWithStock>
+
+    @Insert
+    suspend fun insertCashDividend(dividend: CashDividend)
+
+    @Insert
+    suspend fun insertStockDividend(dividend: StockDividend)
+
+    @Query("SELECT * FROM cashDividend")
+    suspend fun getAllCashDividend(): List<CashDividend>
+
+    @Query("SELECT * FROM stockDividend")
+    suspend fun getAllStockDividend(): List<CashDividend>
+
+
 }

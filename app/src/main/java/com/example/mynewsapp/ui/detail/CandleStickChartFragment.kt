@@ -256,6 +256,10 @@ class CandleStickChartFragment: Fragment() {
 
         findNavController().navigate(CandleStickChartFragmentDirections.actionCandleStickChartFragmentToChatFragment(args.stockNo))
     }
+    private fun navigateToNewDividendFragment() {
+        val stockNo = args.stockNo
+        findNavController().navigate(CandleStickChartFragmentDirections.actionCandleStickChartFragmentToAddDividendFragment(stockNo))
+    }
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
         inflater.inflate(R.menu.candle_stick_chart_fragment_option_menu, menu)
@@ -264,8 +268,12 @@ class CandleStickChartFragment: Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
 
         return when (item.itemId) {
-            R.id.addButton -> {
+            R.id.addInvestRecord -> {
                 navigateToAddHistoryFragment()
+                true
+            }
+            R.id.addDividend -> {
+                navigateToNewDividendFragment()
                 true
             }
             R.id.go_to_chatRoom -> {

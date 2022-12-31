@@ -3,12 +3,13 @@ package com.example.mynewsapp.db
 import android.content.Context
 import androidx.room.*
 import androidx.room.migration.AutoMigrationSpec
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [Stock::class, InvestHistory::class, FollowingList::class],
-    version = 3,
-    autoMigrations = [AutoMigration (from = 2, to = 3, spec = StockDatabase.MyExampleAutoMigration::class)],
+    entities = [Stock::class, InvestHistory::class, FollowingList::class, CashDividend::class, StockDividend::class],
+    version = 4,
+    autoMigrations = [AutoMigration(from = 3, to = 4)],
     exportSchema = true
 )
 abstract class StockDatabase:RoomDatabase() {
@@ -27,10 +28,18 @@ abstract class StockDatabase:RoomDatabase() {
                     context.applicationContext,
                     StockDatabase::class.java,
                     "stock_database"
-                ).build()
+                )
+                    .addMigrations(MIGRATION_3_4)
+                    .build()
                 INSTANCE = instance
                 // return instance
                 instance
+            }
+        }
+        val MIGRATION_3_4 = object :Migration(3,4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("CREATE TABLE IF NOT EXISTS `StockDividend` (`id` INTEGER NOT NULL, `date` INTEGER NOT NULL, `amount` FLOAT NOT NULL, `stockNo` TEXT NOT NULL, PRIMARY KEY(`id`))")
+                database.execSQL("CREATE TABLE IF NOT EXISTS `CashDividend` (`id` INTEGER NOT NULL, `date` INTEGER NOT NULL, `amount` INTEGER NOT NULL, `stockNo` TEXT NOT NULL, PRIMARY KEY(`id`))")
             }
         }
     }
@@ -43,4 +52,5 @@ abstract class StockDatabase:RoomDatabase() {
             // Invoked once auto migration is done
         }
     }
+
 }

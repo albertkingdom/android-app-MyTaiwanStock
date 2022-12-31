@@ -10,7 +10,20 @@
         />
     <item
         android:id="@+id/addButton"
-        android:title="新增紀錄"
-        app:showAsAction="always" />
+        android:title="新增"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_add"
+        app:iconTint="?android:textColorPrimary">
+        <menu>
+            <item
+                android:id="@+id/addDividend"
+                android:title="新增股利"
+                app:showAsAction="ifRoom"/>
+            <item
+                android:id="@+id/addInvestRecord"
+                android:title="新增買/賣"
+                app:showAsAction="ifRoom"/>
+        </menu>
+    </item>
 
 </menu>

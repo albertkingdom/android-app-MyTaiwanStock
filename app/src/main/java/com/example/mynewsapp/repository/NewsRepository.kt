@@ -92,4 +92,12 @@ class NewsRepository(val stockDao: StockDao) {
     suspend fun deleteAllHistory(stockNo: String){
         stockDao.deleteAllHistory(stockNo)
     }
+
+    suspend fun insertCashDividend(dividend: CashDividend) {
+        stockDao.insertCashDividend(dividend)
+    }
+
+    suspend fun insertStockDividend(dividend: StockDividend) {
+        stockDao.insertStockDividend(dividend)
+    }
 }

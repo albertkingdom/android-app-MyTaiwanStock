@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 3,
-    "identityHash": "3bb23ab456a7cb31557dddb48ecc98cb",
+    "version": 4,
+    "identityHash": "bc24b2e164388739274984c42f904db1",
     "entities": [
       {
         "tableName": "stocks",
@@ -153,7 +153,7 @@
       },
       {
         "tableName": "stockDividend",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `stockNo` TEXT NOT NULL, `amount` INTEGER NOT NULL, `date` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `stockNo` TEXT NOT NULL, `amount` REAL NOT NULL, `date` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -170,7 +170,7 @@
           {
             "fieldPath": "amount",
             "columnName": "amount",
-            "affinity": "INTEGER",
+            "affinity": "REAL",
             "notNull": true
           },
           {
@@ -193,7 +193,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3bb23ab456a7cb31557dddb48ecc98cb')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'bc24b2e164388739274984c42f904db1')"
     ]
   }
 }

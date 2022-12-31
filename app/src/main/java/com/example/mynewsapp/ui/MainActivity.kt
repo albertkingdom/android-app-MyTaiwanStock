@@ -13,9 +13,11 @@ import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.*
+import androidx.room.Room
 import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.R
 import com.example.mynewsapp.databinding.ActivityMainBinding
+import com.example.mynewsapp.db.StockDatabase
 import com.example.mynewsapp.ui.list.ListFragmentDirections
 import com.example.mynewsapp.ui.list.ListViewModel
 import com.example.mynewsapp.ui.list.ListViewModelFactory

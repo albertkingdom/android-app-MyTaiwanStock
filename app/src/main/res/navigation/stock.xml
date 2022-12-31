@@ -36,6 +36,9 @@
         <argument
             android:name="time"
             app:argType="string" />
+        <action
+            android:id="@+id/action_candleStickChartFragment_to_addDividendFragment"
+            app:destination="@id/addDividendFragment" />
     </fragment>
     <dialog
         android:id="@+id/addFollowingListDialogFragment"
@@ -71,4 +74,12 @@
         android:name="com.example.mynewsapp.ui.list.AddStockFragment"
         android:label="fragment_add_stock_to_list"
         tools:layout="@layout/fragment_add_stock_to_list" />
+    <fragment
+        android:id="@+id/addDividendFragment"
+        android:name="com.example.mynewsapp.ui.detail.AddDividendFragment"
+        android:label="AddDividendFragment" >
+        <argument
+            android:name="stockNo"
+            app:argType="string" />
+    </fragment>
 </navigation>
