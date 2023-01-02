@@ -64,10 +64,14 @@ interface StockDao {
     suspend fun insertStockDividend(dividend: StockDividend)
 
     @Query("SELECT * FROM cashDividend")
-    suspend fun getAllCashDividend(): List<CashDividend>
+    fun getAllCashDividend(): Flow<List<CashDividend>>
 
     @Query("SELECT * FROM stockDividend")
-    suspend fun getAllStockDividend(): List<CashDividend>
+    fun getAllStockDividend(): Flow<List<StockDividend>>
 
+    @Query("SELECT * FROM cashDividend WHERE stockNo = :stockNo")
+    suspend fun getCashDividendBy(stockNo: String): List<CashDividend>
 
+    @Query("SELECT * FROM stockDividend WHERE stockNo = :stockNo")
+    suspend fun getStockDividendBy(stockNo: String): List<StockDividend>
 }

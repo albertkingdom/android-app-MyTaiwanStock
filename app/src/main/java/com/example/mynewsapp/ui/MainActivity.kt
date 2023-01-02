@@ -13,14 +13,14 @@ import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.*
-import androidx.room.Room
 import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.R
 import com.example.mynewsapp.databinding.ActivityMainBinding
-import com.example.mynewsapp.db.StockDatabase
 import com.example.mynewsapp.ui.list.ListFragmentDirections
 import com.example.mynewsapp.ui.list.ListViewModel
 import com.example.mynewsapp.ui.list.ListViewModelFactory
+import com.example.mynewsapp.ui.statistics.StatisticViewModel
+import com.example.mynewsapp.ui.statistics.StatisticViewModelFactory
 import com.google.android.material.navigation.NavigationBarView
 import timber.log.Timber
 
@@ -30,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     lateinit var listViewModel: ListViewModel
+    lateinit var statisticViewModel: StatisticViewModel
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var navController: NavController
     lateinit var navView: BottomNavigationView
@@ -47,6 +48,9 @@ class MainActivity : AppCompatActivity() {
         val listViewModelFactory = ListViewModelFactory((application as MyApplication).repository, application as MyApplication)
         listViewModel = ViewModelProvider(this, listViewModelFactory)
             .get(ListViewModel::class.java)
+
+        val statisticViewModelFactory = StatisticViewModelFactory((application as MyApplication).repository)
+        statisticViewModel = ViewModelProvider(this, statisticViewModelFactory).get(StatisticViewModel::class.java)
 
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.StockNavHostFragment) as NavHostFragment

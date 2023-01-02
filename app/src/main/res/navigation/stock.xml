@@ -77,7 +77,7 @@
     <fragment
         android:id="@+id/addDividendFragment"
         android:name="com.example.mynewsapp.ui.detail.AddDividendFragment"
-        android:label="AddDividendFragment" >
+        android:label="新增股利紀錄">
         <argument
             android:name="stockNo"
             app:argType="string" />

@@ -8,7 +8,19 @@
     <fragment
         android:id="@+id/statisticFragment"
         android:name="com.example.mynewsapp.ui.statistics.StatisticFragment"
-        android:label="總資產" />
+        android:label="總資產" >
+        <action
+            android:id="@+id/action_statisticFragment_to_dividendDetailFragment"
+            app:destination="@id/dividendDetailFragment" />
+    </fragment>
     <include app:graph="@navigation/news" />
     <include app:graph="@navigation/settings" />
+    <fragment
+        android:id="@+id/dividendDetailFragment"
+        android:name="com.example.mynewsapp.ui.statistics.DividendDetailFragment"
+        android:label="股利細節">
+        <argument
+            android:name="stockNo"
+            app:argType="string" />
+    </fragment>
 </navigation>

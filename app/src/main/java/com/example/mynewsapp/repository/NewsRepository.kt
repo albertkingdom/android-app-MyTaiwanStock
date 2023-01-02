@@ -100,4 +100,16 @@ class NewsRepository(val stockDao: StockDao) {
     suspend fun insertStockDividend(dividend: StockDividend) {
         stockDao.insertStockDividend(dividend)
     }
+
+    fun getCashDividends() = stockDao.getAllCashDividend()
+
+    fun getStockDividends() = stockDao.getAllStockDividend()
+
+    suspend fun getCashDividendsBy(stockNo: String): List<CashDividend> {
+        return stockDao.getCashDividendBy(stockNo)
+    }
+
+    suspend fun getStockDividendsBy(stockNo: String): List<StockDividend> {
+        return stockDao.getStockDividendBy(stockNo)
+    }
 }
