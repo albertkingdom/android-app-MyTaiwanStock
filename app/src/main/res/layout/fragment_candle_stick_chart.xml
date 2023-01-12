@@ -11,51 +11,56 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingHorizontal="0dp"
-        android:paddingVertical="10dp"
+        android:paddingVertical="0dp"
         tools:context=".ui.detail.CandleStickChartFragment">
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/stock_info"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="30dp"
-            android:paddingHorizontal="10dp">
+            android:paddingHorizontal="10dp"
+            android:background="#999999">
 
-            <TextView
-                android:id="@+id/stockName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="22sp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:text="台積電" />
-
-            <TextView
-                android:id="@+id/stockNo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="22sp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/stockName"
-                tools:text="2330" />
 
 
             <TextView
                 android:id="@+id/stockPrice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="22sp"
-                app:layout_constraintEnd_toEndOf="parent"
+                android:textSize="14sp"
+
                 app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
                 tools:text="600.00" />
+
+            <ImageView
+                android:id="@+id/arrow"
+                android:layout_width="14dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_arrow_drop_up"
+                app:layout_constraintBottom_toBottomOf="@id/stockPrice"
+                app:layout_constraintStart_toEndOf="@id/stockPrice"
+                app:layout_constraintTop_toTopOf="@id/stockPrice" />
+
 
             <TextView
                 android:id="@+id/priceDiff"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="22sp"
+                android:textSize="14sp"
+                app:layout_constraintTop_toTopOf="@id/stockPrice"
+                app:layout_constraintBottom_toBottomOf="@id/stockPrice"
+                app:layout_constraintStart_toEndOf="@id/arrow"
+                tools:text="(3.00)" />
+
+            <TextView
+                android:id="@+id/date_stock_price"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/stockPrice"
-                tools:text="-3.00" />
+                tools:text="10/31 09:00"/>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.appcompat.widget.LinearLayoutCompat
@@ -111,13 +116,115 @@
                 android:layout_width="match_parent"
                 android:layout_height="300dp" />
         </androidx.appcompat.widget.LinearLayoutCompat>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="10dp"
+            android:text="Overview"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="18sp"
+            android:textStyle="bold"/>
 
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginHorizontal="10dp"
+            >
+
+            <TextView
+                android:id="@+id/title1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="持股市值"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toStartOf="@+id/title2"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintHorizontal_weight="1"
+                app:layout_constraintHorizontal_chainStyle="spread_inside"
+                />
+
+            <TextView
+                android:id="@+id/total_asset_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toStartOf="@id/title1"
+                app:layout_constraintTop_toBottomOf="@id/title1"
+                app:layout_constraintEnd_toEndOf="@id/title1"
+                tools:text="10000" />
+
+            <TextView
+                android:id="@+id/title2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="持股數"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toStartOf="@+id/title3"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/title1"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintHorizontal_weight="1"/>
+
+            <TextView
+                android:id="@+id/text_total_amount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintEnd_toEndOf="@id/title2"
+                app:layout_constraintStart_toStartOf="@id/title2"
+                app:layout_constraintTop_toBottomOf="@id/title2"
+                tools:text="1000" />
+
+            <TextView
+                android:id="@+id/title3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:text="買入均價"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toStartOf="@+id/title4"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/title2"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/avgBuyPrice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintEnd_toEndOf="@id/title3"
+                app:layout_constraintStart_toStartOf="@id/title3"
+                app:layout_constraintTop_toBottomOf="@id/title3"
+                tools:text="50" />
+
+            <TextView
+                android:id="@+id/title4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:text="賣出均價"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/title3"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/avgSellPrice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintEnd_toEndOf="@id/title4"
+                app:layout_constraintStart_toStartOf="@id/title4"
+                app:layout_constraintTop_toBottomOf="@id/title4"
+                tools:text="52" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
         <TextView
             android:layout_width="match_parent"
             android:paddingHorizontal="10dp"
             android:layout_height="wrap_content"
             android:text="投資紀錄"
-            android:textColor="@color/black"
+            android:textColor="?android:textColorPrimary"
             android:textSize="18sp"
             android:textStyle="bold" />
 
@@ -130,7 +237,7 @@
 
             <TextView
                 style="@style/candle_stick_chart_label"
-                android:text="買/賣" />
+                android:text="@string/buy_or_sell_text" />
 
             <TextView
                 style="@style/candle_stick_chart_label"

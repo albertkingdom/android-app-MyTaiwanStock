@@ -75,12 +75,6 @@ class ListFragment : Fragment() {
                         val listOfMsgArray = stockInfoResponse.msgArray
                         stockAdapter.setData(listOfMsgArray)
 
-                        val listOfWidgetStockData = listOfMsgArray.map { msgArray ->
-                            WidgetStockData(stockNo = msgArray.stockNo, stockPrice = msgArray.currentPrice, stockName = msgArray.stockName, yesterDayPrice = msgArray.lastDayPrice)
-                        }
-
-                        updateWidget(listOfWidgetStockData, requireContext())
-
                     }
                     binding.swipeRefresh.isRefreshing = false
                     toggleNetworkConnectionLostIcon(false)
@@ -228,8 +222,9 @@ class ListFragment : Fragment() {
         val stockNo = it.stockNo
         val stockPrice:String = if(it.currentPrice != "-") it.currentPrice else it.lastDayPrice
         val stockName = it.stockName
+        val time = it.time
 
-        findNavController().navigate(ListFragmentDirections.actionListFragmentToCandleStickChartFragment(stockNo,stockName,stockPrice))
+        findNavController().navigate(ListFragmentDirections.actionListFragmentToCandleStickChartFragment(stockNo,stockName,stockPrice,time))
 
     }
 

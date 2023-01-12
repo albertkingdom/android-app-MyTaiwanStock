@@ -6,14 +6,18 @@ import android.util.Log
 import android.view.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat.getColor
-import androidx.core.view.updateLayoutParams
+import androidx.core.content.ContextCompat.getDrawable
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.R
 import com.example.mynewsapp.ui.adapter.StockHistoryAdapter
 import com.example.mynewsapp.databinding.FragmentCandleStickChartBinding
+import com.example.mynewsapp.util.getColorThemeRes
 import com.github.mikephil.charting.charts.CombinedChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.*
@@ -21,7 +25,9 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.formatter.LargeValueFormatter
 import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
+import kotlinx.coroutines.launch
 import timber.log.Timber
+import kotlin.math.abs
 
 class CandleStickChartFragment: Fragment() {
 
@@ -35,6 +41,7 @@ class CandleStickChartFragment: Fragment() {
 
     private lateinit var historyAdapter: StockHistoryAdapter
 
+    var chartLabelColor = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,7 +55,7 @@ class CandleStickChartFragment: Fragment() {
         binding = FragmentCandleStickChartBinding.inflate(inflater)
         chart = binding.candleStickChart
         //change toolbar title
-        (requireActivity() as AppCompatActivity).supportActionBar?.title = args.stockNo
+        (requireActivity() as AppCompatActivity).supportActionBar?.title = "${args.stockName} ${args.stockNo}"
 
         val repository = (activity?.application as MyApplication).repository
         chartViewModel = CandleStickChartViewModel(repository)
@@ -65,23 +72,42 @@ class CandleStickChartFragment: Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.stockNo.text = args.stockNo
-        binding.stockName.text = args.stockName
-        binding.stockPrice.text = String.format("%.2f",args.stockPrice.toFloat())
+        binding.stockPrice.text = String.format("%.2f", args.stockPrice.toFloat())
+        //binding.dateStockPrice.text = DateTimeFormatter.ofPattern("MM-dd HH:mm").withZone(ZoneId.systemDefault()).format(Instant.now())
+        binding.dateStockPrice.text = args.time
 
+        chartLabelColor = requireContext().getColorThemeRes(android.R.attr.textColorPrimary)
 
         setupListAdapter()
         setupChart()
         setupXLabelFormat()
-
-
-
 
         chartViewModel.originalCandleData.observe(viewLifecycleOwner) { data ->
             setupOnClickChart(data)
             initOpenCloseHighLowValue(data.last()[7])
         }
 
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    chartViewModel.totalHistoryAmount.collect {
+                        binding.textTotalAmount.text = it.toString()
+                        binding.totalAssetValue.text = (it*args.stockPrice.toFloat()).toString()
+                    }
+                }
+                launch {
+                    chartViewModel.historyBuyAvgPrice.collect {
+                        binding.avgBuyPrice.text = if (it > 0) String.format("%.2f", it) else "-"
+                    }
+                }
+                launch {
+                    chartViewModel.historySellAvgPrice.collect {
+                        binding.avgSellPrice.text = if (it > 0) String.format("%.2f", it) else "-"
+                    }
+                }
+            }
+        }
     }
 
     private fun setupListAdapter() {
@@ -110,7 +136,7 @@ class CandleStickChartFragment: Fragment() {
     }
     private fun setupChart() {
         chartViewModel.combinedData.observe(viewLifecycleOwner) { pair ->
-            println("combinedData $pair")
+
             if (pair.first == null || pair.second == null) {
                 println("pair is not completed")
                 return@observe
@@ -135,7 +161,8 @@ class CandleStickChartFragment: Fragment() {
                 position = XAxis.XAxisPosition.BOTTOM
                 labelRotationAngle = -25f
                 setDrawGridLines(false)
-            }
+                textColor = chartLabelColor
+             }
 
         }
 
@@ -160,6 +187,9 @@ class CandleStickChartFragment: Fragment() {
             barData.isHighlightEnabled = false
             candleData.isHighlightEnabled = true
             setDrawBorders(true)
+
+            axisLeft.textColor = chartLabelColor
+            axisRight.textColor = chartLabelColor
         }
     }
     /**
@@ -191,15 +221,31 @@ class CandleStickChartFragment: Fragment() {
         })
     }
     private fun initOpenCloseHighLowValue(stockpriceDiff:String){
+        val priceDiffFloat = stockpriceDiff.toFloat()
+        Timber.d("stockpriceDiff $priceDiffFloat")
         binding.apply {
             open.text = getString(R.string.stockprice_open, "")
             close.text = getString(R.string.stockprice_close, "")
             high.text = getString(R.string.stockprice_high, "")
             low.text = getString(R.string.stockprice_low, "")
             date.text = getString(R.string.stockprice_date, "")
-            priceDiff.text = stockpriceDiff
-            priceDiff.setTextColor(if (stockpriceDiff.toFloat() > 0f ) Color.RED else getColor(requireContext(),R.color.green))
+            priceDiff.text = "${abs(priceDiffFloat)}"
 
+            if (stockpriceDiff.toFloat() > 0f){
+                stockInfo.setBackgroundColor(getColor(requireContext(),R.color.light_red))
+                stockPrice.setTextColor(Color.RED)
+                priceDiff.setTextColor(Color.RED)
+                arrow.setColorFilter(Color.RED)
+                arrow.setImageDrawable(getDrawable(requireContext(),R.drawable.ic_arrow_drop_up))
+            } else if (stockpriceDiff.toFloat() < 0f) {
+                val greenColor = getColor(requireContext(),R.color.green)
+                stockInfo.setBackgroundColor(getColor(requireContext(),R.color.celadon))
+                stockPrice.setTextColor(greenColor)
+                priceDiff.setTextColor(greenColor)
+                arrow.setColorFilter(greenColor)
+                arrow.setImageDrawable(getDrawable(requireContext(),R.drawable.ic_arrow_drop_down))
+
+            }
         }
     }
     private fun navigateToAddHistoryFragment() {
@@ -210,6 +256,10 @@ class CandleStickChartFragment: Fragment() {
 
         findNavController().navigate(CandleStickChartFragmentDirections.actionCandleStickChartFragmentToChatFragment(args.stockNo))
     }
+    private fun navigateToNewDividendFragment() {
+        val stockNo = args.stockNo
+        findNavController().navigate(CandleStickChartFragmentDirections.actionCandleStickChartFragmentToAddDividendFragment(stockNo))
+    }
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
         inflater.inflate(R.menu.candle_stick_chart_fragment_option_menu, menu)
@@ -218,9 +268,12 @@ class CandleStickChartFragment: Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
 
         return when (item.itemId) {
-            R.id.addButton -> {
-                print("go to add history")
+            R.id.addInvestRecord -> {
                 navigateToAddHistoryFragment()
+                true
+            }
+            R.id.addDividend -> {
+                navigateToNewDividendFragment()
                 true
             }
             R.id.go_to_chatRoom -> {

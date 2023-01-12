@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mynewsapp.R
 import com.example.mynewsapp.model.StockStatistic
+import timber.log.Timber
 import java.text.NumberFormat
 import java.util.*
 import kotlin.math.roundToInt
@@ -18,7 +19,8 @@ class StatisticAdapter: ListAdapter<StockStatistic, StatisticAdapter.StatisticVi
 ) {
     class StatisticViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
         val stockNoView: TextView = itemView.findViewById(R.id.stockNo)
-        val assetView: TextView = itemView.findViewById(R.id.total_assets)
+        val assetView: TextView = itemView.findViewById(R.id.stock_value)
+        val amountView: TextView = itemView.findViewById(R.id.stock_amount)
 
         fun setData(data: StockStatistic){
             stockNoView.text = data.stockNo
@@ -28,11 +30,12 @@ class StatisticAdapter: ListAdapter<StockStatistic, StatisticAdapter.StatisticVi
             format.currency = Currency.getInstance("TWD")
 
             assetView.text = format.format(data.totalAssets.roundToInt())
+            amountView.text = amountView.context.getString(R.string.stock_amount, data.amount)
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StatisticViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_stock_statistic, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_statistic, parent, false)
         return StatisticViewHolder(view)
     }
 

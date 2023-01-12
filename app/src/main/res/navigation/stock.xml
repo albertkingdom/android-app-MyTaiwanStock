@@ -33,6 +33,12 @@
         <argument android:name="stockNo" />
         <argument android:name="stockName" />
         <argument android:name="stockPrice" />
+        <argument
+            android:name="time"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_candleStickChartFragment_to_addDividendFragment"
+            app:destination="@id/addDividendFragment" />
     </fragment>
     <dialog
         android:id="@+id/addFollowingListDialogFragment"
@@ -41,8 +47,8 @@
     <fragment
         android:id="@+id/addHistoryFragment"
         android:name="com.example.mynewsapp.ui.detail.AddHistoryFragment"
-        android:label="fragment_add_history"
-        tools:layout="@layout/fragment_add_history" >
+        android:label="新增一筆紀錄"
+        tools:layout="@layout/fragment_add_history">
         <argument android:name="stockNo" />
     </fragment>
     <fragment
@@ -57,8 +63,8 @@
     <fragment
         android:id="@+id/editFollowingListFragment"
         android:name="com.example.mynewsapp.ui.list.EditFollowingListFragment"
-        android:label="fragment_edit_following_list"
-        tools:layout="@layout/fragment_edit_following_list" >
+        android:label="編輯追蹤清單"
+        tools:layout="@layout/fragment_edit_following_list">
         <action
             android:id="@+id/action_editFollowingListFragment_to_addFollowingListDialogFragment"
             app:destination="@id/addFollowingListDialogFragment" />
@@ -68,4 +74,12 @@
         android:name="com.example.mynewsapp.ui.list.AddStockFragment"
         android:label="fragment_add_stock_to_list"
         tools:layout="@layout/fragment_add_stock_to_list" />
+    <fragment
+        android:id="@+id/addDividendFragment"
+        android:name="com.example.mynewsapp.ui.detail.AddDividendFragment"
+        android:label="新增股利紀錄">
+        <argument
+            android:name="stockNo"
+            app:argType="string" />
+    </fragment>
 </navigation>

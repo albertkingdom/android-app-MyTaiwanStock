@@ -121,7 +121,10 @@ class ListViewModel(
                     // return empty array, don't fetch api
                     Observable.just(Resource.Success(StockPriceInfoResponse(listOf())))
                 } else if (isNetworkAvailable(getApplication())) {
-                    fetchStockPriceInfoRx(list).toObservable()
+
+                    val stockNoStringList = retrieveStockNoStringList(list)
+                    setupWorkManagerForUpdateWidget(stockNoStringList)
+                    getStockPriceInfoRx(stockNoStringList).toObservable()
                 } else {
                     Observable.error(Throwable(NO_INTERNET_CONNECTION))
                 }
@@ -148,15 +151,9 @@ class ListViewModel(
         }
     }
 
-
-    private fun fetchStockPriceInfoRx(followingListWithStocks: FollowingListWithStock): Single<Resource<StockPriceInfoResponse>> {
-        val stockNoStringList = followingListWithStocks.stocks.map { stock -> stock.stockNo }
-        Timber.d("stockNoStringList $stockNoStringList")
-        // setup workmanager
-        setupWorkManagerForUpdateWidget(stockNoStringList)
-        return getStockPriceInfoRx(stockNoStringList)
+    private fun retrieveStockNoStringList(followingListWithStocks: FollowingListWithStock): List<String> {
+        return followingListWithStocks.stocks.map { stock -> stock.stockNo }
     }
-
 
     private fun setupWorkManagerForUpdateWidget(stockNos: List<String>) {
         val WORK_TAG = "fetch_stock_price_update_widget"

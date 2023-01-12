@@ -16,7 +16,10 @@
         <item name="android:dialogTheme">@style/CustomDialog</item>
         <!--    preference page dialog -->
         <item name="alertDialogTheme">@style/MyPreferenceDialogTheme</item>
-
+        <item name="android:textColorPrimary">@color/white</item>
+        <!-- Preference page icon       -->
+        <item name="preferenceTheme">@style/MyPreference</item>
+        <item name="android:tint">@null</item>
     </style>
 
     <style name="CustomDialog" parent="@style/Theme.AppCompat.Light.Dialog">
@@ -54,5 +57,9 @@
         <item name="colorPrimary">@color/white</item>
         <item name="android:layout_width">match_parent</item>
         <item name="android:windowMinWidthMinor">80%</item>
+    </style>
+
+    <style name="MyPreference" parent="@style/PreferenceThemeOverlay">
+        <item name="android:tint">@color/white</item>
     </style>
 </resources>

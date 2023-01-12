@@ -27,7 +27,7 @@ class EditFollowingListFragment: Fragment(R.layout.fragment_edit_following_list)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         //change toolbar title
-        (requireActivity() as AppCompatActivity).supportActionBar?.title = "Edit Following List"
+        //(requireActivity() as AppCompatActivity).supportActionBar?.title = "Edit Following List"
 
         binding = FragmentEditFollowingListBinding.bind(view)
 

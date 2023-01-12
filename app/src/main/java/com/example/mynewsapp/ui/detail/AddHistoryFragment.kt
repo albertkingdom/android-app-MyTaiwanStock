@@ -105,7 +105,7 @@ class AddHistoryFragment: Fragment(), AdapterView.OnItemSelectedListener {
         val price = binding.price.editText?.text.toString().toDoubleOrNull()
         val date = dateSelected
 
-        val isBuy = if (binding.radioButtonBuy.isChecked) 0 else 1
+        val isBuy = if (binding.chipBuy.isChecked) 0 else 1
 
         val dataStatus = addHistoryViewModel.checkDataInput(stockNo = stockNo, amount = amount, price = price , date = date)
 

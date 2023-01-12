@@ -7,8 +7,13 @@ import com.example.mynewsapp.use_case.CalculateChartDataUseCase
 import com.example.mynewsapp.util.GetDateString
 import com.github.mikephil.charting.data.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 
 class CandleStickChartViewModel(val repository: NewsRepository): ViewModel() {
@@ -29,6 +34,15 @@ class CandleStickChartViewModel(val repository: NewsRepository): ViewModel() {
     var investHistoryList: LiveData<List<InvestHistory>> = _investHistoryList
     private val _originalCandleData = MutableLiveData<List<List<String>>>()
     val originalCandleData: LiveData<List<List<String>>> = _originalCandleData
+
+    private val _totalHistoryAmount = MutableStateFlow<Int>(0)
+    val totalHistoryAmount = _totalHistoryAmount.asStateFlow()
+
+    private val _historyBuyAvgPrice = MutableStateFlow(0.0)
+    val historyBuyAvgPrice = _historyBuyAvgPrice.asStateFlow()
+
+    private val _historySellAvgPrice = MutableStateFlow(0.0)
+    val historySellAvgPrice = _historySellAvgPrice.asStateFlow()
 
     // helper method to combine two liveData
     fun <A, B, C> combine(
@@ -88,8 +102,37 @@ class CandleStickChartViewModel(val repository: NewsRepository): ViewModel() {
 
     fun queryHistoryByStockNo(stockNo: String) {
         investHistoryList = repository.queryHistoryByStockNo(stockNo).asLiveData()
+        viewModelScope.launch {
+            repository.queryHistoryByStockNo(stockNo)
+                .catch { exception -> Timber.w(exception) }
+                .collect { list ->
+                    if (list.isEmpty()) return@collect
+                    val totalBuyAmount = list.filter { it.status == 0 }.map { it.amount }
+                        .fold(0) { acc, i -> acc + i }
+                    val totalSellAmount = list.filter { it.status == 1 }.map { it.amount }
+                        .fold(0) { acc, i -> acc + i }
+                    val avgBuyPrice = if (totalBuyAmount > 0) {
+                        list.filter { it.status == 0 }.map { it.amount * it.price }
+                            .reduce { acc, d -> acc + d } / totalBuyAmount
+                    } else {
+                        0
+                    }
+                    val avgSellPrice = if (totalSellAmount > 0) {
+                        list.filter { it.status == 1 }.map { it.amount * it.price }
+                            .reduce { acc, d -> acc + d } / totalSellAmount
+                    } else {
+                        0
+                    }
+
+                    _totalHistoryAmount.value = totalBuyAmount - totalSellAmount
+                    _historyBuyAvgPrice.value = avgBuyPrice.toDouble()
+                    _historySellAvgPrice.value = avgSellPrice.toDouble()
+                }
+        }
+
     }
     fun clearCandleStickData() {
         //candleStickData.value = null
     }
+
 }

@@ -8,27 +8,31 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.RecyclerView
-import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.R
-import com.example.mynewsapp.ui.adapter.StatisticAdapter
 import com.example.mynewsapp.databinding.FragmentStatisticBinding
+import com.example.mynewsapp.ui.adapter.StatisticRecyclerViewAdapter
 import com.example.mynewsapp.ui.list.ListViewModel
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.Description
 import com.github.mikephil.charting.formatter.PercentFormatter
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import timber.log.Timber
+import com.google.android.material.tabs.TabLayoutMediator
+import kotlinx.coroutines.launch
 
 class StatisticFragment: Fragment() {
     lateinit var binding: FragmentStatisticBinding
 
-    lateinit var statisticViewModel: StatisticViewModel
+    val statisticViewModel: StatisticViewModel by activityViewModels()
     private val listViewModel: ListViewModel by activityViewModels()
+
     lateinit var pieChart: PieChart
     lateinit var textRemind: TextView
     lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: StatisticAdapter
+    private lateinit var adapter: StatisticRecyclerViewAdapter
 
 
     override fun onCreateView(
@@ -36,32 +40,22 @@ class StatisticFragment: Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val repository = (activity?.application as MyApplication).repository
-        statisticViewModel = StatisticViewModel(repository)
-
 
         binding = FragmentStatisticBinding.inflate(inflater)
         pieChart = binding.pieChart
         textRemind = binding.textNoData
 
-
         observeListViewModel()
-
+        statisticViewModel.collectData()
 
         return binding.root
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
-        recyclerView = binding.recyclerView
-        adapter = StatisticAdapter()
-        recyclerView.adapter = adapter
-
-        setupListAdapter()
+        setupViewPagerAdapter()
 
         setupChart()
-
     }
 
     private fun observeListViewModel() {
@@ -70,37 +64,42 @@ class StatisticFragment: Fragment() {
         }
     }
 
-    private fun setupListAdapter() {
-        statisticViewModel.investStatisticsList.observe(viewLifecycleOwner) { listOfStockStatistic ->
-            Timber.d("listOfStockStatistic $listOfStockStatistic")
-            if(listOfStockStatistic.isEmpty()){
-                textRemind.visibility = View.VISIBLE
-                pieChart.visibility = View.GONE
-                showDialog()
-                return@observe
+    private fun setupViewPagerAdapter() {
+        adapter = StatisticRecyclerViewAdapter(childFragmentManager, lifecycle)
+
+        binding.viewPager.adapter = adapter
+
+        val tabMediator = TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
+            tab.text = when (position) {
+                0 -> "庫存"
+                1 -> "股利"
+                else -> return@TabLayoutMediator
             }
-            adapter.submitList(listOfStockStatistic)
         }
+        tabMediator.attach()
     }
 
     private fun setupChart() {
-        statisticViewModel.pieData.observe(viewLifecycleOwner) { pieData ->
-            if (pieData.dataSetCount == 0){
-                return@observe
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                statisticViewModel.pieDataFlow.collect { pieData ->
+                    if (pieData.dataSetCount == 0){
+                        return@collect
+                    }
+                    pieChart.apply {
+                        data = pieData
+                        data.setDrawValues(true)
+                        data.setValueFormatter(PercentFormatter(this)) // display % on chart
+                        data.setValueTextSize(12f)
+                        setUsePercentValues(true) // display % on chart
+                        invalidate() //refresh
+                        legend.isEnabled = false
+                        val descriptions = Description() // @ bottom right of chart
+                        descriptions.text = "" // remove description
+                        description = descriptions
+                    }
+                }
             }
-            pieChart.apply {
-                data = pieData
-                data.setDrawValues(true)
-                data.setValueFormatter(PercentFormatter(this)) // display % on chart
-                data.setValueTextSize(12f)
-                setUsePercentValues(true) // display % on chart
-                invalidate() //refresh
-                legend.isEnabled = false
-                val descriptions = Description() // @ bottom right of chart
-                descriptions.text = "" // remove description
-                description = descriptions
-            }
-
         }
     }
 

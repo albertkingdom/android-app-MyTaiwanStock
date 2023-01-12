@@ -48,13 +48,13 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
-                android:text="@string/add_history_amount"
+                android:text="現金股利"
                 android:textColor="?attr/colorOnPrimary"
                 android:textSize="18sp" />
 
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/amount"
+                android:id="@+id/cash_dividend"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="2"
@@ -83,18 +83,17 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
-                android:text="@string/add_history_price"
+                android:text="股票股利"
                 android:textColor="?attr/colorOnPrimary"
                 android:textSize="18sp" />
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/price"
+                android:id="@+id/stock_dividend"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="2"
                 android:hint=""
                 app:errorEnabled="true"
-                app:prefixText="NT$"
                 app:prefixTextColor="@color/black"
                 >
 
@@ -107,102 +106,8 @@
             </com.google.android.material.textfield.TextInputLayout>
         </androidx.appcompat.widget.LinearLayoutCompat>
 
-        <androidx.appcompat.widget.LinearLayoutCompat
-            android:layout_width="match_parent"
-            android:layout_height="50dp">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:text="@string/add_history_status"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="18sp" />
 
 
-            <com.google.android.material.chip.ChipGroup
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="2"
-                android:orientation="horizontal"
-
-                app:singleSelection="true">
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_buy"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:checkable="true"
-                    android:text="買進" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_sell"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checkable="true"
-                    android:text="賣出" />
-            </com.google.android.material.chip.ChipGroup>
-
-        </androidx.appcompat.widget.LinearLayoutCompat>
-
-        <androidx.appcompat.widget.LinearLayoutCompat
-            android:layout_width="match_parent"
-            android:layout_height="50dp">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:text="@string/fee"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="18sp" />
-
-            <androidx.appcompat.widget.LinearLayoutCompat
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="2"
-                android:orientation="horizontal">
-
-                <androidx.appcompat.widget.AppCompatSpinner
-                    android:id="@+id/fee_option_spinner"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:entries="@array/fee_option" />
-
-                <androidx.appcompat.widget.AppCompatSpinner
-                    android:id="@+id/fee_discount_spinner"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:entries="@array/fee_discount_option"
-                    android:visibility="gone" />
-
-                <TextView
-                    android:id="@+id/fee_one_dollar"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="@string/fee_one_dollar"
-                    android:textSize="16sp"
-                    android:visibility="gone" />
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/fee_custom"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:hint="@string/fee_custom_hint"
-                    android:inputType="numberDecimal"
-                    android:visibility="gone" />
-
-            </androidx.appcompat.widget.LinearLayoutCompat>
-
-        </androidx.appcompat.widget.LinearLayoutCompat>
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"

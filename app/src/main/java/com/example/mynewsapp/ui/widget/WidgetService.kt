@@ -8,16 +8,18 @@ import android.widget.RemoteViews
 import android.widget.RemoteViewsService
 import com.example.mynewsapp.R
 import com.example.mynewsapp.model.WidgetStockData
+import com.example.mynewsapp.util.Constant.Companion.WIDGET_DATA_KEY
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import timber.log.Timber
 
 
 // For Collection View of widget
 class WidgetService: RemoteViewsService() {
 
     override fun onGetViewFactory(intent: Intent): RemoteViewsFactory {
-        println("onGetViewFactory")
+        Timber.d("onGetViewFactory")
         return WidgetItemFactory(applicationContext, intent)
     }
 
@@ -27,16 +29,8 @@ class WidgetService: RemoteViewsService() {
 
         lateinit var dataList: List<WidgetStockData>
         override fun onCreate() {
-            //println("WidgetItemFactory onCreate")
 
-            if (intent.getSerializableExtra("updatedPrice")!= null) {
-
-                dataList = intent.getSerializableExtra("updatedPrice") as List<WidgetStockData>
-                //println("WidgetItemFactory onCreate from intent $dataList")
-            }else {
-                //println("WidgetItemFactory onCreate default")
-                dataList = listOf(WidgetStockData(stockNo = "0050", stockPrice = "130", stockName = "台50", yesterDayPrice = "100"))
-            }
+            dataList = listOf(WidgetStockData(stockNo = "0050", stockPrice = "130", stockName = "台50", yesterDayPrice = "100"))
         }
 
         override fun onDataSetChanged() {
@@ -46,14 +40,12 @@ class WidgetService: RemoteViewsService() {
             val jsonAdapter: JsonAdapter<List<WidgetStockData>> = moshi.adapter(Types.newParameterizedType(List::class.java, WidgetStockData::class.java))
 
             val sharedPreferences = context.getSharedPreferences("sharedPref", Context.MODE_PRIVATE)
-            val stringFromPref = sharedPreferences.getString("sharedPref1", "default")
+            val stringFromPref = sharedPreferences.getString(WIDGET_DATA_KEY, "default")
             val stringDecode = jsonAdapter.fromJson(stringFromPref)
             //Log.d("WidgetItemFactory", "stringDecode..$stringDecode")
             if (stringDecode != null) {
                 dataList = stringDecode
             }
-
-
 
         }
 

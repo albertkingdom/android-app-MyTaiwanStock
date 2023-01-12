@@ -15,9 +15,13 @@
         <!-- Customize your theme here. -->
         <item name="android:textColorPrimary">@color/black</item>
         <item name="android:dialogTheme">@style/CustomDialog</item>
-        <item name="android:colorBackground">#f5f5f5</item>
+<!--        <item name="android:colorBackground">#f5f5f5</item>-->
         <!--    preference page dialog -->
         <item name="alertDialogTheme">@style/MyPreferenceDialogTheme</item>
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout</item>
+        <!-- Preference page icon       -->
+        <item name="preferenceTheme">@style/MyPreference</item>
+        <item name="android:tint">@null</item>
     </style>
     <style name="Theme.MyNewsApp.NoActionBar">
         <item name="windowActionBar">false</item>
@@ -60,7 +64,19 @@
         <item name="hintTextColor">@color/black</item>
 
     </style>
+<!--    override material text input field-->
+    <style name="Widget.App.TextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.FilledBox">
+        <item name="materialThemeOverlay">@style/ThemeOverlay.App.TextInputLayout</item>
+    </style>
+    <style name="ThemeOverlay.App.TextInputLayout" parent="">
+        <item name="colorPrimary">@color/black</item>
+        <item name="colorOnSurface">@android:color/transparent</item>
+        <item name="editTextStyle">@style/Widget.App.TextInputLayout.Edit</item>
+    </style>
+    <style name="Widget.App.TextInputLayout.Edit" parent="@style/Widget.MaterialComponents.TextInputEditText.FilledBox">
 
+    </style>
+<!--    -->
 <!--    news page-->
     <style name="roundedImageView" parent="">
         <item name="cornerFamily">rounded</item>
@@ -75,5 +91,13 @@
         <item name="colorPrimary">@color/black</item>
         <item name="android:layout_width">match_parent</item>
         <item name="android:windowMinWidthMinor">80%</item>
+    </style>
+    <style name="MyChipStyle" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="chipBackgroundColor">@color/purple_200</item>
+        <item name="colorOnSurface">@color/black</item>
+    </style>
+    
+    <style name="MyPreference" parent="@style/PreferenceThemeOverlay">
+        <item name="android:tint">@color/black</item>
     </style>
 </resources>
