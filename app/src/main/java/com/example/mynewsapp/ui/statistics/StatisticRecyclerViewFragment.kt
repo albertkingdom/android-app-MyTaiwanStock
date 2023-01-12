@@ -5,16 +5,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.example.mynewsapp.MyApplication
-import com.example.mynewsapp.R
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.mynewsapp.databinding.FragmentStatisticRecyclerviewBinding
-import com.example.mynewsapp.model.StockStatistic
 import com.example.mynewsapp.ui.adapter.StatisticAdapter
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class StatisticRecyclerViewFragment(
-    val stockStatistics:  List<StockStatistic>
-): Fragment() {
+class StatisticRecyclerViewFragment: Fragment() {
+    private val statisticViewModel: StatisticViewModel by activityViewModels()
+
     lateinit var binding: FragmentStatisticRecyclerviewBinding
     lateinit var adapter: StatisticAdapter
 
@@ -36,7 +38,16 @@ class StatisticRecyclerViewFragment(
         binding.statisticRecyclerview.adapter = adapter
 
 
-        adapter.submitList(stockStatistics)
+        lifecycleScope.launch {
+            // collect flow value when state is at least STARTED
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                statisticViewModel.combineData.collect {
+                    val (listOfDividend,listOfStockStatistic) = it
+
+                    adapter.submitList(listOfStockStatistic)
+                }
+            }
+        }
     }
 
 }

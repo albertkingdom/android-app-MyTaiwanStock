@@ -53,7 +53,7 @@ class StatisticFragment: Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        setupListAdapter()
+        setupViewPagerAdapter()
 
         setupChart()
     }
@@ -64,27 +64,8 @@ class StatisticFragment: Fragment() {
         }
     }
 
-    private fun setupListAdapter() {
-        adapter = StatisticRecyclerViewAdapter(requireActivity())
-
-        lifecycleScope.launch {
-            // collect flow value when state is at least STARTED
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                statisticViewModel.combineData.collect {
-
-                    val (listOfDividend,listOfStockStatistic) = it
-
-                    if(listOfStockStatistic.isEmpty()){
-                        textRemind.visibility = View.VISIBLE
-                    } else {
-                        textRemind.visibility = View.GONE
-                    }
-                    adapter.statistics = listOfStockStatistic
-                    adapter.dividends = listOfDividend
-                    binding.viewPager.adapter = adapter
-                }
-            }
-        }
+    private fun setupViewPagerAdapter() {
+        adapter = StatisticRecyclerViewAdapter(childFragmentManager, lifecycle)
 
         binding.viewPager.adapter = adapter
 
