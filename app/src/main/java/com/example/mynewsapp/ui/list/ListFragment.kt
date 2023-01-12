@@ -75,12 +75,6 @@ class ListFragment : Fragment() {
                         val listOfMsgArray = stockInfoResponse.msgArray
                         stockAdapter.setData(listOfMsgArray)
 
-//                        val listOfWidgetStockData = listOfMsgArray.map { msgArray ->
-//                            WidgetStockData(stockNo = msgArray.stockNo, stockPrice = msgArray.currentPrice, stockName = msgArray.stockName, yesterDayPrice = msgArray.lastDayPrice)
-//                        }
-//
-//                        updateWidget(listOfWidgetStockData, requireContext())
-
                     }
                     binding.swipeRefresh.isRefreshing = false
                     toggleNetworkConnectionLostIcon(false)

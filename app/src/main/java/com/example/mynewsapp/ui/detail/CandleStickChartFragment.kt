@@ -98,12 +98,12 @@ class CandleStickChartFragment: Fragment() {
                 }
                 launch {
                     chartViewModel.historyBuyAvgPrice.collect {
-                        binding.avgBuyPrice.text = if (it > 0) it.toString() else "-"
+                        binding.avgBuyPrice.text = if (it > 0) String.format("%.2f", it) else "-"
                     }
                 }
                 launch {
                     chartViewModel.historySellAvgPrice.collect {
-                        binding.avgSellPrice.text = if (it > 0) it.toString() else "-"
+                        binding.avgSellPrice.text = if (it > 0) String.format("%.2f", it) else "-"
                     }
                 }
             }

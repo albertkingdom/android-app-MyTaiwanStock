@@ -9,5 +9,7 @@ class Constant {
         const val WORKER_INPUT_DATA_KEY = "STOCK_NO_LIST"
 
         const val NO_INTERNET_CONNECTION = "No Internet Connection"
+
+        const val WIDGET_DATA_KEY = "widget_data_list"
     }
 }

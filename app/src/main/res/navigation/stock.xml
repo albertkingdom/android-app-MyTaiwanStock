@@ -63,8 +63,8 @@
     <fragment
         android:id="@+id/editFollowingListFragment"
         android:name="com.example.mynewsapp.ui.list.EditFollowingListFragment"
-        android:label="fragment_edit_following_list"
-        tools:layout="@layout/fragment_edit_following_list" >
+        android:label="編輯追蹤清單"
+        tools:layout="@layout/fragment_edit_following_list">
         <action
             android:id="@+id/action_editFollowingListFragment_to_addFollowingListDialogFragment"
             app:destination="@id/addFollowingListDialogFragment" />

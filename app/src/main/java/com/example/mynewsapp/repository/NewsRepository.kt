@@ -1,7 +1,5 @@
 package com.example.mynewsapp.repository
 
-import android.util.Log
-import androidx.lifecycle.LiveData
 import com.example.mynewsapp.model.NewsResponse
 import com.example.mynewsapp.model.StockPriceInfoResponse
 import com.example.mynewsapp.api.RetrofitInstance
@@ -27,26 +25,19 @@ class NewsRepository(val stockDao: StockDao) {
     }
 
     suspend fun getHeadlines(country:String = "tw", page: Int = 1, category: String ="business"):Response<NewsResponse>{
-//        return RetrofitInstance.retrofitService.getHeadlines(country, category,page)
-        return RetrofitInstanceForGeneralUse.retrofitServiceForNews.getHeadlines("${BASE_URL_NEWS}v2/top-headlines?country=$country&page=$page&category=$category&apiKey=$API_KEY")
+        return RetrofitInstanceForGeneralUse.retrofitServiceForNews.getHeadlines(country = country, page=page, category = category )
     }
 
     suspend fun getStockPriceInfo(stockNo:String):Response<StockPriceInfoResponse>{
-//        return RetrofitInstanceForStockPrice.retrofitService.getStockPriceInfo(stockNo)
-        return RetrofitInstanceForGeneralUse.retrofitServiceForStockInfo.getStockPriceInfo("${BASE_URL_STOCK_PRICE}api/getStockInfo.jsp?ex_ch=$stockNo&json=1")
+        return RetrofitInstanceForGeneralUse.retrofitServiceForStockInfo.getStockPriceInfo(stockNo=stockNo)
     }
     fun getStockPriceInfoRx(stockNo:String): Single<Response<StockPriceInfoResponse>> {
-        return RetrofitInstanceForGeneralUse.retrofitServiceForStockInfo.getStockPriceInfoRx("${BASE_URL_STOCK_PRICE}api/getStockInfo.jsp?ex_ch=$stockNo&json=1")
+        return RetrofitInstanceForGeneralUse.retrofitServiceForStockInfo.getStockPriceInfoRx(stockNo=stockNo)
     }
     val allstocks: Flow<List<Stock>> =stockDao.getAllStocks()
 
     val allFollowingList: Flow<List<FollowingList>> = stockDao.getAllFollowingList()
-    //val allFollowingListWithStock: List<FollowingListWithStock> = stockDao.getAllListsWithStocks()
-    fun getAllFollowingList() {
-        //return stockDao.getAllListsWithStocks()
-        stockDao.getAllFollowingList()
 
-    }
     suspend fun getOneListWithStocks(followingListId: Int): FollowingListWithStock {
         return stockDao.getListsWithStocks(followingListId)
     }
@@ -67,16 +58,13 @@ class NewsRepository(val stockDao: StockDao) {
         stockDao.insert(stock = stock)
     }
 
-    suspend fun delStock(stockNo:String){
-        stockDao.delete(stockNo)
-    }
+
     suspend fun deleteStockByStockNoAndListId(stockNo: String, followingListId: Int){
         stockDao.deleteStockByStockNoAndListId(stockNo, followingListId)
     }
     suspend fun getCandleStickData(currentDate:String, stockNo: String):Response<CandleStickData>{
-//        return  RetrofitInstanceForCandleStickData.retrofitService.getCandleStickData(currentDate, stockNo)
 
-        return  RetrofitInstanceForGeneralUse.retrofitServiceForCandleStickData.getCandleStickData("${BASE_URL_CANDLE_STICK_DATA}STOCK_DAY?response=json&date=$currentDate&stockNo=$stockNo")
+        return  RetrofitInstanceForGeneralUse.retrofitServiceForCandleStickData.getCandleStickData(date = currentDate, stockNo = stockNo)
     }
 
     val allHistory: Flow<List<InvestHistory>> = stockDao.getAllHistory()

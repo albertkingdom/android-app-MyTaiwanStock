@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import com.example.mynewsapp.model.WidgetStockData
+import com.example.mynewsapp.util.Constant.Companion.WIDGET_DATA_KEY
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
@@ -32,7 +33,7 @@ class WidgetUtil {
 
             val jsonString = jsonAdapter.toJson(listOfWidgetStockData)
             with(sharedPref.edit()) {
-                putString("sharedPref1", jsonString)
+                putString(WIDGET_DATA_KEY, jsonString)
                 apply()
             }
         }
