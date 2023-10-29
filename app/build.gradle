@@ -5,16 +5,18 @@ plugins {
     id 'kotlin-kapt'
     id 'com.google.gms.google-services'
     id 'com.google.firebase.crashlytics'
+    id "com.google.devtools.ksp"
 }
 
 android {
-    compileSdkVersion 31
-    buildToolsVersion "30.0.3"
+//    compileSdkVersion 33
+//    buildToolsVersion "30.0.3"
 
     defaultConfig {
         applicationId "com.albertkingdom.mystockapp"
         minSdkVersion 26
-        targetSdkVersion 31
+        targetSdkVersion 34
+        compileSdk 34
         versionCode 11
         versionName "1.10"
 
@@ -47,11 +49,12 @@ android {
     buildFeatures {
         viewBinding true
     }
+    namespace 'com.example.mynewsapp'
 }
 
 dependencies {
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.6.10"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.6.21"
     implementation 'androidx.core:core-ktx:1.7.0'
     implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation 'com.google.android.material:material:1.5.0'
@@ -75,7 +78,9 @@ dependencies {
     implementation "com.squareup.retrofit2:adapter-rxjava3:2.9.0"
     //moshi
     implementation 'com.squareup.moshi:moshi-kotlin:1.13.0'
-    kapt 'com.squareup.moshi:moshi-kotlin-codegen:1.13.0'
+//    kapt 'com.squareup.moshi:moshi-kotlin-codegen:1.13.0'
+    ksp 'com.squareup.moshi:moshi-kotlin-codegen:1.13.0'
+
     implementation "com.squareup.retrofit2:converter-moshi:2.9.0"
     // Glide
     implementation 'com.github.bumptech.glide:glide:4.12.0'

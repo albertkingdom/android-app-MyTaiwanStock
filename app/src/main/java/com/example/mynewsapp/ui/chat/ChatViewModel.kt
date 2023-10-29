@@ -120,6 +120,9 @@ class ChatViewModel: ViewModel() {
                     Instant.ofEpochSecond(sentDate.seconds),TimeZone.getDefault().toZoneId()))
 
             }
+            else -> {
+
+            }
         }
         return message
     }
