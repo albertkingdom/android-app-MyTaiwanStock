@@ -42,6 +42,8 @@ interface StockDao {
     @Query("DELETE FROM followingList WHERE followingListId = :followingListId")
     suspend fun deleteFollowingList(followingListId: Int)
 
+    @Query("UPDATE followingList SET listName = :newListName WHERE followingListId = :followingListId")
+    suspend fun updateFollowingListName(newListName: String, followingListId: Int)
     @Query("DELETE FROM stocks WHERE parentFollowingListId = :followingListId")
     suspend fun deleteStockAfterDeleteFollowingList(followingListId: Int)
 

@@ -54,6 +54,10 @@ class NewsRepository(val stockDao: StockDao) {
         stockDao.deleteFollowingList(followingListId)
         stockDao.deleteStockAfterDeleteFollowingList(followingListId)
     }
+
+    suspend fun updateFollowingList(newListName: String, followingListId: Int) {
+        stockDao.updateFollowingListName(newListName, followingListId)
+    }
     suspend fun insert(stock:Stock){
         stockDao.insert(stock = stock)
     }

@@ -193,6 +193,11 @@ class ListViewModel(
         }
     }
 
+    fun updateFollowingListName(newListName: String, followingListId: Int) {
+        viewModelScope.launch {
+            repository.updateFollowingList(newListName, followingListId)
+        }
+    }
     private fun getStockPriceInfoRx(stockList: List<String>): Single<Resource<StockPriceInfoResponse>> {
         val stockListString: String = stockList.joinToString("|") {
             "tse_${it}.tw"
