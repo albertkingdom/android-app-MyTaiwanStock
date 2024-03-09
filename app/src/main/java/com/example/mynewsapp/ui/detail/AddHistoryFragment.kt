@@ -9,6 +9,7 @@ import android.view.*
 import android.widget.AdapterView
 import android.widget.DatePicker
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -63,8 +64,17 @@ class AddHistoryFragment: Fragment(), AdapterView.OnItemSelectedListener {
         }
 
         binding.feeOptionSpinner.onItemSelectedListener = this
-
-
+        //處理輸入任何前導零的情況,將其轉換為合法的數字:
+        binding.amount.editText?.doAfterTextChanged {
+            println("amount ${it.toString()}")
+            val inputText=it.toString().trim()
+            val newText = inputText.trimStart('0')
+            if (newText!=inputText) {
+                binding.amount.editText?.setText(newText)
+            } else {
+                println("amount $inputText")
+            }
+        }
     }
     private fun showDatePickerDialog(){
         val calendar = Calendar.getInstance()

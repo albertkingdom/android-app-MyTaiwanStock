@@ -3,7 +3,7 @@
     <string name="title_home">自選股</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
-    <string name="title_businessNewsList">Business News</string>
+    <string name="title_businessNewsList">新聞</string>
     <string name="dialog_addStockNo">加入追蹤</string>
     <string name="dialog_cancel">取消</string>
     <string name="dialog_editTextHint">請輸入新股票代號</string>

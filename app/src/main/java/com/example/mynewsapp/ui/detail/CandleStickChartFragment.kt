@@ -141,9 +141,28 @@ class CandleStickChartFragment: Fragment() {
                 println("pair is not completed")
                 return@observe
             }
+            val candleDatas: CandleData = pair.first as CandleData
+            val averageEntriesFiveDays = calculateAverageEntries((candleDatas.dataSets[0] as CandleDataSet).values)
+            val averageDataSetFiveDays = LineDataSet(averageEntriesFiveDays, "Average")
+            val averageEntriesTenDays = calculateAverageEntries((candleDatas.dataSets[0] as CandleDataSet).values, 10)
+            val averageDataSetTenDays = LineDataSet(averageEntriesTenDays, "Average")
+            averageDataSetFiveDays.color = Color.parseColor("#ffcc00")
+            averageDataSetTenDays.color = Color.parseColor("#e238ec")
+            averageDataSetFiveDays.setDrawCircles(false)// 禁用繪製數據點圓圈
+            averageDataSetTenDays.setDrawCircles(false)// 禁用繪製數據點圓圈
+
+            val lineData = LineData(averageDataSetFiveDays, averageDataSetTenDays)
+
+            lineData.setDrawValues(false)// 禁用顯示數據點值
+
+
             val combinedData = CombinedData()
             combinedData.setData(pair.first)
             combinedData.setData(pair.second)
+            combinedData.setData(lineData)
+
+
+
             chart.data = combinedData
 
             chart.invalidate()
@@ -151,6 +170,20 @@ class CandleStickChartFragment: Fragment() {
             setupChartFormat()
         }
     }
+
+    private fun calculateAverageEntries(candleEntries: List<CandleEntry>, windowSize: Int=5): List<Entry> {
+        val averageEntries = mutableListOf<Entry>()
+        // 定義移動平均數的窗口大小
+
+        for (i in windowSize - 1 until candleEntries.size) {
+            val sum = candleEntries.subList(i - windowSize + 1, i + 1).sumOf { it.close.toDouble() }
+            val average = sum / windowSize
+            averageEntries.add(Entry(i.toFloat(), average.toFloat()))
+        }
+
+        return averageEntries
+    }
+
     /**
      * format x label data
      */
