@@ -70,6 +70,7 @@ class AccountFragment: Fragment() {
         auth.signOut()
         updateUI(null)
     }
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == RC_SIGN_IN) {
@@ -102,6 +103,7 @@ class AccountFragment: Fragment() {
     }
     private fun updateUI(user: FirebaseUser?) {
         if (user != null) {
+
             val name = user.displayName
             val email = user.email
             val userImageUrl = user.photoUrl
@@ -110,11 +112,17 @@ class AccountFragment: Fragment() {
             binding.username.text = email
             binding.googleSignInButton.visibility = View.INVISIBLE
             binding.signOutButton.visibility = View.VISIBLE
-            Glide
-                .with(this)
-                .load(userImageUrl)
-                .centerCrop()
-                .into(binding.userImage)
+
+            if (userImageUrl!==null) {
+                Glide
+                    .with(this)
+                    .load(userImageUrl)
+                    .centerCrop()
+                    .into(binding.userImage)
+            } else {
+                binding.userImage.setImageResource(R.drawable.ic_baseline_person)
+            }
+
         } else {
             binding.signOutButton.visibility = View.INVISIBLE
             binding.googleSignInButton.visibility = View.VISIBLE
