@@ -17,8 +17,8 @@ android {
         minSdkVersion 26
         targetSdkVersion 34
         compileSdk 34
-        versionCode 12
-        versionName "1.11"
+        versionCode 13
+        versionName "1.12"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
@@ -143,4 +143,6 @@ dependencies {
     debugImplementation "androidx.compose.ui:ui-tooling:1.5.4"
     implementation "androidx.compose.ui:ui-tooling-preview:1.5.4"
 
+    //
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:3.0-alpha-1'
 }
