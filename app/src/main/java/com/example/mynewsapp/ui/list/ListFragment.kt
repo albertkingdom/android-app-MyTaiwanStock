@@ -32,7 +32,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-
+interface ShowAsPercentListener {
+    fun setShowAsPercent(showAsPercent: Boolean)
+}
 class ListFragment : Fragment() {
     private lateinit var binding: FragmentListBinding
     private val listViewModel: ListViewModel by activityViewModels()
@@ -41,6 +43,11 @@ class ListFragment : Fragment() {
     private lateinit var swipeBackground: ColorDrawable
     private lateinit var deleteIcon: Drawable
     private lateinit var shimmerLayout: ShimmerFrameLayout
+    private var isShowAsPercent = false
+        set(value) {
+            Timber.d("isShowAsPercent ->$value")
+            field = value
+        }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -62,7 +69,16 @@ class ListFragment : Fragment() {
         shimmerLayout = binding.shimmerFrameLayout
 
 
-        stockAdapter = StockInfoAdapter(getStockNameToGetRelatedNews, navigateToCandleStickChartFragment)
+        stockAdapter = StockInfoAdapter(
+            getStockNameToGetRelatedNews,
+            navigateToCandleStickChartFragment,
+            object : ShowAsPercentListener {
+                override fun setShowAsPercent(showAsPercent: Boolean) {
+                    Timber.d(showAsPercent.toString())
+                    toggleShowMode(showAsPercent)
+                }
+            }
+        )
         recyclerView.adapter = stockAdapter
         changeToLastViewedList()
         listViewModel.stockPriceInfo.observe(viewLifecycleOwner, Observer { response ->
@@ -105,7 +121,6 @@ class ListFragment : Fragment() {
             Timber.d("currentSelectedFollowingListId $listId")
 
         }
-
 
         /**
          * swipe to delete a stockNo from db
@@ -200,6 +215,13 @@ class ListFragment : Fragment() {
         Timber.d("onResume")
         toggleShimmerLoadingEffect(true)
     }
+    fun toggleShowMode(show: Boolean) {
+        Timber.d(show.toString())
+        isShowAsPercent = show
+        stockAdapter.setMode(show)
+        stockAdapter.notifyItemRangeChanged(0, stockAdapter.itemCount)
+    }
+
     private fun setupSwipeRefresh() {
         binding.swipeRefresh.setOnRefreshListener {
             listViewModel.changeCurrentFollowingListId()

@@ -8,7 +8,7 @@
     <string name="dialog_cancel">取消</string>
     <string name="dialog_editTextHint">請輸入新股票代號</string>
     <string name="stockprice_diff">%1$s%2$s</string>
-
+    <string name="stockPriceDiffPercent">%.2f%%</string>
     <string name="stockprice_open">開: %1$s</string>
     <string name="stockprice_close">收: %1$s</string>
     <string name="stockprice_high">高: %1$s</string>

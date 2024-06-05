@@ -5,6 +5,7 @@ package com.example.mynewsapp.ui.adapter
 
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,13 +19,18 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.mynewsapp.R
 import com.example.mynewsapp.databinding.ItemStockinfoBinding
 import com.example.mynewsapp.model.MsgArray
+import com.example.mynewsapp.ui.list.ShowAsPercentListener
+import timber.log.Timber
+import java.util.Locale
 
 
-class StockInfoAdapter(val onClick: (Stock: MsgArray)->Unit, val toCandleStickChart: (Stock: MsgArray)->Unit):ListAdapter<MsgArray, StockInfoAdapter.StockViewHolder>(
-    DiffCallback
-), Filterable {
+class StockInfoAdapter(
+    val onClick: (Stock: MsgArray)->Unit,
+    val toCandleStickChart: (Stock: MsgArray)->Unit,
+    private val showAsPercentListener: ShowAsPercentListener
+):ListAdapter<MsgArray, StockInfoAdapter.StockViewHolder>(DiffCallback), Filterable {
     private var list = listOf<MsgArray>()
-
+    private var showAsPercent: Boolean = false
     companion object {
         private val DiffCallback = object : DiffUtil.ItemCallback<MsgArray>(){
             override fun areItemsTheSame(oldItem: MsgArray, newItem: MsgArray): Boolean {
@@ -41,6 +47,9 @@ class StockInfoAdapter(val onClick: (Stock: MsgArray)->Unit, val toCandleStickCh
     fun setData(list: List<MsgArray>?){
         this.list = list!!
         submitList(list)
+    }
+    fun setMode(showAsPercent: Boolean) {
+        this.showAsPercent = showAsPercent
     }
     class StockViewHolder(view: View):RecyclerView.ViewHolder(view){
 
@@ -93,7 +102,19 @@ class StockInfoAdapter(val onClick: (Stock: MsgArray)->Unit, val toCandleStickCh
                 toCandleStickChart(currentStock)
 
             }
-
+            if (showAsPercent) {
+                stockPriceDiff.text = holder.itemView.context.getString(
+                    R.string.stockPriceDiffPercent,
+                    currentStock.diffPercent
+                )
+            }
+            stockPriceDiff.setOnClickListener {
+                if (!showAsPercent) {
+                    showAsPercentListener.setShowAsPercent(showAsPercent = true)
+                } else {
+                    showAsPercentListener.setShowAsPercent(showAsPercent = false)
+                }
+            }
         }
 
 
@@ -105,6 +126,7 @@ class StockInfoAdapter(val onClick: (Stock: MsgArray)->Unit, val toCandleStickCh
             currentStock.currentPrice
         }
     }
+
 // to filter with searchview in list fragment
     override fun getFilter(): Filter {
        return customFilter

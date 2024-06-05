@@ -16,5 +16,8 @@ data class MsgArray(
     @Json(name = "n")
     val stockName: String,
     @Json(name ="t")
-    val time: String
+    val time: String,
+
+
+    val diffPercent: Float = 100*(currentPrice.toFloat() - lastDayPrice.toFloat())/(lastDayPrice.toFloat())
 )
