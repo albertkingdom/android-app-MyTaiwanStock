@@ -5,31 +5,35 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
-    tools:context=".ui.list.EditFollowingListFragment">
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/following_list_recyclerview"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:background="@drawable/recyclerview_border_radius"
-        style="@style/followingListItem"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    tools:context=".ui.list.EditFollowingListFragment"
+    android:background="#E8E8E8">
+<!--    <androidx.recyclerview.widget.RecyclerView-->
+<!--        android:id="@+id/following_list_recyclerview"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_margin="10dp"-->
+<!--        android:background="@drawable/recyclerview_border_radius"-->
+<!--        style="@style/followingListItem"-->
+<!--        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toTopOf="parent" />-->
     <androidx.compose.ui.platform.ComposeView
         android:id="@+id/compose_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_margin="20sp"
-        android:id="@+id/floatingBtn"
-        android:src="@drawable/ic_add"
-        app:tint="?attr/colorPrimary"
-        app:backgroundTint="?attr/colorOnPrimary"
         />
+<!--    <com.google.android.material.floatingactionbutton.FloatingActionButton-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        android:layout_margin="20sp"-->
+<!--        android:id="@+id/floatingBtn"-->
+<!--        android:src="@drawable/ic_add"-->
+<!--        app:tint="?attr/colorPrimary"-->
+<!--        app:backgroundTint="?attr/colorOnPrimary"-->
+<!--        />-->
 </androidx.constraintlayout.widget.ConstraintLayout>

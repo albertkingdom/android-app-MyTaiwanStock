@@ -48,4 +48,7 @@
     <string name="setting">設定</string>
     <string name="stock_amount">%1$s 股</string>
     <string name="buy_or_sell_text">買/賣</string>
+
+    <string name="add_new_following_list">新增追蹤清單</string>
+    <string name="add_new_stockNo">新增股票</string>
 </resources>

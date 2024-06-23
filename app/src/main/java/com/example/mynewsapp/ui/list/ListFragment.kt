@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mynewsapp.ui.MainActivity
 import com.example.mynewsapp.R
+import com.example.mynewsapp.databinding.FragmentCandleStickChartBinding
 import com.example.mynewsapp.ui.adapter.StockInfoAdapter
 import com.example.mynewsapp.databinding.FragmentListBinding
 import com.example.mynewsapp.model.MsgArray
@@ -36,7 +37,8 @@ interface ShowAsPercentListener {
     fun setShowAsPercent(showAsPercent: Boolean)
 }
 class ListFragment : Fragment() {
-    private lateinit var binding: FragmentListBinding
+    private var _binding: FragmentListBinding? = null
+    private val binding get() = _binding!!
     private val listViewModel: ListViewModel by activityViewModels()
 
     private lateinit var stockAdapter: StockInfoAdapter
@@ -54,7 +56,7 @@ class ListFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = FragmentListBinding.inflate(inflater, container, false)
+        _binding = FragmentListBinding.inflate(inflater, container, false)
         setHasOptionsMenu(true)
 
         checkIfFirstTimeAfterLoginAndGetOnlineData()
@@ -229,10 +231,23 @@ class ListFragment : Fragment() {
     }
 
     private fun setupOnClickFab() {
+        val navToListsPageBtn = binding.addNewFollowingList
+        val navToNewStockNoBtn = binding.addNewStockNo
         binding.floatingBtn.setOnClickListener {
-            findNavController().navigate(ListFragmentDirections.actionStockListFragmentToAddStockFragment())
+            val buttonContainer = binding.buttonContainer
 
-            it.visibility = View.INVISIBLE
+            if (buttonContainer.visibility == View.GONE) {
+                buttonContainer.visibility = View.VISIBLE
+            } else {
+                buttonContainer.visibility = View.GONE
+            }
+        }
+
+        navToListsPageBtn.setOnClickListener {
+            findNavController().navigate(ListFragmentDirections.actionStockListFragmentToEditFollowingListFragment())
+        }
+        navToNewStockNoBtn.setOnClickListener {
+            findNavController().navigate(ListFragmentDirections.actionStockListFragmentToAddStockFragment())
         }
     }
     private val getStockNameToGetRelatedNews:(stockContent: MsgArray)->Unit = { stockContent->
@@ -327,6 +342,11 @@ class ListFragment : Fragment() {
         val index = requireContext().getSharedPreferences("sharedPref", AppCompatActivity.MODE_PRIVATE).getInt("currentList", 0)
         Timber.d("last viewed list: $index")
         listViewModel.changeLastViewedListIndex(index = index)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
     override fun onStop() {
         super.onStop()

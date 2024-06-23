@@ -80,4 +80,36 @@
         app:tint="?attr/colorPrimary"
         app:backgroundTint="?attr/colorOnPrimary"
         />
+
+
+        <LinearLayout
+            android:id="@+id/buttonContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/floatingBtn"
+            android:layout_marginBottom="20dp"
+            app:layout_constraintBottom_toTopOf="@id/floatingBtn"
+
+            app:layout_constraintEnd_toEndOf="@id/floatingBtn"
+            android:gravity="end"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/add_new_following_list"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:cornerRadius="30px"
+                android:text="@string/add_new_following_list" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/add_new_stockNo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:cornerRadius="30px"
+                android:text="@string/add_new_stockNo" />
+
+
+
+        </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

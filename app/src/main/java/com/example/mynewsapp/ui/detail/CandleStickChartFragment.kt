@@ -31,13 +31,14 @@ import kotlin.math.abs
 
 class CandleStickChartFragment: Fragment() {
 
-    lateinit var binding: FragmentCandleStickChartBinding
-
+    private var _binding: FragmentCandleStickChartBinding? = null
+    private val binding get() = _binding!!
     private lateinit var chartViewModel: CandleStickChartViewModel
 
     private val args: CandleStickChartFragmentArgs by navArgs()
 
-    private lateinit var chart:CombinedChart
+    private var _chart: CombinedChart? = null
+    private val chart get() = _chart!!
 
     private lateinit var historyAdapter: StockHistoryAdapter
 
@@ -52,8 +53,8 @@ class CandleStickChartFragment: Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = FragmentCandleStickChartBinding.inflate(inflater)
-        chart = binding.candleStickChart
+        _binding = FragmentCandleStickChartBinding.inflate(inflater)
+        _chart = binding.candleStickChart
         //change toolbar title
         (requireActivity() as AppCompatActivity).supportActionBar?.title = "${args.stockName} ${args.stockNo}"
 
@@ -320,5 +321,10 @@ class CandleStickChartFragment: Fragment() {
     override fun onDestroyView() {
         chartViewModel.clearCandleStickData()
         super.onDestroyView()
+        _chart?.clear()
+        _chart=null
+        binding.investHistoryRecyclerView.adapter = null
+
+        _binding=null
     }
 }

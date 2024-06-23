@@ -50,7 +50,7 @@
 
     <!--    following list-->
     <style name="followingListItem" parent="">
-        <item name="android:backgroundTint">#808080</item>
+        <item name="android:backgroundTint">@color/recyclerview_background</item>
     </style>
     <!--    preference page dialog -->
     <style name="MyPreferenceDialogTheme" parent="Theme.MaterialComponents.DayNight.Dialog">
