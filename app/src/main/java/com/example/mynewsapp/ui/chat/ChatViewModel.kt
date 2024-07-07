@@ -12,6 +12,7 @@ import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.ktx.messaging
 import timber.log.Timber
 import java.time.Instant
 import java.time.LocalDateTime
@@ -32,6 +33,7 @@ class ChatViewModel: ViewModel() {
 
 
     fun checkIsExistingChannel(channelName: String) {
+        Timber.d("checkIsExistingChannel $channelName")
         var channelReference: CollectionReference = db.collection("channels")
 
         var isExisting = false
@@ -51,13 +53,25 @@ class ChatViewModel: ViewModel() {
                     channelID = snapshot.documents[0].id
                     Timber.d("checkIsExistingChannel channel id...$channelID")
                     getMessages()
-                    return@addOnSuccessListener
+//                    return@addOnSuccessListener
                 } else {
                     createChannel(channelName)
                 }
+                subscribeToTopic(channelName = channelName)
             }
             .addOnFailureListener { exception ->
                 Timber.w("Error getting documents: ", exception)
+            }
+    }
+    private fun subscribeToTopic(channelName: String) {
+        Timber.d("subscribeToTopic $channelName")
+        Firebase.messaging.subscribeToTopic("channel_$channelName")
+            .addOnCompleteListener { task ->
+                var msg = "Subscribed"
+                if (!task.isSuccessful) {
+                    msg = "Subscribe failed"
+                }
+                Timber.d(msg)
             }
     }
     private fun createChannel(channelName: String) {
