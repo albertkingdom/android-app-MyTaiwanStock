@@ -7,9 +7,10 @@ import java.util.*
 
 @Entity(tableName = "stocks")
 data class Stock (
-    @PrimaryKey(autoGenerate = true)
-    val id: Int,
+    @PrimaryKey
     val stockNo: String,
     @ColumnInfo(defaultValue = "0")
-    val parentFollowingListId: Int
+    val parentFollowingListId: Int,
+    @ColumnInfo(defaultValue = "0")
+    val price: String
 )

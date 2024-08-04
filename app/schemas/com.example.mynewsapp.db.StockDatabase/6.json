@@ -1,19 +1,13 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 4,
-    "identityHash": "1632b30d4cc041697bade364ca40a159",
+    "version": 6,
+    "identityHash": "cad6f9b8b97de226a6c8ca6b1d695a3c",
     "entities": [
       {
         "tableName": "stocks",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `stockNo` TEXT NOT NULL, `parentFollowingListId` INTEGER NOT NULL DEFAULT 0, `price` TEXT NOT NULL DEFAULT '0')",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`stockNo` TEXT NOT NULL, `parentFollowingListId` INTEGER NOT NULL DEFAULT 0, `price` TEXT NOT NULL DEFAULT '0', PRIMARY KEY(`stockNo`))",
         "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
           {
             "fieldPath": "stockNo",
             "columnName": "stockNo",
@@ -36,9 +30,9 @@
           }
         ],
         "primaryKey": {
-          "autoGenerate": true,
+          "autoGenerate": false,
           "columnNames": [
-            "id"
+            "stockNo"
           ]
         },
         "indices": [],
@@ -200,7 +194,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1632b30d4cc041697bade364ca40a159')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cad6f9b8b97de226a6c8ca6b1d695a3c')"
     ]
   }
 }

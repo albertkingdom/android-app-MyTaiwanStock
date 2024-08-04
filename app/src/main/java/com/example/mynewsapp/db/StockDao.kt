@@ -2,7 +2,9 @@ package com.example.mynewsapp.db
 
 import android.database.Observable
 import androidx.room.*
+import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Flowable
+import io.reactivex.rxjava3.core.Single
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -12,8 +14,15 @@ interface StockDao {
     fun getAllStocks(): Flow<List<Stock>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(stock:Stock)
+    suspend fun upsert(stock:Stock)
 
+    @Query("UPDATE stocks SET price = :price WHERE stockNo = :stockNo")
+    fun updatePrice(stockNo: String, price: String): Completable
+    @Query("SELECT * FROM stocks WHERE stockNo = :stockNo")
+    fun getPriceByStockNo(stockNo: String): Single<Stock>
+
+    @Query("SELECT * FROM stocks WHERE stockNo IN (:stockNos)")
+    fun getStocksByStockNos(stockNos: List<String>): Single<List<Stock>>
     @Query("DELETE FROM stocks WHERE stockNo = :stockNumberToDel")
     suspend fun delete(stockNumberToDel:String)
 
