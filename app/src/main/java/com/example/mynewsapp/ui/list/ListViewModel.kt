@@ -8,6 +8,7 @@ import com.albertkingdom.mystockapp.model.History
 import com.example.mynewsapp.ui.widget.UpdateWidgetPeriodicTask
 import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.db.*
+import com.example.mynewsapp.model.MsgArray
 import com.example.mynewsapp.model.StockPriceInfoResponse
 import com.example.mynewsapp.repository.NewsRepository
 import com.example.mynewsapp.util.Constant.Companion.NO_INTERNET_CONNECTION
@@ -21,6 +22,7 @@ import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.ktx.Firebase
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.*
 import io.reactivex.rxjava3.core.Observer
@@ -125,11 +127,22 @@ class ListViewModel(
                     val stockNoStringList = retrieveStockNoStringList(list)
                     setupWorkManagerForUpdateWidget(stockNoStringList)
                     getStockPriceInfoRx(stockNoStringList).toObservable()
+
                 } else {
                     Observable.error(Throwable(NO_INTERNET_CONNECTION))
                 }
             }
-            .retry(2)
+//            .retry(2)
+            .retryWhen { errors ->
+                errors.zipWith(Observable.range(1, 3)) { error, retryCount ->
+                    if (retryCount < 3) {
+                        Timber.d("Retrying... attempt $retryCount")
+                        Observable.timer(1, TimeUnit.MINUTES)
+                    } else {
+                        Observable.error(error)
+                    }
+                }.flatMap { it }
+            }
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(observer)
     }
@@ -186,6 +199,8 @@ class ListViewModel(
 
     private fun fetchSingleListRx(followingListId: Int): Flowable<FollowingListWithStock> {
         return repository.getOneListWithStocksRx(followingListId)
+            .distinctUntilChanged()
+            .share()
     }
     fun deleteFollowingList(followingListId: Int) {
         viewModelScope.launch {
@@ -202,26 +217,45 @@ class ListViewModel(
         val stockListString: String = stockList.joinToString("|") {
             "tse_${it}.tw"
         }
-        val response = repository.getStockPriceInfoRx(stockListString)
-        return response
-            .map {
-                handleStockPriceInfoResponse(it)
-            }
+        return  repository.getStockPriceInfoRx(stockListString)
+            .flatMap { response -> handleStockPriceInfoResponse(response) }
     }
 
-    private fun handleStockPriceInfoResponse(response: Response<StockPriceInfoResponse>): Resource<StockPriceInfoResponse> {
-        if (response.isSuccessful) {
+    private fun handleStockPriceInfoResponse(response: Response<StockPriceInfoResponse>): Single<Resource<StockPriceInfoResponse>> {
+        return if (response.isSuccessful) {
             response.body()?.let { resultResponse ->
-                return Resource.Success(resultResponse)
-            }
+                updatePriceInDatabase(resultResponse.msgArray)
+                    .andThen(Single.just(Resource.Success(resultResponse)))
+            } ?: Single.just(Resource.Error(response.message()))
+        } else {
+             Single.just(Resource.Error(response.message()))
         }
-        return Resource.Error(response.message())
     }
 
+    private fun updatePriceInDatabase(dataList: List<MsgArray>): Completable {
+        val stockNosToUpdate = dataList.filter { it.currentPrice == "-" }.map { it.stockNo }
+        return repository.getStocksByStockNos(stockNosToUpdate)
+            .flatMapCompletable { stocks ->
+                Completable.merge(dataList.map { msgArray ->
+                    if (msgArray.currentPrice != "-") {
+                        repository.updatePrice(msgArray.stockNo, msgArray.currentPrice)
+                    } else {
+                        stocks.find { it.stockNo == msgArray.stockNo }?.let { stock ->
+                            val lastPrice = stock.price
+                            val newMsgArray = MsgArray(stockNo = msgArray.stockNo, stockName = msgArray.stockName, lastDayPrice = msgArray.lastDayPrice, currentPrice = lastPrice, ch = msgArray.ch, time = msgArray.time)
+                            newMsgArray
+                        }
+                        Completable.complete()
+                    }
+                })
+            }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+    }
     fun addToStockList(stockNo: String, followingListId: Int = currentSelectedFollowingListId.value!!) {
         viewModelScope.launch {
             if (stockIdsInCurrentList.value?.indexOf(stockNo) == -1) {
-                repository.insert(stock = Stock(0, stockNo, followingListId))
+                repository.upsert(stock = Stock(stockNo, followingListId, "0"))
             }
         }
     }
@@ -335,8 +369,8 @@ class ListViewModel(
                                 if (isStockNumberInFollowingList(followingListId = existedFollowingListId, newStockNo = stockNo)) {
                                     return@launch
                                 }
-                                val newStock = Stock(0, stockNo, existedFollowingListId)
-                                repository.insert(newStock)
+                                val newStock = Stock(stockNo, existedFollowingListId, "0")
+                                repository.upsert(newStock)
                             }
                         }
                         return@addOnSuccessListener
@@ -347,8 +381,8 @@ class ListViewModel(
                         val followingListId = repository.insertFollowingList(newFollowingList)
                         val stockNos = favList.stocks ?: return@launch
                         for (stockNo in stockNos) {
-                            val newStock = Stock(0, stockNo, followingListId)
-                            repository.insert(newStock)
+                            val newStock = Stock(stockNo, followingListId, "0")
+                            repository.upsert(newStock)
                         }
                     }
                 }

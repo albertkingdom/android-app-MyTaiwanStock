@@ -12,9 +12,11 @@ import com.example.mynewsapp.util.Constant.Companion.API_KEY
 import com.example.mynewsapp.util.Constant.Companion.BASE_URL_CANDLE_STICK_DATA
 import com.example.mynewsapp.util.Constant.Companion.BASE_URL_NEWS
 import com.example.mynewsapp.util.Constant.Companion.BASE_URL_STOCK_PRICE
+import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Response
 import timber.log.Timber
@@ -58,11 +60,19 @@ class NewsRepository(val stockDao: StockDao) {
     suspend fun updateFollowingList(newListName: String, followingListId: Int) {
         stockDao.updateFollowingListName(newListName, followingListId)
     }
-    suspend fun insert(stock:Stock){
-        stockDao.insert(stock = stock)
+    suspend fun upsert(stock:Stock){
+        stockDao.upsert(stock = stock)
     }
-
-
+    fun getPriceByStockNo(stockNo: String): Single<Stock> {
+        return stockDao.getPriceByStockNo(stockNo = stockNo).subscribeOn(Schedulers.io())
+    }
+    fun getStocksByStockNos(stockNos: List<String>): Single<List<Stock>> {
+        return stockDao.getStocksByStockNos(stockNos)
+            .subscribeOn(Schedulers.io())
+    }
+    fun updatePrice(stockNo: String, price: String): Completable {
+        return stockDao.updatePrice(stockNo= stockNo, price = price).subscribeOn(Schedulers.io())
+    }
     suspend fun deleteStockByStockNoAndListId(stockNo: String, followingListId: Int){
         stockDao.deleteStockByStockNoAndListId(stockNo, followingListId)
     }
