@@ -30,7 +30,7 @@ class StatisticAdapter: ListAdapter<StockStatistic, StatisticAdapter.StatisticVi
             format.currency = Currency.getInstance("TWD")
 
             assetView.text = format.format(data.totalAssets.roundToInt())
-            amountView.text = amountView.context.getString(R.string.stock_amount, data.amount)
+            amountView.text = amountView.context.getString(R.string.stock_amount, data.amount.toString())
         }
     }
 

@@ -157,11 +157,8 @@ class ListViewModel(
         }
     }
 
-    fun changeCurrentFollowingListId(id: Int? = currentSelectedFollowingListId.value) {
-        if (id !== null) {
-            currentSelectedFollowingListId.value = id
-            setupGetStockPriceDataPipe(id)
-        }
+    fun changeCurrentFollowingListId() {
+        currentSelectedFollowingListId.value?.let { setupGetStockPriceDataPipe(it) }
     }
 
     private fun retrieveStockNoStringList(followingListWithStocks: FollowingListWithStock): List<String> {
