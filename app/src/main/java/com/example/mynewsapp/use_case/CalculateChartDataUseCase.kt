@@ -12,10 +12,10 @@ class CalculateChartDataUseCase {
 
             CandleEntry(
                 index.toFloat(),
-                day[4].toFloat(),//high
-                day[5].toFloat(), //low
-                day[3].toFloat(), //open
-                day[6].toFloat() //close
+                day[4].replace(",", "").toFloat(),//high
+                day[5].replace(",", "").toFloat(), //low
+                day[3].replace(",", "").toFloat(), //open
+                day[6].replace(",", "").toFloat() //close
             )
 
         }
