@@ -267,6 +267,7 @@ class ListViewModel(
         viewModelScope.launch {
             repository.deleteStockByStockNoAndListId(stockNo, followingListId)
             changeCurrentFollowingListId()
+            FirebaseManager.unsubscribeToTopic(channelName = stockNo)
         }
     }
     private fun getCurrentStockIds(list: FollowingListWithStock) {
