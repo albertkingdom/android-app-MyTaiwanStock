@@ -4,6 +4,8 @@ import com.example.mynewsapp.model.Message
 import com.example.mynewsapp.model.User
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
@@ -152,6 +154,28 @@ object FirebaseManager {
                 continuation.resumeWithException(authResult.exception!!)
             }
         }
+    }
+    suspend fun fireBaseAuthWithGoogle(idToken: String)  = suspendCoroutine { continuation ->
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        auth.signInWithCredential(credential)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val user = auth.currentUser
+                    Timber.d("fireBaseAuthWithGoogle success $user")
+                    if (user != null) {
+                        continuation.resume(user)
+                    }
+                } else {
+                    Timber.w("fireBaseAuthWithGoogle failure ${task.exception}")
+                }
+            }
+        }
+    fun checkIfLogin(): FirebaseUser? {
+        return auth.currentUser
+    }
+
+    fun signOut() {
+        auth.signOut()
     }
 
 }
