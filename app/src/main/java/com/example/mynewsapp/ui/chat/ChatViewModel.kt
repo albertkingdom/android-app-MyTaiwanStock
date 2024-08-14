@@ -7,6 +7,7 @@ import com.example.mynewsapp.firebase.FirebaseManager
 import com.example.mynewsapp.model.Message
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import kotlin.collections.HashMap
@@ -19,24 +20,18 @@ class ChatViewModel: ViewModel() {
 
     var messageListLiveData: MutableLiveData<MutableList<Message>> = MutableLiveData()
 
+    private fun getChannelID(channelName: String) =
 
-
-
-    fun checkIsExistingChannel(channelName: String) {
-        Timber.d("checkIsExistingChannel $channelName")
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.async<String> (Dispatchers.IO) {
             val result = FirebaseManager.checkIsExistingChannel(channelName=channelName)
             val isExisting = result["isExisting"] as Boolean
             var channelID = result["channelID"] as String
             if (!isExisting) {
                 channelID = FirebaseManager.createChannel(channelName = channelName)
             }
-            currentChannelID = channelID
-            getMessages(channelID = channelID)
-
-            FirebaseManager.subscribeToTopic(channelName = channelName)
+            return@async channelID
         }
-    }
+
 
 
     private fun getMessages(channelID: String) {
@@ -47,15 +42,20 @@ class ChatViewModel: ViewModel() {
 
 
 
-    fun checkIsSignIn() {
-        if (FirebaseManager.auth.currentUser == null) {
+    fun signInAndGetMsgAndSubscribe(channelName: String) {
             viewModelScope.launch(Dispatchers.Main) {
-                currentLoginUser.value = FirebaseManager.signIn()
+                if (FirebaseManager.auth.currentUser == null) {
+                    currentLoginUser.value = FirebaseManager.signIn()
+
+                }else {
+                        currentLoginUser.value = FirebaseManager.auth.currentUser
+                }
+                val channelID = getChannelID(channelName = channelName).await()
+                getMessages(channelID = channelID)
+                FirebaseManager.subscribeToTopic(channelName = channelName)
             }
-        } else {
-            currentLoginUser.value = FirebaseManager.auth.currentUser
         }
-    }
+
 
     fun sendMessage(message: HashMap<String, Any?>) {
         viewModelScope.launch {

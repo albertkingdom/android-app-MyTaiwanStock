@@ -34,11 +34,7 @@ class ChatFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
-        chatViewModel.checkIsExistingChannel(args.stockNo)
-
-        chatViewModel.checkIsSignIn()
-
+        chatViewModel.signInAndGetMsgAndSubscribe(args.stockNo)
         binding = FragmentChatBinding.inflate(inflater, container, false)
         return binding.root
     }
