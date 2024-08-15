@@ -7,10 +7,12 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.example.mynewsapp.R
 import com.example.mynewsapp.databinding.FragmentAccountBinding
+import com.example.mynewsapp.firebase.FirebaseManager
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -18,12 +20,12 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class AccountFragment: Fragment() {
     lateinit var googleSignInClient: GoogleSignInClient
     lateinit var binding: FragmentAccountBinding
-    lateinit var auth: FirebaseAuth
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,7 +40,6 @@ class AccountFragment: Fragment() {
 
         googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
         binding = FragmentAccountBinding.inflate(inflater, container, false)
-        auth = FirebaseAuth.getInstance()
         bindingView()
 
         checkIfLogin()
@@ -46,7 +47,7 @@ class AccountFragment: Fragment() {
         return binding.root
     }
     private fun checkIfLogin() {
-        val currentUser = auth.currentUser
+        val currentUser = FirebaseManager.auth.currentUser
         if (currentUser != null) {
             updateUI(currentUser)
         } else {
@@ -67,7 +68,7 @@ class AccountFragment: Fragment() {
         startActivityForResult(googleSignInClient.signInIntent, RC_SIGN_IN)
     }
     private fun signOut() {
-        auth.signOut()
+        FirebaseManager.signOut()
         updateUI(null)
     }
     @Deprecated("Deprecated in Java")
@@ -85,21 +86,11 @@ class AccountFragment: Fragment() {
         }
     }
     private fun fireBaseAuthWithGoogle(idToken: String) {
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-        auth.signInWithCredential(credential)
-            .addOnCompleteListener {  task ->
-                if (task.isSuccessful) {
-                    val user = auth.currentUser
-                    Timber.d("fireBaseAuthWithGoogle success $user")
-                    if (user != null) {
-                        updateUI(user)
-                        editPreference()
-                    }
-                } else {
-                    Timber.w("fireBaseAuthWithGoogle failure ${task.exception}")
-                }
-            }
-
+        lifecycleScope.launch {
+            val user = FirebaseManager.fireBaseAuthWithGoogle(idToken)
+            updateUI(user)
+            editPreference()
+        }
     }
     private fun updateUI(user: FirebaseUser?) {
         if (user != null) {
