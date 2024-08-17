@@ -8,6 +8,7 @@ import com.albertkingdom.mystockapp.model.History
 import com.example.mynewsapp.ui.widget.UpdateWidgetPeriodicTask
 import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.db.*
+import com.example.mynewsapp.firebase.FirebaseManager
 import com.example.mynewsapp.model.MsgArray
 import com.example.mynewsapp.model.StockPriceInfoResponse
 import com.example.mynewsapp.repository.NewsRepository
@@ -17,8 +18,8 @@ import com.example.mynewsapp.util.Resource
 import com.example.mynewsapp.util.isNetworkAvailable
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.firestore.ktx.toObject
+import com.google.firebase.firestore.QueryDocumentSnapshot
+import com.google.firebase.firestore.toObject
 import com.google.firebase.ktx.Firebase
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
@@ -73,7 +74,7 @@ class ListViewModel(
 
     val compositeDisposable = CompositeDisposable()
 
-    val db = Firebase.firestore
+//    val db = Firebase.firestore
     var auth: FirebaseAuth = FirebaseAuth.getInstance()
 
     fun changeLastViewedListIndex(index: Int) {
@@ -285,60 +286,18 @@ class ListViewModel(
         compositeDisposable.clear()
     }
 
-
-    // ===========================================================
     fun uploadListToOnlineDB(listName: String) {
-        val email = auth.currentUser?.email ?: return
-        val favList = FavList(name = listName, email = email, stocks = null)
-
-        checkIfSignInAccountDataExist(favList = favList, listName = listName)
+        viewModelScope.launch {
+            FirebaseManager.uploadFollowingList(listName = listName)
+        }
     }
 
-    fun checkIfSignInAccountDataExist(favList: FavList, listName: String) {
-        val accountEmail = auth.currentUser?.email ?: return
 
-        val ref = db.collection("followingList").document()
-        //
-        db.collection("followingList")
-            .whereEqualTo("email", accountEmail)
-            .whereEqualTo("name",listName)
-            .get()
-            .addOnSuccessListener { documents ->
-                Timber.d("document ${documents.documents}")
-                for (document in documents) {
-                    Timber.d("${document.id} => ${document.data}")
-                }
-
-                if (documents.isEmpty) {
-                    // create new document
-                    ref.set(favList)
-                }
-            }
-            .addOnFailureListener { exception ->
-                Timber.w("Error getting documents: ", exception)
-            }
-    }
     fun uploadNewStockNoToOnlineDB(stockNo: String) {
-        val accountEmail = auth.currentUser?.email ?: return
         val listName = appBarMenuButtonTitle.value ?: return
-
-        db.collection("followingList")
-            .whereEqualTo("email", accountEmail)
-            .whereEqualTo("name",listName)
-            .get()
-            .addOnSuccessListener { documents ->
-                Timber.d("document ${documents.documents}")
-                if (documents.documents.isNotEmpty()) {
-                    var documentId = documents.documents[0].id
-                    Timber.d("doc id $documentId")
-                    val ref = db.collection("followingList").document(documentId)
-                    ref.update("stocks", FieldValue.arrayUnion(stockNo))
-                }
-            }
-            .addOnFailureListener { exception ->
-                Timber.w("Error getting documents: ", exception)
-            }
-
+        viewModelScope.launch {
+            FirebaseManager.uploadNewStockNoToOnlineDB(stockNo, listName)
+        }
     }
     private fun getLocalListIdByListNameOrNull(newListName: String) : Int? {
         return allFollowingList.value?.find { it.listName == newListName }?.followingListId
@@ -347,113 +306,86 @@ class ListViewModel(
         val result = repository.getOneListWithStocks(followingListId = followingListId).stocks.find { it.stockNo == newStockNo }
         return result != null
     }
-    private fun getAllListAndStocksFromOnlineDBAndSaveToLocal() {
-        val accountEmail = auth.currentUser?.email ?: return
-        Timber.d("getAllListAndStocksFromOnlineDBAndSaveToLocal email $accountEmail")
-        db.collection("followingList")
-            .whereEqualTo("email", accountEmail)
-            .get()
-            .addOnSuccessListener { documents ->
+
+    private fun syncFollowingList() {
+        viewModelScope.launch {
+            val documents = FirebaseManager.syncFollowingList()
+
+            if (documents != null) {
                 for (document in documents) {
                     val favList = document.toObject<FavList>()
                     val existedFollowingListId = getLocalListIdByListNameOrNull(newListName = favList.name!!)
-                    // list name exist in local database
+
                     if (existedFollowingListId != null) {
-                        viewModelScope.launch {
-
-                            val stockNos = favList.stocks ?: return@launch
-
-                            for (stockNo in stockNos) {
-                                if (isStockNumberInFollowingList(followingListId = existedFollowingListId, newStockNo = stockNo)) {
-                                    return@launch
-                                }
-                                val newStock = Stock(stockNo, existedFollowingListId, "0")
-                                repository.upsert(newStock)
-                            }
-                        }
-                        return@addOnSuccessListener
-                    }
-                    // list name not exist in local database, to create new list
-                    val newFollowingList = FollowingList(followingListId = 0, listName = favList.name!!)
-                    viewModelScope.launch {
-                        val followingListId = repository.insertFollowingList(newFollowingList)
-                        val stockNos = favList.stocks ?: return@launch
-                        for (stockNo in stockNos) {
-                            val newStock = Stock(stockNo, followingListId, "0")
-                            repository.upsert(newStock)
-                        }
+                        updateExistingFollowingList(existedFollowingListId, favList.stocks ?: listOf())
+                    } else {
+                        createNewFollowingList(favList.name!!, favList.stocks ?: listOf())
                     }
                 }
             }
-            .addOnFailureListener { exception ->
-                Timber.w("Error getting documents: ", exception)
-            }
+        }
     }
-    private fun getAllHistoryFromOnlineDBAndSaveToLocal() {
-        val accountEmail = auth.currentUser?.email ?: return
-        db.collection("history")
-            .whereEqualTo("email", accountEmail)
-            .get()
-            .addOnSuccessListener { documents ->
+
+    private fun syncInvestHistory() {
+        viewModelScope.launch {
+            val documents = FirebaseManager.syncInvestHistory()
+
+            if (documents != null ) {
                 for (document in documents) {
                     val history = document.toObject<History>()
                     Timber.d("history $history")
 
-                    val newHistory = InvestHistory(0, stockNo = history.stockNo!!,
+                    val newHistory = InvestHistory(
+                        0, stockNo = history.stockNo!!,
                         amount = history.amount!!,
                         price = history.price!!,
                         status = history.status!!,
-                        date = history.time!!)
+                        date = history.time!!
+                    )
 
-                    viewModelScope.launch {
-                        repository.insertHistory(newHistory)
-                    }
+                    insertHistory(newHistory)
                 }
             }
-            .addOnFailureListener { exception ->
-                Timber.w("Error getting documents: ", exception)
-            }
+        }
     }
+
+    private suspend fun updateExistingFollowingList(followingListId: Int, stockNos: List<String>) {
+        for (stockNo in stockNos) {
+            if (!isStockNumberInFollowingList(followingListId, stockNo)) {
+                val newStock = Stock(stockNo, followingListId, "0")
+                repository.upsert(newStock)
+            }
+        }
+    }
+
+    private suspend fun createNewFollowingList(listName: String, stockNos: List<String>) {
+        val newFollowingList = FollowingList(followingListId = 0, listName = listName)
+        val followingListId = repository.insertFollowingList(newFollowingList)
+
+        for (stockNo in stockNos) {
+            val newStock = Stock(stockNo, followingListId, "0")
+            repository.upsert(newStock)
+        }
+    }
+
+    private suspend fun insertHistory(newHistory: InvestHistory) {
+        repository.insertHistory(newHistory)
+    }
+
     fun deleteStockNoFromOnlineDB(stockNo: String) {
-        val accountEmail = auth.currentUser?.email ?: return
         val listName = appBarMenuButtonTitle.value ?: return
-
-        db.collection("followingList")
-            .whereEqualTo("email", accountEmail)
-            .whereEqualTo("name", listName)
-            .get()
-            .addOnSuccessListener { documents ->
-
-                val documentId = documents.documents[0].id
-
-                val ref = db.collection("followingList").document(documentId)
-                ref.update("stocks", FieldValue.arrayRemove(stockNo))
-
-            }
-            .addOnFailureListener { exception ->
-                Timber.w("Error getting documents: ", exception)
-            }
+        viewModelScope.launch {
+            FirebaseManager.deleteStockNo(stockNo, listName)
+        }
     }
     fun deleteListFromOnlineDB(listName: String) {
-        val accountEmail = auth.currentUser?.email ?: return
-
-        db.collection("followingList")
-            .whereEqualTo("email", accountEmail)
-            .whereEqualTo("name", listName)
-            .get()
-            .addOnSuccessListener { documents ->
-                val documentId = documents.documents[0].id
-                val ref = db.collection("followingList").document(documentId)
-                ref.delete()
-
-            }
-            .addOnFailureListener { exception ->
-                Timber.w("Error getting documents: ", exception)
-            }
+        viewModelScope.launch {
+            FirebaseManager.deleteList(listName)
+        }
     }
     fun getAllOnlineDBDataAndSaveToLocal() {
-        getAllListAndStocksFromOnlineDBAndSaveToLocal()
-        getAllHistoryFromOnlineDBAndSaveToLocal()
+        syncFollowingList()
+        syncInvestHistory()
     }
 }
 

@@ -1,5 +1,7 @@
 package com.example.mynewsapp.firebase
 
+import com.albertkingdom.mystockapp.model.FavList
+import com.albertkingdom.mystockapp.model.History
 import com.example.mynewsapp.model.Message
 import com.example.mynewsapp.model.User
 import com.google.firebase.Timestamp
@@ -8,10 +10,12 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentChange
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
+import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.time.Instant
 import java.time.LocalDateTime
@@ -24,37 +28,44 @@ object FirebaseManager {
     private val db: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
     val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 
-    suspend fun checkIsExistingChannel(channelName: String): Map<String, Any> = suspendCoroutine { continuation ->
-        var isExisting = false
-        var channelID = ""
-        val channelReference: CollectionReference = db.collection("channels")
-        channelReference.whereEqualTo("name", channelName).get()
-            .addOnSuccessListener { snapshot ->
+    suspend fun checkIsExistingChannel(channelName: String): Map<String, Any> =
+        suspendCoroutine { continuation ->
+            var isExisting = false
+            var channelID = ""
+            val channelReference: CollectionReference = db.collection("channels")
+            channelReference.whereEqualTo("name", channelName).get()
+                .addOnSuccessListener { snapshot ->
 
-                for (document in snapshot) {
-                    Timber.d("${document.id} => ${document.data}")
+                    for (document in snapshot) {
+                        Timber.d("${document.id} => ${document.data}")
 
-                }
+                    }
 
 
-                if (snapshot.size() > 0) {
-                    isExisting = true
-                    channelID = snapshot.documents[0].id
-                    continuation.resume(mapOf("isExisting" to isExisting, "channelID" to channelID))
+                    if (snapshot.size() > 0) {
+                        isExisting = true
+                        channelID = snapshot.documents[0].id
+                        continuation.resume(
+                            mapOf(
+                                "isExisting" to isExisting,
+                                "channelID" to channelID
+                            )
+                        )
 
-                } else {
-                    isExisting = false
+                    } else {
+                        isExisting = false
 
 //                    createChannel(channelName)
-                }
+                    }
 //                subscribeToTopic(channelName = channelName)
-            }
-            .addOnFailureListener { exception ->
-                Timber.w("Error getting documents: ", exception)
-                continuation.resumeWithException(exception)
-            }
-    }
-    suspend fun createChannel(channelName: String): String = suspendCoroutine{ continuation ->
+                }
+                .addOnFailureListener { exception ->
+                    Timber.w("Error getting documents: ", exception)
+                    continuation.resumeWithException(exception)
+                }
+        }
+
+    suspend fun createChannel(channelName: String): String = suspendCoroutine { continuation ->
         println("createChannel")
         val channelReference: CollectionReference =
             db.collection("channels")
@@ -87,24 +98,29 @@ object FirebaseManager {
                 messageList.add(message)
                 Timber.d("message...$message")
             }
-            messageList.sortBy { message ->  message.createdAt}
+            messageList.sortBy { message -> message.createdAt }
         }
         return messageList
     }
 
     private fun handleDocumentChange(change: DocumentChange): Message {
         lateinit var message: Message
-        when(change.type) {
+        when (change.type) {
             DocumentChange.Type.ADDED -> {
                 val data = change.document.data
-                val sender = User(id = data["senderId"] as String, nickname = data["senderName"] as String)
+                val sender =
+                    User(id = data["senderId"] as String, nickname = data["senderName"] as String)
                 val content = data["content"] as String
                 val sentDate = data["created"] as Timestamp //Timestamp is an object
 
-                message = Message(sender = sender, messageContent = content, createdAt = LocalDateTime.ofInstant(
-                    Instant.ofEpochSecond(sentDate.seconds), TimeZone.getDefault().toZoneId()))
+                message = Message(
+                    sender = sender, messageContent = content, createdAt = LocalDateTime.ofInstant(
+                        Instant.ofEpochSecond(sentDate.seconds), TimeZone.getDefault().toZoneId()
+                    )
+                )
 
             }
+
             else -> {
 
             }
@@ -112,18 +128,20 @@ object FirebaseManager {
         return message
     }
 
-    suspend fun sendMessage(message: HashMap<String, Any?>, channelID: String) = suspendCoroutine { continuation ->
-        val reference = db.collection("channels/$channelID/thread")
-        reference.add(message)
-            .addOnSuccessListener { documentRef ->
-                Timber.d("successfully add new document: ${documentRef.id}")
-                continuation.resume(documentRef.id)
-            }
-            .addOnFailureListener { e ->
-                Timber.w("Error adding document", e)
-                continuation.resumeWithException(e)
-            }
-    }
+    suspend fun sendMessage(message: HashMap<String, Any?>, channelID: String) =
+        suspendCoroutine { continuation ->
+            val reference = db.collection("channels/$channelID/thread")
+            reference.add(message)
+                .addOnSuccessListener { documentRef ->
+                    Timber.d("successfully add new document: ${documentRef.id}")
+                    continuation.resume(documentRef.id)
+                }
+                .addOnFailureListener { e ->
+                    Timber.w("Error adding document", e)
+                    continuation.resumeWithException(e)
+                }
+        }
+
     fun subscribeToTopic(channelName: String) {
         Firebase.messaging.subscribeToTopic("channel_$channelName")
             .addOnCompleteListener { task ->
@@ -134,6 +152,7 @@ object FirebaseManager {
                 Timber.d(msg)
             }
     }
+
     fun unsubscribeToTopic(channelName: String) {
         Firebase.messaging.unsubscribeFromTopic("channel_$channelName")
             .addOnCompleteListener { task ->
@@ -144,7 +163,8 @@ object FirebaseManager {
                 Timber.d(msg)
             }
     }
-    suspend fun signIn() = suspendCoroutine {  continuation ->
+
+    suspend fun signIn() = suspendCoroutine { continuation ->
         auth.signInAnonymously().addOnCompleteListener { authResult ->
             if (authResult.isSuccessful) {
                 continuation.resume(auth.currentUser)
@@ -155,7 +175,8 @@ object FirebaseManager {
             }
         }
     }
-    suspend fun fireBaseAuthWithGoogle(idToken: String)  = suspendCoroutine { continuation ->
+
+    suspend fun fireBaseAuthWithGoogle(idToken: String) = suspendCoroutine { continuation ->
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->
@@ -169,7 +190,8 @@ object FirebaseManager {
                     Timber.w("fireBaseAuthWithGoogle failure ${task.exception}")
                 }
             }
-        }
+    }
+
     fun checkIfLogin(): FirebaseUser? {
         return auth.currentUser
     }
@@ -178,4 +200,140 @@ object FirebaseManager {
         auth.signOut()
     }
 
+
+    // insert history
+    fun uploadHistoryToOnlineDB(
+        price: Double,
+        amount: Int,
+        date: Long,
+        stockNo: String,
+        status: Int
+    ) {
+        val email = auth.currentUser?.email ?: return
+        val newHistory = History(
+            price = price,
+            amount = amount,
+            email = email,
+            time = date,
+            stockNo = stockNo,
+            status = status
+        )
+        db.collection("history").document().set(newHistory)
+    }
+
+
+    suspend fun uploadFollowingList(listName: String) {
+        val email = auth.currentUser?.email ?: return
+        val favList = FavList(name = listName, email = email, stocks = null)
+
+        try {
+            val documents = db.collection("followingList")
+                .whereEqualTo("email", email)
+                .whereEqualTo("name", listName)
+                .limit(1)  // Optimization if expecting only one document
+                .get()
+                .await()
+
+            Timber.d("Documents found: ${documents.documents}")
+
+            if (documents.isEmpty) {
+                // Create new document
+                db.collection("followingList").add(favList).await()
+                Timber.d("New document created")
+            } else {
+                Timber.d("Document already exists")
+            }
+
+        } catch (e: Exception) {
+            Timber.w("Error getting documents: ", e)
+        }
+    }
+
+
+    suspend fun uploadNewStockNoToOnlineDB(stockNo: String, listName: String) {
+        val accountEmail = auth.currentUser?.email ?: return
+        try {
+            val documents = db.collection("followingList")
+                .whereEqualTo("email", accountEmail)
+                .whereEqualTo("name", listName)
+                .limit(1)
+                .get()
+                .await()
+
+            if (documents.documents.isNotEmpty()) {
+                val documentId = documents.documents[0].id
+                Timber.d("doc id $documentId")
+                val ref = db.collection("followingList").document(documentId)
+                ref.update("stocks", FieldValue.arrayUnion(stockNo))
+            }
+        } catch (exception: Exception) {
+            Timber.w("Error getting documents: ", exception)
+        }
+    }
+
+    suspend fun syncFollowingList(): QuerySnapshot? {
+        val accountEmail = auth.currentUser?.email ?: return null
+
+        try {
+            val documents = db.collection("followingList")
+                .whereEqualTo("email", accountEmail)
+                .get()
+                .await()
+
+            return documents
+        } catch (e: Exception) {
+            Timber.w("Error getting documents: ", e)
+            return null
+        }
+    }
+
+    suspend fun syncInvestHistory(): QuerySnapshot? {
+        val accountEmail = auth.currentUser?.email ?: null
+        try {
+            val documents = db.collection("history")
+                .whereEqualTo("email", accountEmail)
+                .get()
+                .await()
+            return documents
+        } catch (e: Exception) {
+            Timber.w("Error getting documents: ", e)
+            return null
+        }
+    }
+
+    suspend fun deleteStockNo(stockNo: String, listName: String) {
+        val accountEmail = auth.currentUser?.email ?: return
+        try {
+            val documents = db.collection("followingList")
+                .whereEqualTo("email", accountEmail)
+                .whereEqualTo("name", listName)
+                .get()
+                .await()
+
+            val documentId = documents.documents[0].id
+
+            val ref = db.collection("followingList").document(documentId)
+            ref.update("stocks", FieldValue.arrayRemove(stockNo))
+
+        } catch (e: Exception) {
+            Timber.w("Error getting documents: ", e)
+        }
+    }
+
+    suspend fun deleteList(listName: String) {
+        val accountEmail = auth.currentUser?.email ?: return
+        try {
+            val documents = db.collection("followingList")
+                .whereEqualTo("email", accountEmail)
+                .whereEqualTo("name", listName)
+                .get()
+                .await()
+
+            val documentId = documents.documents[0].id
+            val ref = db.collection("followingList").document(documentId)
+            ref.delete()
+        } catch(e: Exception) {
+            Timber.w("Error getting documents: ", e)
+        }
+    }
 }
