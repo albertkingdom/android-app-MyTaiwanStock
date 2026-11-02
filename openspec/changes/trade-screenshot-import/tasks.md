@@ -1,0 +1,24 @@
+## 1. 平台無關的核心（純 Kotlin，JVM 測試）
+
+- [ ] 1.1 核心資料模型與截圖解析器（設計：平台無關的核心放在 `ui/tradeimport/core`；Parse two-line trade rows by position、Ignore expanded detail block、Reassemble stock name fragments、Read shares only from the share column、Restrict scope to supported trade types）：在 app/src/main/java/com/example/mynewsapp/ui/tradeimport/core/ 新增 TradeImportModels.kt 與 TradeScreenshotParser.kt，逐行移植 iOS 的 TradeScreenshotParser，不 import 任何 android 或 androidx 類別。`TradeScreenshotParser.parse(boxes: List<TextBox>): List<ParsedTrade>` 依位置分行、找交易類型錨點、找上方年份行、組名稱片段、依股數欄位讀股數。驗證：1.2 的測試全部通過；`grep -rE "import (android|androidx)" app/src/main/java/com/example/mynewsapp/ui/tradeimport/core` 沒有結果。
+- [ ] 1.2 移植 iOS 的解析測試 [after: 1.1]：新增 app/src/test/java/com/example/mynewsapp/ui/tradeimport/core/TradeScreenshotFixtures.kt（iOS TradeScreenshotFixtures 的像素框與換算、TradeScreenshotVisionFixtures 的四組 Vision 輸出，數值原樣抄錄）與 TradeScreenshotParserTest.kt（iOS TradeScreenshotParserTests 的每個測試各一個 JUnit 4 測試，斷言內容相同；需要名稱解析的兩個測試在 1.3 完成後啟用）。驗證：在 JVM 執行這些測試全部通過，測試數量與 iOS 檔案的測試函式數量相同。
+- [ ] 1.3 股票名稱對代號（Resolve stock number from stock name）：新增 core/StockNameResolver.kt，建構參數為 `List<StockEntry(code, name)>`，`resolve(name): String?`；新增 app/src/test/.../core/StockNameResolverTest.kt，移植 iOS StockNameResolverTests 中不依賴 iOS 真實名錄的案例（含全形、空白、破折號、ASCII 連字號、同名不解析），並啟用 1.2 中使用解析器的兩個測試。驗證：這兩個測試檔全部通過。
+- [ ] 1.4 預覽狀態與匯入計畫（設計：狀態規則（與 iOS 相同，去掉費稅）、寫入的日期、加入清單（Android 的資料模型限制）；Mandatory preview with per-trade confirmation、Detect duplicates、Write through the existing record flow、Choose target list for imported stocks）[after: 1.3]：新增 core/TradeImportSession.kt：以 ParsedTrade 清單、StockNameResolver、`isKnownCode`、既有紀錄快照、已用毫秒時間戳、已在清單中的代號、清單選項與預設清單建立；提供狀態計算、勾選、編輯（代號、價格、股數、日期、方向）、選清單、`isImportEnabled`、`buildImportPlan()`（不合法時丟 InvalidSelection，合法時回傳 records 與 stocksToAdd）。新增 app/src/test/.../core/TradeImportSessionTest.kt，移植 iOS TradeImportViewModelTests 中與費稅無關的案例，並加上「已在別的清單的代號不加入」與台北 12:00 加毫秒錯開的測試。驗證：測試全部通過。
+
+## 2. 雲端驗證用的 JVM 測試執行方式
+
+- [ ] 2.1 （設計：測試策略）雲端環境無法下載 Android SDK，以獨立的 Kotlin JVM Gradle 專案（放在 session 暫存目錄，不進版控）把 app/src/main/java/com/example/mynewsapp/ui/tradeimport/core 與 app/src/test/java/com/example/mynewsapp/ui/tradeimport 的檔案當作來源編譯並以 JUnit 4 執行 [after: 1.4]。驗證：執行結果全部通過，並把通過的測試數寫進 PR 描述；本機或 CI 的 `./gradlew testDebugUnitTest` 由使用者在合併前執行。
+
+## 3. Android 端：辨識、資料、畫面
+
+- [ ] 3.1 依賴（設計：範圍）：app/build.gradle 加入 `com.google.mlkit:text-recognition-chinese:16.0.1` 與 `androidx.activity:activity-ktx:1.8.2`。驗證：本機 `./gradlew assembleDebug` 成功（雲端無法執行，見 2.1）。
+- [ ] 3.2 文字辨識（設計：文字辨識：ML Kit 中文模型（打包版）；Recognize trades from screenshots on device）[after: 1.1, 3.1]：新增 ui/tradeimport/TradeTextRecognizer.kt：`suspend fun recognize(uri: Uri): List<TextBox>`，用 ML Kit 中文模型辨識，取每個 Text.Line，把像素框（原點左上）轉成核心座標（原點左下、正規化），旋轉 90 或 270 度時互換寬高，不寫辨識內容到 log。座標轉換抽成純函式 `toTextBox(text, left, top, right, bottom, width, height)` 放在 core，並在 TradeImportSessionTest 以外新增一個小測試確認換算。驗證：換算測試通過；手動驗證見 4.2。
+- [ ] 3.3 名錄與資料存取（設計：寫入流程）[after: 1.4]：新增 ui/tradeimport/StockDirectory.kt（從 `R.array.countries_array` 讀「代號 名稱」轉成 StockEntry 清單，並提供 isKnownCode）與 ui/tradeimport/TradeImportRepository.kt（讀既有紀錄、所有股票、所有清單的快照；依匯入計畫呼叫 NewsRepository.insertHistory、FirebaseManager.uploadHistoryToOnlineDB、NewsRepository.upsert(Stock)、FirebaseManager.uploadNewStockNoToOnlineDB），不修改 db/ 底下的檔案。驗證：本機建置成功；手動驗證見 4.2。
+- [ ] 3.4 預覽畫面與流程（設計：流程與畫面；Return to the stock list after import）[after: 3.2, 3.3]：新增 TradeImportViewModel.kt（fragment 範圍，逐張辨識並保存狀態，結果分為 預覽、找不到交易、錯誤）、TradeImportFragment.kt（無圖片參數時開 PickMultipleVisualMedia，取消則返回；顯示進度、預覽清單、清單下拉選單與「不加入清單」提示、匯入按鈕在無勾選時停用；完成後 Toast「已匯入 N 筆」並返回）、TradePreviewAdapter.kt、TradeEditDialog.kt，與 layout fragment_trade_import.xml、item_trade_preview.xml、dialog_trade_edit.xml、strings.xml 的字串；在 res/navigation/stock.xml 加入 tradeImportFragment（參數 imageUris，string[]，nullable）與 global action。驗證：本機建置成功；手動驗證見 4.2。
+- [ ] 3.5 列表頁入口 [after: 3.4]：res/layout/fragment_list.xml 的按鈕組加「截圖匯入」按鈕，ListFragment.setupOnClickFab 點擊時導到 tradeImportFragment，ListFragment 其他行為不變。驗證：手動點擊後出現相片挑選器。
+- [ ] 3.6 分享 intent（設計：分享 intent；Accept shared images from the system share sheet）[after: 3.4]：新增 ui/tradeimport/ShareIntentImages.kt 的純函式 `select(action, mimeType, single, multiple)` 與 app/src/test/.../ShareIntentImagesTest.kt；AndroidManifest.xml 的 MainActivity 加 ACTION_SEND、ACTION_SEND_MULTIPLE 的 `image/*` intent filter；MainActivity 在 onCreate（savedInstanceState 為 null）與 onNewIntent 處理分享：切到 stock 分頁、以 global action 帶入 URI 開啟 tradeImportFragment，處理後把 intent 換成空 Intent。驗證：ShareIntentImagesTest 通過；手動驗證見 4.2。
+
+## 4. 收尾驗證
+
+- [ ] 4.1 Code review 依 AGENTS.md 執行並記錄在 docs/reviews/，修到沒有中以上的發現 [after: 3.5, 3.6]。驗證：review 文件所有項目打勾。
+- [ ] 4.2 手動驗證清單（需要裝置或模擬器，由使用者在本機執行，結果寫進 PR）：(a) 列表頁「截圖匯入」選兩張投資先生截圖，預覽合併顯示，名稱、價格、股數、日期正確；(b) 選一張非交易截圖，顯示「找不到可匯入的交易」且沒有新紀錄；(c) 取消挑選器回到列表；(d) 同一張截圖匯入兩次，第二次全部為「重複」且預設不勾選；(e) 編輯一筆不完整的交易後變成可匯入並自動勾選；(f) 選目前清單匯入後列表立即出現新股票，個股頁有紀錄；(g) 從相簿 App 分享一張與多張截圖到本 App，直接開啟預覽；(h) 從瀏覽器分享網址時分享選單不出現本 App；(i) 開啟飛航模式仍可辨識。
