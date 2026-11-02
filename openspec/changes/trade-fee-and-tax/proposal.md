@@ -50,5 +50,6 @@ iOS 版每筆買賣紀錄都存手續費與證交稅，用同一套規則計算�
   - Modified: app/src/main/res/layout/fragment_add_history.xml、fragment_candle_stick_chart.xml、item_stock_history.xml
   - Modified: app/src/main/res/xml/fragment_setting.xml、app/src/main/res/navigation/settings.xml、app/src/main/res/values/strings.xml
   - Removed: app/src/main/res/values/fee_options.xml、fee_discount_option.xml（舊手續費選項，只有新增頁與舊設定列使用）
+  - Removed: app/src/main/java/com/example/mynewsapp/use_case/CheckUserInputHistoryDataUseCase.kt、app/src/main/java/com/example/mynewsapp/util/InputDataStatus.kt（驗證改由 `TradeEntryForm` 負責）
   - Modified: app/build.gradle（androidTest 的 room-testing 與 schema assets、JVM 測試的 sqlite-jdbc）
   - Generated on build: app/schemas/com.example.mynewsapp.db.StockDatabase/7.json

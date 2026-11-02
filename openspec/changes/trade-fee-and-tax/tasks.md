@@ -4,19 +4,24 @@
 - 「建置」：`./gradlew assembleDebug`，需要 JDK 17＋Android SDK。
 - 「手動」：在模擬器或裝置上操作，依各任務列出的步驟檢查。
 
+## 進度
+
+- 已勾選的任務已在雲端以 JVM 暫時專案驗證（124 個測試通過）。
+- 2.1、2.3、3.x、4.1、5.x、6.1 的程式已完成，但驗證需要 Android SDK（建置、`7.json`、`androidTest`、手動 UI），雲端無法執行，留待能建置的環境勾選。
+
 ## 1. 費稅與成本的純邏輯（`tradecost`）
 
-- [ ] 1.1（Calculate fee and tax with one rule set；決策：純 Kotlin package `tradecost`）新增 `TradeSide`、`TaxCategory`（稅率用字串建 `BigDecimal`）、`FeeAndTax`、`FeeCalculator`，並移植 iOS `FeeCalculatorTests`（規格範例表 13 列、2.8 折 399、當沖稅 150、買進稅 0、價格／股數無效回傳 null、超過 2147483647 回傳 null）。驗證：JVM 測試 `FeeCalculatorTest` 全過。
-- [ ] 1.2（Choose the fee discount and minimum fees in settings；決策：手續費設定存在 `SharedPreferences`）新增 `FeeSettings`（`parseDiscount`、`parse`、`summaryText`、`fromStored`、`toStored`）與 `FeeSettingsException`，移植 iOS `FeeSettingsTests`，改成 Android 的 key 與舊版百分比規則（"60" → 6、舊 `fee_custom` 不影響、最低手續費只接受 Int），並加 BigDecimal 表示法案例（"10.0" → 無折扣、"2.80" → 「2.8 折」、"2.850" 接受、"10.00" 接受、"1e1" 與 "." 拒絕）。依賴 1.1。驗證：JVM 測試 `FeeSettingsTest` 全過。
-- [ ] 1.3 新增 `TradeInput`（`parsePrice`、`parseShares`、`parseFeeOrTax`，去頭尾空白、只接受 ASCII 數字）。驗證：JVM 測試 `TradeInputTest`（含 "1e3"、"Infinity"、"."、" 100 "、"５"、"2147483648"、"99999999999"、空白）全過。
-- [ ] 1.4 新增 `FeeTaxFields`，移植 iOS `FeeTaxFieldsTests`。依賴 1.1、1.3。驗證：JVM 測試 `FeeTaxFieldsTest` 全過。
-- [ ] 1.5（Compute holdings and cost with sells and fees）新增 `HoldingsCalculator`（`TradeLine`、持股數與費用加總用 `Long`、均價、未知手續費提示、市值、報酬率、`format`、`formatMarketValue`、`Double` 價格轉 `BigDecimal`），移植 iOS `OverViewCalculatorTests`。依賴 1.1。驗證：JVM 測試 `HoldingsCalculatorTest` 全過。
-- [ ] 1.6（Enter fee and tax when adding a record by hand）新增 `TradeEntryForm`，移植 iOS `MyTaiwanStockTests/Screens/TradeEntry/AddHistoryViewModelTests.swift`（不含 32767 股上限的案例），並涵蓋 spec 情境：逐字輸入、切換賣出算稅、手動值保留、刪除後重打、離開空白欄位回到計算值、存檔前結束編輯會補回計算值、切換買進忘掉手動稅、設定的最低手續費、存檔時的價格／股數／費稅驗證（含 5.5、-1、Infinity）。依賴 1.1–1.4。驗證：JVM 測試 `TradeEntryFormTest` 全過。
+- [x] 1.1（Calculate fee and tax with one rule set；決策：純 Kotlin package `tradecost`）新增 `TradeSide`、`TaxCategory`（稅率用字串建 `BigDecimal`）、`FeeAndTax`、`FeeCalculator`，並移植 iOS `FeeCalculatorTests`（規格範例表 13 列、2.8 折 399、當沖稅 150、買進稅 0、價格／股數無效回傳 null、超過 2147483647 回傳 null）。驗證：JVM 測試 `FeeCalculatorTest` 全過。
+- [x] 1.2（Choose the fee discount and minimum fees in settings；決策：手續費設定存在 `SharedPreferences`）新增 `FeeSettings`（`parseDiscount`、`parse`、`summaryText`、`fromStored`、`toStored`）與 `FeeSettingsException`，移植 iOS `FeeSettingsTests`，改成 Android 的 key 與舊版百分比規則（"60" → 6、舊 `fee_custom` 不影響、最低手續費只接受 Int），並加 BigDecimal 表示法案例（"10.0" → 無折扣、"2.80" → 「2.8 折」、"2.850" 接受、"10.00" 接受、"1e1" 與 "." 拒絕）。依賴 1.1。驗證：JVM 測試 `FeeSettingsTest` 全過。
+- [x] 1.3 新增 `TradeInput`（`parsePrice`、`parseShares`、`parseFeeOrTax`，去頭尾空白、只接受 ASCII 數字）。驗證：JVM 測試 `TradeInputTest`（含 "1e3"、"Infinity"、"."、" 100 "、"５"、"2147483648"、"99999999999"、空白）全過。
+- [x] 1.4 新增 `FeeTaxFields`，移植 iOS `FeeTaxFieldsTests`。依賴 1.1、1.3。驗證：JVM 測試 `FeeTaxFieldsTest` 全過。
+- [x] 1.5（Compute holdings and cost with sells and fees）新增 `HoldingsCalculator`（`TradeLine`、持股數與費用加總用 `Long`、均價、未知手續費提示、市值、報酬率、`format`、`formatMarketValue`、`Double` 價格轉 `BigDecimal`），移植 iOS `OverViewCalculatorTests`。依賴 1.1。驗證：JVM 測試 `HoldingsCalculatorTest` 全過。
+- [x] 1.6（Enter fee and tax when adding a record by hand）新增 `TradeEntryForm`，移植 iOS `MyTaiwanStockTests/Screens/TradeEntry/AddHistoryViewModelTests.swift`（不含 32767 股上限的案例），並涵蓋 spec 情境：逐字輸入、切換賣出算稅、手動值保留、刪除後重打、離開空白欄位回到計算值、存檔前結束編輯會補回計算值、切換買進忘掉手動稅、設定的最低手續費、存檔時的價格／股數／費稅驗證（含 5.5、-1、Infinity）。依賴 1.1–1.4。驗證：JVM 測試 `TradeEntryFormTest` 全過。
 
 ## 2. Room 欄位與 migration
 
 - [ ] 2.1（Store fee, tax and memo with each record；決策：Room migration 6 → 7）新增 `db/InvestHistoryMigrationSql.kt`（`V6_TO_V7`），`InvestHistory` 加 `fee`、`tax`、`memo`（可為空、預設 null），`StockDatabase` 版本 7 並註冊 `MIGRATION_6_7`。驗證：建置成功，且 `app/schemas/.../7.json` 產生、包含三個新欄位。
-- [ ] 2.2（Keep existing data when the database is upgraded）`app/build.gradle` 加 `testImplementation 'org.xerial:sqlite-jdbc'`，新增 JVM 測試 `InvestHistoryMigrationSqlTest`：用 `6.json` 的 `investHistory` createSql（把 `${TABLE_NAME}` 換成 `investHistory`）建 v6 表、3 買 2 賣 → 跑 `V6_TO_V7` → 5 筆原樣、新欄位 null、欄位型別 INTEGER／INTEGER／TEXT。依賴 2.1。驗證：JVM 測試 `InvestHistoryMigrationSqlTest` 全過，且先在 `V6_TO_V7` 為空時確認測試會失敗。
+- [x] 2.2（Keep existing data when the database is upgraded）`app/build.gradle` 加 `testImplementation 'org.xerial:sqlite-jdbc'`，新增 JVM 測試 `InvestHistoryMigrationSqlTest`：用 `6.json` 的 `investHistory` createSql（把 `${TABLE_NAME}` 換成 `investHistory`）建 v6 表、3 買 2 賣 → 跑 `V6_TO_V7` → 5 筆原樣、新欄位 null、欄位型別 INTEGER／INTEGER／TEXT。依賴 2.1。驗證：JVM 測試 `InvestHistoryMigrationSqlTest` 全過，且先在 `V6_TO_V7` 為空時確認測試會失敗。
 - [ ] 2.3 `app/build.gradle` 加 `androidTestImplementation "androidx.room:room-testing:$room_version"`、`androidx.test:runner`、`androidx.test:core` 與 androidTest assets 指向 `schemas/`，新增 `StockDatabaseMigrationTest`（`MigrationTestHelper(instrumentation, StockDatabase::class.java)`，建立 v6 並插入資料，`runMigrationsAndValidate(TEST_DB, 7, true, MIGRATION_6_7)` 後檢查資料）。依賴 2.1。驗證：`./gradlew connectedDebugAndroidTest` 在模擬器通過；雲端無法執行，PR 列為合併前必做。
 
 ## 3. 手續費設定頁

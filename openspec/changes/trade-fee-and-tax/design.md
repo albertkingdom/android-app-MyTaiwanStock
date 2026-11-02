@@ -71,11 +71,12 @@
 - 旋轉或 view 重建時，系統會在 `onViewCreated` 之後還原 EditText、chip、spinner 的狀態，這些還原事件不能被當成使用者輸入。Fragment 在 `onViewStateRestored` 才掛 TextWatcher 與 listener，掛上後立刻以 ViewModel state 重繪費稅欄位、chip 與 spinner（價格、股數、備註以還原的文字為準，掛上後呼叫一次 `changeTrade` 同步）。chip 與 spinner 的 listener 同樣看 `isRendering`，程式設定選取狀態時不觸發 `selectSide`／`selectTaxCategory`。選擇的日期移進 ViewModel（原本是 Fragment 欄位，旋轉後會遺失）。程序被系統回收後 ViewModel 重建，買賣、稅別與手動旗標回到預設，費稅欄位以計算值重繪；不使用 `SavedStateHandle`。
 - 程式設定文字會觸發 `TextWatcher`，若直接呼叫 `editFee` 會把計算值誤判成手動輸入。Fragment 在把 state 寫回欄位時設 `isRendering = true`，watcher 看到旗標就忽略；而且只有文字不同才 `setText`，保留游標。
 - 離開欄位用 `OnFocusChangeListener`（失去焦點時呼叫 `endEditingFee`／`endEditingTax`）。點選單的「儲存」或點買賣 chip 不會移走焦點，所以 iOS 的 `view.endEditing(true)` 在 Android 改成：存檔與切換買賣前先呼叫 `endEditingFee`、`endEditingTax`，再 `clearFocus()` 並收鍵盤。
-- 儲存：價格與股數改用 `TradeInput.parsePrice`／`parseShares` 解析（與計算同一個定義，擋掉 "Infinity"、"1e50"、負數），價格存成 `parsed.toDouble()`，再交給 `CheckUserInputHistoryDataUseCase` 檢查股號、股數、價格、日期；股數無法解析時的錯誤訊息改為「請輸入 1 到 2147483647 的整數」，價格為「請輸入大於 0 的數字」；手續費用 `TradeInput.parseFeeOrTax`，賣出的稅也檢查，買進的稅固定存 0；不合法時在欄位顯示「請輸入 0 到 2147483647 的整數」，不寫入。合法時寫入 `InvestHistory(fee, tax, memo)`；Firestore 上傳維持原本的欄位。
+- 儲存：價格與股數改用 `TradeInput.parsePrice`／`parseShares` 解析（與計算同一個定義，擋掉 "Infinity"、"1e50"、負數），價格存成 `parsed.toDouble()`；股號空白、未選日期與 `TradeEntryForm` 的驗證結果合成一組欄位錯誤，一次顯示所有無效欄位。原本的 `CheckUserInputHistoryDataUseCase` 與 `InputDataStatus` 只剩這裡使用，一併移除。錯誤訊息：股數「請輸入 1 到 2147483647 的整數」、價格「請輸入大於 0 的數字」；手續費用 `TradeInput.parseFeeOrTax`，賣出的稅也檢查，買進的稅固定存 0；不合法時在欄位顯示「請輸入 0 到 2147483647 的整數」，不寫入。合法時寫入 `InvestHistory(fee, tax, memo)`；Firestore 上傳維持原本的欄位。
 
 ### 個股詳情
 
 - `CandleStickChartFragment` 目前在頁首以 `args.stockPrice.toFloat()` 顯示股價，現價為 "-" 時會 `NumberFormatException`；改成 `toBigDecimalOrNull()`，無法解析時頁首顯示「-」、市值與報酬率顯示「-」。
+- 價格不是有限數字的紀錄（舊版可存入 "Infinity"）不納入總覽計算，報酬率顯示「-」，不 crash。`queryHistoryByStockNo` 每次 view 重建都會呼叫，先取消前一個查詢的 collector。
 - `CandleStickChartViewModel` 收到紀錄清單（包含空清單）就用 `HoldingsCalculator` 產生 `HoldingsSummary`（持股數、市值文字、買入均價文字、賣出均價文字、是否顯示未知手續費提示），以 `StateFlow` 提供，初始值為持股 0、其他「-」；現價由 Fragment 用 `args.stockPrice.toBigDecimalOrNull()` 傳入。修正空清單時不更新的問題。
 - 版面：「買入均價」改成「買入均價(含費用)」；總覽下方新增提示 `TextView`「部分買進紀錄沒有手續費資料，均價可能偏低」，預設 `GONE`。
 - `item_stock_history.xml`：`content_container` 與根元素都改 `wrap_content`（根元素 `minHeight` 60dp），第二行顯示「手續費 6・稅 22」，未知為「手續費 -・稅 -」。

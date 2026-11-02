@@ -12,10 +12,10 @@
 | 即時股價 | 有，上市＋上櫃 | 有，只查上市（寫死 `tse_`） | **中** | 依市場帶 `tse_`／`otc_` 前綴 |
 | 股票名錄 | 官方 open data 建清單、快取＋內建備援、背景更新、精確比對代號 | 無內建名錄與背景更新 | **大** | assets 內建 JSON＋WorkManager 定期更新 |
 | K 線圖 | 有，往左捲載入更多歷史 | 有，無載入更多 | 中 | MPAndroidChart `OnChartGestureListener` |
-| 個股詳情總覽（持股、均價、損益） | 有 | 部分 | 中 | 依新成本規則重算 |
-| 買賣紀錄（手動新增、備註） | 有，含手續費、稅、備註 | 有，`InvestHistory` 無費稅與備註欄 | **大** | Room migration 加欄位 |
-| 手續費與交易稅 | 統一計算規則、每筆存費稅、設定折數與整股／零股最低手續費 | 只在新增頁有簡單選項，不存 | **大** | 共用 `FeeCalculator` 純 Kotlin＋設定頁 |
-| 成本計算（含賣出、費用） | 有 `OverViewCalculator` | `CalculateAssetUseCase` 不含費用 | 大 | 改寫並補 unit test |
+| 個股詳情總覽（持股、均價、損益） | 有 | 有，均價含手續費（`trade-fee-and-tax`） | 小 | 沿用 |
+| 買賣紀錄（手動新增、備註） | 有，含手續費、稅、備註 | 有，含手續費、稅、備註（資料庫版本 7） | 小 | 沿用 |
+| 手續費與交易稅 | 統一計算規則、每筆存費稅、設定折數與整股／零股最低手續費 | 有，`tradecost/FeeCalculator`＋手續費設定頁；不上傳 Firestore | 小 | 沿用 |
+| 成本計算（含賣出、費用） | 有 `OverViewCalculator` | 有，`tradecost/HoldingsCalculator`（統計頁圓餅圖仍用 `CalculateAssetUseCase`，只算股數） | 小 | 沿用 |
 | 股利（新增、明細） | 有 | 有 | 小 | 沿用 |
 | 統計（圓餅圖、股利統計） | 有 | 有 | 小 | 沿用 |
 | 截圖匯入交易（投資先生） | 裝置端 Vision OCR、解析、預覽、逐筆編輯、選清單 | 無 | **大** | ML Kit 中文文字辨識（裝置端）＋移植解析器 |
@@ -26,7 +26,7 @@
 | 聊天室 | Firebase，未讀數 | 有，無未讀數 | 小 | 視需要補未讀 |
 | 登入 | Google、Apple | Google（舊版 `GoogleSignIn` API，已棄用） | 中 | 改 Credential Manager；Apple 登入不做 |
 | 初次使用導覽 | 有 | 無 | 小 | ViewPager2 導覽頁 |
-| 設定頁 | 帳號、手續費 | 只有帳號 | 中 | 隨手續費功能一起做 |
+| 設定頁 | 帳號、手續費 | 帳號、手續費 | 小 | 沿用 |
 | 本機資料匯入（登入後） | 有 | 無 | 依需求 | 與雲端同步有關，先確認是否屬於排除範圍 |
 | 雙語（中／英） | 有 | 待確認 | 小 | `values-en` |
 
