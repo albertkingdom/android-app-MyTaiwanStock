@@ -34,4 +34,4 @@
 
 ## 7. 收尾
 
-- [ ] 7.1 在 JVM 驗證專案執行全部測試並通過；PR 說明註明：合併前必須在有 Android SDK 的環境執行 `./gradlew testDebugUnitTest assembleDebug` 並通過（雲端無法執行），以及 spectra validate／analyze 未執行，驗證：JVM 測試報告 0 failures；PR 說明含上述兩點。[after: 3.4, 4.2, 5.2, 6.2]
+- [x] 7.1 在 JVM 驗證專案執行全部測試並通過；PR 說明註明：合併前必須在有 Android SDK 的環境執行 `./gradlew testDebugUnitTest assembleDebug` 並通過（雲端無法執行），以及 spectra validate／analyze 未執行，驗證：JVM 測試報告 0 failures；PR 說明含上述兩點。[after: 3.4, 4.2, 5.2, 6.2]
