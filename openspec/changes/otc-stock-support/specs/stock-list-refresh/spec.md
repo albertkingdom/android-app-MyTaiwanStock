@@ -139,7 +139,7 @@ The system SHALL run at most one refresh at any time within the app process. Whe
 
 ### Requirement: Validate stock numbers by exact match
 
-The system SHALL accept a stock number as valid only when it is exactly equal to the code of an entry in the stock list. The system SHALL NOT accept a partial code. The add-stock dialog SHALL take the text before the first space, after trimming surrounding whitespace, as the entered code; it SHALL add a stock only when that code is valid, and SHALL otherwise keep the dialog open and show the error "查無此股票代號". The dialog input SHALL accept letters so codes such as 00981A can be typed.
+The system SHALL accept a stock number as valid only when it is exactly equal to the code of an entry in the stock list. The system SHALL NOT accept a partial code. The add-stock dialog SHALL take the text before the first space, after trimming surrounding whitespace and converting letters to upper case, as the entered code; it SHALL add a stock only when that code is valid, and SHALL otherwise keep the dialog open and show the error "查無此股票代號". The dialog input SHALL accept letters so codes such as 00981A can be typed.
 
 #### Scenario: Partial code is rejected
 

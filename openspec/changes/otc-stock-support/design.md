@@ -42,7 +42,7 @@
 
 ### 狀態以不可變快照原子替換
 
-iOS 用 main actor 保證讀寫順序；Android 的讀取來自 UI thread、WorkManager thread、Rx io thread。`StockListRepository` 把 `entries`、`marketByCode`、`searchStrings`、`fromCache` 包成一個不可變的 `Snapshot`，存在 `@Volatile` 欄位；`replace` 用 `synchronized` 序列化，先寫同目錄的暫存檔 `StockList.json.tmp`（寫完 `fd.sync()`），再以 `Files.move(tmp, cache, ATOMIC_MOVE, REPLACE_EXISTING)` 取代，失敗時刪除暫存檔並丟 `IOException`，成功後才替換快照。讀取不加鎖，且不會看到新舊混合。
+iOS 用 main actor 保證讀寫順序；Android 的讀取來自 UI thread、WorkManager thread、Rx io thread。`StockListRepository` 把 `entries`、`marketByCode`、`searchStrings`、`fromCache` 包成一個不可變的 `Snapshot`，存在 `@Volatile` 欄位；`replace` 用 `synchronized` 序列化，先寫同目錄的暫存檔 `StockList.json.tmp`（寫完 `fd.sync()`），再以 `Files.move(tmp, cache, ATOMIC_MOVE, REPLACE_EXISTING)` 取代，失敗時盡力刪除暫存檔（`tmp.delete()`，忽略結果，不得蓋掉原本的例外）並丟 `IOException`，成功後才替換快照。讀取不加鎖，且不會看到新舊混合。
 
 ### 更新策略：過期才更新，兩個市場獨立防呆，single-flight
 
@@ -58,11 +58,11 @@ iOS 用 main actor 保證讀寫順序；Android 的讀取來自 UI thread、Work
 
 ### 新增股票改讀 repository，對話框精確比對
 
-`StockSearch.filter(strings, query)` 是 `contains` 判斷的純函式。`AddStockViewModel` 改為持有 `stockNamesProvider: () -> List<String>`，每次 `filterSearchQuery` 都重新讀取；`init` 不再篩選，由 `AddStockFragment` 設定 provider 為 `{ stockListRepository.searchStrings }` 後呼叫一次。`AddStockDialogFragment` 的自動完成來源同上；輸入框改 `inputType="text"`；按下「新增」時 trim 後取第一段字串，`stockListRepository.contains(code)` 為真才加入並關閉，否則在 `TextInputLayout`（`outlinedTextField`）顯示「查無此股票代號」且不關閉（以 `setOnShowListener` 覆寫正向按鈕的 click listener，避免 AlertDialog 自動關閉）。
+`StockSearch.filter(strings, query)` 是 `contains` 判斷的純函式；`StockSearch.codeFromInput(text)` 先 trim、取第一個空格（" "）前的字串並以 `uppercase()` 轉大寫（00981a 視為 00981A）。`AddStockViewModel` 改為持有 `stockNamesProvider: () -> List<String>`，每次 `filterSearchQuery` 都重新讀取；`init` 不再篩選，由 `AddStockFragment` 設定 provider 為 `{ stockListRepository.searchStrings }` 後呼叫一次。`AddStockDialogFragment` 的自動完成來源同上；輸入框改 `inputType="text"`；按下「新增」時 以 `codeFromInput` 取代號，`stockListRepository.contains(code)` 為真才加入並關閉，否則在 `TextInputLayout`（`outlinedTextField`）顯示「查無此股票代號」且不關閉（以 `setOnShowListener` 覆寫正向按鈕的 click listener，避免 AlertDialog 自動關閉）。
 
 ### K 線無資料與均線
 
-`CandleRows.merge(lastMonth: List<List<String>>?, currentMonth: List<List<String>>?)` 把 null 當成空清單合併，再以 `CandleRows.sanitize` 丟掉欄位不足或開高低收、成交股數不是數字的列。`CandleRows.priceChange(text)` 把 "X0.00"、"+1.5" 等文字轉成數字，無法解析時回 0。`CandleStickChartViewModel.getCandleStickData` 以 try/catch 分別包住兩個請求（失敗或非 2xx 視為 null），合併後為空時把 `candleDataUnavailable` 設為 true 且不產生圖表資料；只有一個月失敗時顯示另一個月的資料（之前會整個不顯示或 crash）。Fragment 觀察到 `candleDataUnavailable` 時呼叫 `chart.clear()` 並 `setNoDataText("無資料")`；`originalCandleData` 遇到空清單直接返回。均線抽成 `MovingAverage.compute(closes, window): List<Pair<Int, Float>>`，筆數不足回傳空清單；fragment 只把非空的均線加入 `LineData`，兩條都空時不設定 line data。
+`CandleRows.merge(lastMonth: List<List<String>>?, currentMonth: List<List<String>>?)` 把 null 當成空清單合併，再以 `CandleRows.sanitize` 丟掉欄位不足或開高低收、成交股數不是數字的列。`CandleRows.priceChange(text)` 把 "X0.00"、"+1.5" 等文字轉成數字，無法解析時回 0。`CandleStickChartViewModel.getCandleStickData` 以 try/catch 分別包住兩個請求（失敗或非 2xx 視為 null），合併後為空時把 `candleDataUnavailable` 設為 true 且不產生圖表資料；只有一個月失敗時顯示另一個月的資料（之前會整個不顯示或 crash）。蠟燭、成交量、x 軸標籤與 `originalCandleData` 都由同一份 merge＋sanitize 後的清單產生，點擊圖表與買賣紀錄定位用的索引才會一致；`CalculateChartDataUseCase.generateBarData` 改為去逗號後 `toFloat()`，與 `sanitize` 的判斷一致且不依裝置語系。Fragment 觀察到 `candleDataUnavailable` 時呼叫 `chart.clear()` 並 `setNoDataText("無資料")`；`originalCandleData` 遇到空清單直接返回。均線抽成 `MovingAverage.compute(closes, window): List<Pair<Int, Float>>`，筆數不足回傳空清單；fragment 只把非空的均線加入 `LineData`，兩條都空時不設定 line data。
 
 ### 驗證方式
 
@@ -75,12 +75,12 @@ iOS 用 main actor 保證讀寫順序；Android 的讀取來自 UI thread、Work
 - `enum class StockMarket(val prefix: String) { TSE("tse"), OTC("otc") }`；JSON 值為 `"tse"`／`"otc"`，其他值解碼失敗。
 - `data class StockListEntry(val code: String, val name: String, val market: StockMarket) { val searchString: String get() = "$code $name" }`
 - `object StockListParser { fun parseTwse(json: String): List<StockListEntry>; fun parseOtc(json: String): List<StockListEntry>; fun isKeptOtcCode(code: String): Boolean; fun merge(tse: List<StockListEntry>, otc: List<StockListEntry>): List<StockListEntry>; fun encodeFile(entries: List<StockListEntry>): String; fun decodeFile(json: String): List<StockListEntry> }`；格式錯誤丟 `IOException`（含 Moshi 的 `JsonDataException`／`JsonEncodingException` 轉成的 `IOException`）。
-- `class StockListRepository(cacheFile: File, bundledSource: () -> InputStream?)`：建構時載入；`entries`、`searchStrings`、`hasCache`（目前快照來自快取）、`market(code): StockMarket?`、`contains(code)`、`marketLookup()`、`replace(newEntries)`（失敗丟 `IOException`，記憶體與原快取檔不變、不留暫存檔）、`reload()`。重複代號以第一筆為準。
+- `class StockListRepository(cacheFile: File, bundledSource: () -> InputStream?)`：建構時載入；`bundledSource` 丟例外或回 null、內容無法解碼時視為沒有內建清單（不丟例外）；`entries`、`searchStrings`、`hasCache`（目前快照來自快取）、`market(code): StockMarket?`、`contains(code)`、`marketLookup()`、`replace(newEntries)`（失敗丟 `IOException`，記憶體與原快取檔不變、不留暫存檔）、`reload()`。重複代號以第一筆為準。
 - `class StockListRefresher(repository, fetcher: StockListFetching, timeStore: RefreshTimeStore, now: () -> Long = System::currentTimeMillis, dispatcher: CoroutineDispatcher = Dispatchers.IO)`：`isRefreshDue()`、`suspend refreshIfNeeded(): RefreshResult`；`data class RefreshResult(tse: MarketOutcome, otc: MarketOutcome)`，`MarketOutcome { UPDATED, SKIPPED, KEPT_OLD_DATA }`；常數 `REFRESH_INTERVAL_MILLIS = 7 天`、`MINIMUM_RATIO = 0.8`。refresher 本身不寫 log；worker 依結果與 `repository.entries` 以 Timber 記錄 `stock list refreshed: tse=N otc=M`（至少一個市場 UPDATED 時）。
 - `interface StockListFetching { suspend fun fetchTwse(): String; suspend fun fetchOtc(): String }`；`interface RefreshTimeStore { var lastRefreshMillis: Long? }`。
-- `class OkHttpStockListFetcher(client: OkHttpClient = 預設 30 秒 connect／read, twseUrl, otcUrl)`：在 `Dispatchers.IO` 執行，非 200 丟 `IOException`。
+- `class OkHttpStockListFetcher(client: OkHttpClient = defaultClient(), twseUrl, otcUrl)`，`companion fun defaultClient()` 回傳 connect／read 30 秒、無 callTimeout 的 client：在 `Dispatchers.IO` 執行，非 200 丟 `IOException`。
 - `class StockMarketLookup(marketByCode: Map<String, StockMarket>)`：`market(code)`（未知回 TSE）、`exChannel(code)`、`exChannelQuery(codes)`。
-- `object StockSearch { fun filter(strings: List<String>, query: String): List<String> }`：`contains` 比對，空字串回傳全部。
+- `object StockSearch { fun filter(strings: List<String>, query: String): List<String>; fun codeFromInput(text: String): String }`：`contains` 比對，空字串回傳全部；`codeFromInput` 為 trim、取第一個空格前、以 `uppercase()` 轉大寫。
 - `object MovingAverage { fun compute(closes: List<Float>, window: Int): List<Pair<Int, Float>> }`，第 i 點（i ≥ window−1）為 closes[i−window+1..i] 的平均，x 為 i。
 - `object CandleRows { fun merge(lastMonth: List<List<String>>?, currentMonth: List<List<String>>?): List<List<String>>; fun sanitize(rows): List<List<String>>; fun priceChange(text: String): Float }`；STOCK_DAY 列格式：0 日期、2 成交股數、3 開、4 高、5 低、6 收、7 漲跌，數字可含千分位逗號。
 - 失敗模式：refresher 與 worker 不讓任何例外（`CancellationException` 除外）離開；UI 不顯示更新錯誤。
