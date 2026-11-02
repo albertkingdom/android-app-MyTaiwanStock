@@ -5,7 +5,7 @@ iOS 版每筆買賣紀錄都存手續費與證交稅，用同一套規則計算�
 ## What Changes
 
 - 新增純 Kotlin 的費稅計算（`FeeCalculator`）、手續費設定（`FeeSettings`）、費稅欄位狀態（`FeeTaxFields`）與持股成本計算（`HoldingsCalculator`，對應 iOS `OverViewCalculator`），放在新 package `com.example.mynewsapp.tradecost`，不依賴 Android framework，並移植 iOS `MyTaiwanStockTests/TradeCost/` 的測試案例。
-- Room：`InvestHistory` 新增可為空的 `fee`、`tax`（整數元）與 `memo`（文字，預設空字串），資料庫版本 6 → 7，migration 只加欄位，舊紀錄保留，費稅為未知（null）。
+- Room：`InvestHistory` 新增可為空的 `fee`、`tax`（整數元）與 `memo`（文字）。三個欄位都可為空（null），從新增頁存的紀錄備註沒填時存空字串，資料庫版本 6 → 7，migration 只加欄位，舊紀錄保留，費稅為未知（null）。
 - 新增紀錄頁：移除舊的手續費選項（折扣下拉、盤中零股 1 元、自訂元），改成可編輯的手續費與交易稅欄位（預設帶入計算值）、賣出時的稅別選擇、備註欄位；儲存時寫入顯示的費稅值。
 - 設定頁：手續費改成一列摘要（例如「2.8 折・最低 20 / 1 元」），點進去是新的手續費設定頁，可輸入折數與整股／零股最低手續費，三個值一起驗證、一起儲存。舊版的折扣（`fee_discount`，百分比）讀成對應折數；舊版自訂手續費（`fee_custom`）不再使用、不刪除。
 - 個股詳情：持股數＝買進股數－賣出股數；買入均價含買進手續費並標示「含費用」，四捨五入到兩位；沒有買進時顯示「-」；持股為 0 或負數時市值顯示「-」；每筆紀錄第二行顯示手續費與交易稅，未知顯示「-」；有買進紀錄沒有手續費資料時顯示提示；買進紀錄的報酬率以含手續費的成本計算，賣出紀錄不顯示報酬率。

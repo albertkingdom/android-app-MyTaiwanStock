@@ -93,7 +93,7 @@ When the app starts with a database of version 6, the system SHALL upgrade it to
 
 ### Requirement: Enter fee and tax when adding a record by hand
 
-On the add-record screen the system SHALL compute the fee and the tax from the current text of the price and shares fields, using the fee settings, every time the price or the shares change, when the side changes between buy and sell, and when the tax category changes. The fee and the tax SHALL be shown in editable fields that contain only the number, with the unit shown beside the field. When the price or the shares do not give a result, the computed fields SHALL be empty. For a sell, the system SHALL show the tax field and a choice of tax category with general stock as the default; for a buy the system SHALL NOT show the tax field or the category choice. When the user types in the fee field or the tax field, that field SHALL keep the user's value when the price, the shares, the side or the category change afterwards, except that switching to a buy SHALL discard a typed tax. While the user is editing, an empty field SHALL stay empty, and when the field loses focus while it is empty or blank, the system SHALL show the computed value again and SHALL follow the computation again. A value the system writes into a field SHALL NOT be treated as typed by the user. When the user saves, the system SHALL reject a fee, or the tax of a sell, that is empty, negative, not a whole number, or greater than 2147483647, SHALL show an input error on that field and SHALL NOT write a record.
+On the add-record screen the system SHALL compute the fee and the tax from the current text of the price and shares fields, using the fee settings, every time the price or the shares change, when the side changes between buy and sell, and when the tax category changes. The fee and the tax SHALL be shown in editable fields that contain only the number, with the unit shown beside the field. When the price or the shares do not give a result, the computed fields SHALL be empty. For a sell, the system SHALL show the tax field and a choice of tax category with general stock as the default; for a buy the system SHALL NOT show the tax field or the category choice. When the user types in the fee field or the tax field, that field SHALL keep the user's value when the price, the shares, the side or the category change afterwards, except that switching to a buy SHALL discard a typed tax. While the user is editing, an empty field SHALL stay empty, and when the field loses focus while it is empty or blank, the system SHALL show the computed value again and SHALL follow the computation again. A value the system writes into a field, including text restored after the screen is recreated, SHALL NOT be treated as typed by the user. Saving or switching the side SHALL first end the editing of the fee and tax fields, as leaving them would. When the user saves, the system SHALL reject a fee, or the tax of a sell, that is empty, negative, not a whole number, or greater than 2147483647, SHALL show an input error on that field and SHALL NOT write a record.
 
 #### Scenario: Fee follows the final text
 
@@ -110,6 +110,21 @@ On the add-record screen the system SHALL compute the fee and the tax from the c
 - **WHEN** the user types 50 in the fee field and then changes the shares
 - **THEN** the fee field SHALL still show 50
 
+#### Scenario: Retyping after deleting the value
+
+- **WHEN** the fee field shows 142, the user deletes all digits and types 50
+- **THEN** the fee field SHALL show 50 and the stored fee SHALL be 50
+
+#### Scenario: Minimum fee from the settings
+
+- **WHEN** the saved odd-lot minimum fee is 5 and the discount is 6, and the user enters a buy of 5 shares at a price of 112.55
+- **THEN** the fee field SHALL show 5
+
+#### Scenario: Saving with an empty fee field that still has focus
+
+- **WHEN** the price is 100, the shares are 1000, the user deletes all digits of the fee field and saves without leaving the field
+- **THEN** the system SHALL end the editing first and SHALL store the computed fee of 142
+
 #### Scenario: Leaving the field empty
 
 - **WHEN** the user deletes all digits of the fee field and the field loses focus
@@ -122,12 +137,12 @@ On the add-record screen the system SHALL compute the fee and the tax from the c
 
 #### Scenario: Invalid fee blocks saving
 
-- **WHEN** the user saves with the fee field showing 5.5
+- **WHEN** the user saves with a fee of 5.5 or 2147483648
 - **THEN** the system SHALL show an input error on the fee field and SHALL NOT write a record
 
 ### Requirement: Compute holdings and cost with sells and fees
 
-For one stock, the system SHALL compute the holdings as the total shares bought minus the total shares sold, and SHALL show a negative result as it is. The average buy price SHALL be the sum of the buy values and the buy fees divided by the total shares bought, where an unknown fee counts as 0, and SHALL be shown as a dash when there are no buys. The average sell price SHALL be the sum of the sell values divided by the total shares sold, without fees, and SHALL be shown as a dash when there are no sells. Average prices and profit percentages SHALL be shown rounded half up to two decimal places. The market value SHALL be the holdings multiplied by the current price, shown only when the holdings are greater than 0 and a current price is known, and shown as a dash otherwise. For a buy record, the profit percentage SHALL be the current price minus the fee-inclusive unit cost, divided by the fee-inclusive unit cost, multiplied by 100, where the fee-inclusive unit cost is the buy value plus the fee (0 when unknown), divided by the shares; a positive value SHALL be shown in red and a negative value in green. A sell record SHALL show a dash instead of a profit percentage. The stock detail screen SHALL label the average buy price as including fees, and SHALL update every overview value when the records change, including when no record is left.
+For one stock, the system SHALL compute the holdings as the total shares bought minus the total shares sold, and SHALL show a negative result as it is. The average buy price SHALL be the sum of the buy values and the buy fees divided by the total shares bought, where an unknown fee counts as 0, and SHALL be shown as a dash when there are no buys. The average sell price SHALL be the sum of the sell values divided by the total shares sold, without fees, and SHALL be shown as a dash when there are no sells. Average prices and profit percentages SHALL be shown rounded half up to two decimal places. The market value SHALL be the holdings multiplied by the current price, rounded half up to a whole dollar, shown only when the holdings are greater than 0 and a current price is known, and shown as a dash otherwise. For a buy record, the profit percentage SHALL be the current price minus the fee-inclusive unit cost, divided by the fee-inclusive unit cost, multiplied by 100, where the fee-inclusive unit cost is the buy value plus the fee (0 when unknown), divided by the shares; the color SHALL follow the value rounded to two decimal places: red when positive, green when negative, and the normal text color when it is 0. A sell record SHALL show a dash instead of a profit percentage. When the current price is not a number, the screen SHALL show a dash for the price, the market value and the profit percentages and SHALL NOT crash. The stock detail screen SHALL label the average buy price as including fees, and SHALL update every overview value when the records change, including when no record is left.
 
 #### Scenario: Buy and sell the same shares
 
