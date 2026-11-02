@@ -8,7 +8,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [Stock::class, InvestHistory::class, FollowingList::class, CashDividend::class, StockDividend::class],
-    version = 6,
+    version = 7,
     autoMigrations = [AutoMigration(from = 3, to = 4)],
     exportSchema = true
 )
@@ -32,6 +32,7 @@ abstract class StockDatabase:RoomDatabase() {
                     .addMigrations(MIGRATION_3_4)
                     .addMigrations(MIGRATION_4_5)
                     .addMigrations(MIGRATION_5_6)
+                    .addMigrations(MIGRATION_6_7)
                     .build()
                 INSTANCE = instance
                 // return instance
@@ -73,6 +74,12 @@ abstract class StockDatabase:RoomDatabase() {
 
                 // 将新表重命名为旧表名
                 database.execSQL("ALTER TABLE stocks_new RENAME TO stocks")
+            }
+        }
+
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                InvestHistoryMigrationSql.V6_TO_V7.forEach { database.execSQL(it) }
             }
         }
     }
