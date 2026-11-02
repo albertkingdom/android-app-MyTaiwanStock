@@ -1,0 +1,9 @@
+# Spectra application config
+
+# Language for AI-generated artifacts
+locale: tw
+
+# AI tools to generate instruction files for
+tools:
+  - claude
+  - codex
