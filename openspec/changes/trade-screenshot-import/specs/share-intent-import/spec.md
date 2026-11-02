@@ -28,7 +28,8 @@ The app SHALL appear in the system share sheet for images by declaring `ACTION_S
 
 - **WHEN** the user shares an image from another app
 - **THEN** the import SHALL open on top of the sharing app
-- **AND** after the import completes or the user goes back, the user SHALL return to the stock list of that instance or to the sharing app
+- **AND** after the import completes, the app SHALL show its stock list
+- **AND** pressing back from that stock list SHALL return to the sharing app
 
 #### Scenario: Image delivered only in clip data
 
@@ -37,6 +38,11 @@ The app SHALL appear in the system share sheet for images by declaring `ACTION_S
 
 #### Scenario: Share received while an import is open
 
-- **WHEN** the running app instance receives a shared image while an import screen is open
+- **WHEN** the running app instance receives a shared image while an import screen is open and that import has not started writing
 - **THEN** the app SHALL replace that import screen with a new import for the shared images
 - **AND** the replaced import SHALL NOT write any record
+
+#### Scenario: Share received while an import is writing
+
+- **WHEN** the running app instance receives a shared image while an import is writing records
+- **THEN** the app SHALL keep that import, ignore the share and show a message to share again later

@@ -39,6 +39,7 @@ iOS 版已經能把元大「投資先生」的交易明細截圖辨識成買賣�
   - New: app/src/main/java/com/example/mynewsapp/ui/tradeimport/TradeTextRecognizer.kt
   - New: app/src/main/java/com/example/mynewsapp/ui/tradeimport/StockDirectory.kt
   - New: app/src/main/java/com/example/mynewsapp/ui/tradeimport/TradeImportRepository.kt
+  - New: app/src/main/java/com/example/mynewsapp/ui/tradeimport/TradeImportScope.kt
   - New: app/src/main/java/com/example/mynewsapp/ui/tradeimport/TradeImportViewModel.kt
   - New: app/src/main/java/com/example/mynewsapp/ui/tradeimport/TradeImportFragment.kt
   - New: app/src/main/java/com/example/mynewsapp/ui/tradeimport/TradePreviewAdapter.kt
