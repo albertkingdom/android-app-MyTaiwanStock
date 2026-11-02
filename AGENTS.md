@@ -122,11 +122,14 @@ Code review（含 subagent review）的結果必須記錄成 Markdown：
 #### 建置環境
 
 - Gradle toolchain 要求 JDK 17（`compileOptions` 為 `VERSION_17`）。本機沒有 JDK 17 時建置會失敗在 `compileDebugJavaWithJavac`，先安裝 JDK 17（例如 `brew install openjdk@17`）。
-- 執行 Gradle 時以 Android Studio 內建 JBR 啟動：
+- 執行 Gradle 時以 JDK 17 啟動，與 CI（`build-and-test`，temurin 17）一致。不要用 Android Studio 內建的 JBR：新版內建的是 JDK 21，而本專案的 Kotlin 1.9.0 要到 1.9.20 才正式支援 JDK 21。
 
   ```bash
-  JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew assembleDebug
+  JAVA_HOME="$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home" ./gradlew assembleDebug
   ```
+
+- 在 Android Studio 裡建置時，把 Settings › Build, Execution, Deployment › Build Tools › Gradle 的 Gradle JDK 設為 JDK 17。
+- 雲端（Linux）環境的設定見 `docs/cloud-setup.md`。
 
 - `local.properties`、`app/google-services.json` 以外的金鑰、keystore（`*.jks`、`*.keystore`）不進版控。
 
