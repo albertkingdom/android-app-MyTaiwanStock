@@ -14,6 +14,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.mynewsapp.R
 import com.example.mynewsapp.db.InvestHistory
 import com.example.mynewsapp.model.StockHistory
+import com.example.mynewsapp.tradecost.HoldingsCalculator
+import com.example.mynewsapp.tradecost.TradeSide
+import com.example.mynewsapp.db.tradeLine
+import com.example.mynewsapp.util.getColorThemeRes
+import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -25,7 +30,7 @@ import java.util.*
 class StockHistoryAdapter: ListAdapter<InvestHistory, StockHistoryAdapter.StockHistoryViewHolder>(
     DiffCallback
 ) {
-    private var stockPrice: String? = null
+    private var stockPrice: BigDecimal? = null
     private var clickItemListener: ((String) -> Unit)? = null
 
     class StockHistoryViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
@@ -34,6 +39,9 @@ class StockHistoryAdapter: ListAdapter<InvestHistory, StockHistoryAdapter.StockH
         val priceView: TextView = itemView.findViewById(R.id.price)
         val amountView: TextView = itemView.findViewById(R.id.amount)
         val revenueView: TextView = itemView.findViewById(R.id.revenue)
+        val feeAndTaxView: TextView = itemView.findViewById(R.id.fee_and_tax)
+        val primaryTextColor: Int = itemView.context.getColorThemeRes(android.R.attr.textColorPrimary)
+        val greenColor: Int = itemView.resources.getColor(R.color.green, null)
     }
 
     override fun onCreateViewHolder(
@@ -51,17 +59,32 @@ class StockHistoryAdapter: ListAdapter<InvestHistory, StockHistoryAdapter.StockH
         val currentHistory = getItem(position)
 
         holder.apply {
-            val revenue = calcRevenue(price = currentHistory.price)
-            statusView.text = if (currentHistory.status == 0) "買" else "賣"
+            val context = itemView.context
+            statusView.text = if (TradeSide.fromStatus(currentHistory.status) == TradeSide.BUY) "買" else "賣"
             dateView.text = formatDateLong(currentHistory.date)
             priceView.text = currentHistory.price.toString()
             amountView.text = currentHistory.amount.toString()
-            revenueView.text = this.itemView.context.getString(R.string.stockhistory_revenue, revenue)
+            feeAndTaxView.text = context.getString(
+                R.string.history_fee_and_tax,
+                currentHistory.fee?.toString() ?: "-",
+                currentHistory.tax?.toString() ?: "-",
+            )
 
-            if (revenue.toFloat() > 0) {
-                revenueView.setTextColor(Color.RED)
-            }else{
-                revenueView.setTextColor(this.revenueView.resources.getColor(R.color.green, null))
+            // A sell has no profit; the color follows the value as it is shown, rounded to two places.
+            val profit = HoldingsCalculator.profitPercent(currentHistory.tradeLine(), stockPrice)
+                ?.let { HoldingsCalculator.rounded(it) }
+            if (profit == null) {
+                revenueView.text = "-"
+                revenueView.setTextColor(primaryTextColor)
+            } else {
+                revenueView.text = context.getString(R.string.stockhistory_revenue, profit.toPlainString())
+                revenueView.setTextColor(
+                    when {
+                        profit.signum() > 0 -> Color.RED
+                        profit.signum() < 0 -> greenColor
+                        else -> primaryTextColor
+                    }
+                )
             }
             // click to get the history date in 110/10/10 format
             itemView.setOnClickListener {
@@ -103,20 +126,11 @@ class StockHistoryAdapter: ListAdapter<InvestHistory, StockHistoryAdapter.StockH
         return Instant.ofEpochMilli(dateLong).atZone(ZoneId.systemDefault()).format(formatter)
 
     }
-    fun setStockPrice(price: String) {
+    /** The current price; null when it is not known, which shows no profit. */
+    fun setStockPrice(price: BigDecimal?) {
         stockPrice = price
     }
-    private fun calcRevenue(price: Double): String {
-        var revenueStr: String = "-"
-        val stockPriceDouble = stockPrice?.toDoubleOrNull()
-        if (stockPrice != "-" && stockPriceDouble != null) {
 
-            val result = (stockPriceDouble - price) / price * 100
-            revenueStr = String.format("%.2f", result)
-
-        }
-        return revenueStr
-    }
     fun setListener(listener:(String) -> Unit) {
         clickItemListener = listener
     }

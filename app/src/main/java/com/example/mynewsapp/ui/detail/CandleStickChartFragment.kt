@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat.getColor
 import androidx.core.content.ContextCompat.getDrawable
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -17,6 +18,8 @@ import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.R
 import com.example.mynewsapp.ui.adapter.StockHistoryAdapter
 import com.example.mynewsapp.databinding.FragmentCandleStickChartBinding
+import com.example.mynewsapp.tradecost.HoldingsCalculator
+import com.example.mynewsapp.tradecost.TradeInput
 import com.example.mynewsapp.util.getColorThemeRes
 import com.github.mikephil.charting.charts.CombinedChart
 import com.github.mikephil.charting.components.XAxis
@@ -27,13 +30,17 @@ import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.math.BigDecimal
 import kotlin.math.abs
 
 class CandleStickChartFragment: Fragment() {
 
     private var _binding: FragmentCandleStickChartBinding? = null
     private val binding get() = _binding!!
-    private lateinit var chartViewModel: CandleStickChartViewModel
+    // From the provider, so that it is cleared with the screen and its history query does not outlive it.
+    private val chartViewModel: CandleStickChartViewModel by viewModels {
+        CandleStickChartViewModel.Factory((requireActivity().application as MyApplication).repository)
+    }
 
     private val args: CandleStickChartFragmentArgs by navArgs()
 
@@ -43,6 +50,9 @@ class CandleStickChartFragment: Fragment() {
     private lateinit var historyAdapter: StockHistoryAdapter
 
     var chartLabelColor = 0
+
+    /** The current price passed in by the list, or null when it is not a number such as "-". */
+    private val currentPrice: BigDecimal? by lazy { TradeInput.parsePrice(args.stockPrice)?.takeIf { it.signum() > 0 } }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,12 +68,9 @@ class CandleStickChartFragment: Fragment() {
         //change toolbar title
         (requireActivity() as AppCompatActivity).supportActionBar?.title = "${args.stockName} ${args.stockNo}"
 
-        val repository = (activity?.application as MyApplication).repository
-        chartViewModel = CandleStickChartViewModel(repository)
-
         chartViewModel.getCandleStickData("", args.stockNo)
 
-        chartViewModel.queryHistoryByStockNo(args.stockNo)
+        chartViewModel.queryHistoryByStockNo(args.stockNo, currentPrice)
 
         Timber.d("on create view ${args.stockNo}")
 
@@ -73,7 +80,7 @@ class CandleStickChartFragment: Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.stockPrice.text = String.format("%.2f", args.stockPrice.toFloat())
+        binding.stockPrice.text = HoldingsCalculator.format(currentPrice)
         //binding.dateStockPrice.text = DateTimeFormatter.ofPattern("MM-dd HH:mm").withZone(ZoneId.systemDefault()).format(Instant.now())
         binding.dateStockPrice.text = args.time
 
@@ -92,19 +99,12 @@ class CandleStickChartFragment: Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
-                    chartViewModel.totalHistoryAmount.collect {
-                        binding.textTotalAmount.text = it.toString()
-                        binding.totalAssetValue.text = (it*args.stockPrice.toFloat()).toString()
-                    }
-                }
-                launch {
-                    chartViewModel.historyBuyAvgPrice.collect {
-                        binding.avgBuyPrice.text = if (it > 0) String.format("%.2f", it) else "-"
-                    }
-                }
-                launch {
-                    chartViewModel.historySellAvgPrice.collect {
-                        binding.avgSellPrice.text = if (it > 0) String.format("%.2f", it) else "-"
+                    chartViewModel.holdingsSummary.collect { summary ->
+                        binding.textTotalAmount.text = summary.amountText
+                        binding.totalAssetValue.text = summary.marketValueText
+                        binding.avgBuyPrice.text = summary.averageBuyPriceText
+                        binding.avgSellPrice.text = summary.averageSellPriceText
+                        binding.unknownFeeNote.visibility = if (summary.showsUnknownFeeNote) View.VISIBLE else View.GONE
                     }
                 }
             }
@@ -113,7 +113,7 @@ class CandleStickChartFragment: Fragment() {
 
     private fun setupListAdapter() {
         historyAdapter = StockHistoryAdapter()
-        historyAdapter.setStockPrice(args.stockPrice)
+        historyAdapter.setStockPrice(currentPrice)
         historyAdapter.setListener { targetDate ->
             // when clicked record, highlight the day of investing record on chart
 
