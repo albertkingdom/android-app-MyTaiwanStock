@@ -8,17 +8,10 @@
             app:title="帳號"/>
     </PreferenceCategory>
     <PreferenceCategory
-        app:title="手續費"
+        app:title="@string/fee_settings_title"
         app:icon="@drawable/ic_baseline_attach_money">
-        <ListPreference
-            app:entries="@array/fee_discount_option"
-            app:entryValues="@array/fee_discount_option"
-            app:key="fee_discount"
-            app:title="手續費預設折扣(%)"
-            app:useSimpleSummaryProvider="true" />
-        <EditTextPreference
-            app:key="fee_custom"
-            app:title="自訂手續費(元)"
-            app:useSimpleSummaryProvider="true" />
+        <Preference
+            app:key="fee_settings"
+            app:title="@string/fee_settings_title" />
     </PreferenceCategory>
 </androidx.preference.PreferenceScreen>

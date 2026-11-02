@@ -17,6 +17,20 @@ class SettingFragment: PreferenceFragmentCompat() {
                 true
             }
         }
+        preferenceManager.findPreference<Preference>(FEE_SETTINGS_KEY)?.setOnPreferenceClickListener {
+            findNavController().navigate(SettingFragmentDirections.actionSettingFragmentToFeeSettingsFragment())
+            true
+        }
     }
 
+    /** The fee row states what is saved, so it is refreshed whenever the screen comes back. */
+    override fun onResume() {
+        super.onResume()
+        preferenceManager.findPreference<Preference>(FEE_SETTINGS_KEY)?.summary =
+            FeeSettingsStore(requireContext()).load().summaryText
+    }
+
+    private companion object {
+        const val FEE_SETTINGS_KEY = "fee_settings"
+    }
 }
