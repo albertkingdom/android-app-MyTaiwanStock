@@ -8,7 +8,8 @@
 ## 2. CI
 
 - [x] 2.1 CI workflow: add `.github/workflows/ci.yml` as described in the design decision (triggers `pull_request` and `push` to `rx`, job `build-and-test`, temurin JDK 17, Gradle cache, `./gradlew assembleDebug testDebugUnitTest --stacktrace`, test results and reports uploaded with `if: always()`, concurrency that cancels only PR runs, read-only permissions). Verify: `python3 -c "import yaml;yaml.safe_load(open('.github/workflows/ci.yml'))"` succeeds and the job id is `build-and-test`.
-- [x] 2.2 In `AGENTS.md`, set the `CI 必過檢查` row to `` `build-and-test`（GitHub Actions，`.github/workflows/ci.yml`） ``. Verify: `git diff origin/rx -- AGENTS.md` shows only that row changed.
+- [x] 2.2 In `AGENTS.md`, set the `CI 必過檢查` row to `` `build-and-test`（GitHub Actions，`.github/workflows/ci.yml`） ``. Verify: `git diff origin/rx -- AGENTS.md` shows only that row changed (the 2.3 edit is counted separately).
+- [x] 2.3 In `AGENTS.md`'s Android build-environment section, replace the instruction to run Gradle with Android Studio's bundled JBR by one to run it with JDK 17 (matching CI), including the Android Studio Gradle JDK setting and a pointer to `docs/cloud-setup.md`. Verify: `grep -n "jbr" AGENTS.md` prints nothing and the section names JDK 17.
 
 ## 3. Cloud setup document
 

@@ -94,7 +94,7 @@ Alternative: a committed SessionStart hook. Rejected; the task asks for a docume
 - **Data shapes**: none. No Room schema, preference, or network contract changes.
 - **Failure modes**: dependency resolution failure after jcenter removal → repoint the artifact, never restore jcenter. A compile error from Kotlin 1.9 → minimal behavior-preserving source edit. A Gradle plugin incompatible with AGP 8.5.1 → latest patch of the same minor line. jitpack.io outage → CI fails, accepted.
 - **Acceptance criteria**: the PR's `build-and-test` run is green, and its uploaded test results contain `TEST-com.example.mynewsapp.ExampleUnitTest.xml` with `tests="1" failures="0" errors="0" skipped="0"`. `grep -nE "1\.6\.21|jcenter" build.gradle app/build.gradle` prints nothing. `AGENTS.md` names `build-and-test`. `docs/cloud-setup.md` exists with the D7 content.
-- **Scope boundaries**: may edit root `build.gradle`, `app/build.gradle`, `.github/workflows/ci.yml`, the `CI 必過檢查` row of `AGENTS.md`, `docs/cloud-setup.md`, and source files only for forced fixes. Must not edit anything else under `app/src`, resources, version numbers, or signing.
+- **Scope boundaries**: may edit root `build.gradle`, `app/build.gradle`, `.github/workflows/ci.yml`, the `CI 必過檢查` row and the Android build-environment section of `AGENTS.md` (Gradle runs on JDK 17 instead of Android Studio's bundled JBR, to match CI), `docs/cloud-setup.md`, and source files only for forced fixes. Must not edit anything else under `app/src`, resources, version numbers, or signing.
 
 ## Risks / Trade-offs
 
