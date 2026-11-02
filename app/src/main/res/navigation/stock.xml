@@ -75,6 +75,20 @@
         android:label="fragment_add_stock_to_list"
         tools:layout="@layout/fragment_add_stock_to_list" />
     <fragment
+        android:id="@+id/tradeImportFragment"
+        android:name="com.example.mynewsapp.ui.tradeimport.TradeImportFragment"
+        android:label="@string/trade_import_entry"
+        tools:layout="@layout/fragment_trade_import">
+        <argument
+            android:name="imageUris"
+            android:defaultValue="@null"
+            app:argType="string[]"
+            app:nullable="true" />
+    </fragment>
+    <action
+        android:id="@+id/action_global_tradeImportFragment"
+        app:destination="@id/tradeImportFragment" />
+    <fragment
         android:id="@+id/addDividendFragment"
         android:name="com.example.mynewsapp.ui.detail.AddDividendFragment"
         android:label="新增股利紀錄">

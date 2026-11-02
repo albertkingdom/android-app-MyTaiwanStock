@@ -70,6 +70,10 @@ dependencies {
     implementation 'androidx.navigation:navigation-fragment-ktx:2.4.1'
     implementation 'androidx.navigation:navigation-ui-ktx:2.4.1'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    // Photo picker (PickMultipleVisualMedia) for the trade screenshot import
+    implementation 'androidx.activity:activity-ktx:1.8.2'
+    // On-device text recognition, Chinese model bundled in the APK (nothing is uploaded)
+    implementation 'com.google.mlkit:text-recognition-chinese:16.0.1'
 
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'

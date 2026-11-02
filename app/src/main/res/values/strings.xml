@@ -51,4 +51,40 @@
 
     <string name="add_new_following_list">新增追蹤清單</string>
     <string name="add_new_stockNo">新增股票</string>
+    <!-- trade screenshot import -->
+    <string name="trade_import_entry">截圖匯入</string>
+    <string name="trade_import_recognizing">辨識中 %1$d / %2$d</string>
+    <string name="trade_import_loading">載入中</string>
+    <string name="trade_import_no_trade">找不到可匯入的交易</string>
+    <string name="trade_import_failed">無法讀取或辨識圖片，沒有寫入任何紀錄</string>
+    <string name="trade_import_target_list">加入清單</string>
+    <string name="trade_import_no_list">不加入清單</string>
+    <string name="trade_import_no_list_notice">匯入的紀錄只能從含有該股票的清單打開</string>
+    <string name="trade_import_listed_only_notice">已在其他清單的股票不會移動；目前只能辨識上市股票</string>
+    <string name="trade_import_confirm">匯入</string>
+    <string name="trade_import_importing">匯入中…</string>
+    <string name="trade_import_done">已匯入 %1$d 筆</string>
+    <string name="trade_import_invalid_selection">有勾選的交易資料不完整，沒有寫入任何紀錄</string>
+    <string name="trade_import_write_failed">寫入失敗，沒有寫入任何紀錄</string>
+    <string name="trade_import_read_failed">無法讀取本機紀錄，沒有寫入任何紀錄</string>
+    <string name="trade_import_preview_changed">有交易剛被匯入過，預覽已更新，請確認後再按匯入</string>
+    <string name="trade_import_share_refused">無法讀取分享的圖片，請改用 App 內的「截圖匯入」選擇圖片</string>
+    <string name="trade_import_status_importable">可匯入</string>
+    <string name="trade_import_status_duplicate">重複</string>
+    <string name="trade_import_status_incomplete">不完整</string>
+    <string name="trade_import_status_unsupported">不支援</string>
+    <string name="trade_import_buy">買進</string>
+    <string name="trade_import_sell">賣出</string>
+    <string name="trade_import_unknown_stock">（未知代號）</string>
+    <string name="trade_import_missing">—</string>
+    <string name="trade_import_done_list_gone">已匯入 %1$d 筆；選擇的清單已被刪除，股票沒有加入清單</string>
+    <string name="trade_import_row_title">%1$s %2$s　%3$s</string>
+    <string name="trade_import_detail">%1$s 股 × %2$s　%3$s</string>
+    <string name="trade_import_edit_title">編輯交易</string>
+    <string name="trade_import_edit_stock_no">股票代號</string>
+    <string name="trade_import_edit_price">價格</string>
+    <string name="trade_import_edit_amount">股數</string>
+    <string name="trade_import_edit_pick_date">選擇日期</string>
+    <string name="trade_import_copy_fixture">複製辨識結果（debug）</string>
+    <string name="trade_import_fixture_copied">已複製辨識結果</string>
 </resources>
