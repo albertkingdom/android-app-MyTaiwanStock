@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.RecyclerView
+import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.R
 import com.example.mynewsapp.ui.adapter.ClickOnStarListener
 import com.example.mynewsapp.ui.adapter.StockIdAndNameAdapter
@@ -41,8 +42,9 @@ class AddStockFragment: Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val stockNames: Array<String> = resources.getStringArray(R.array.countries_array)
-        addStockViewModel.stockNames = stockNames.toMutableList()
+        val stockListRepository = (requireActivity().application as MyApplication).stockListRepository
+        addStockViewModel.stockNamesProvider = { stockListRepository.searchStrings }
+        addStockViewModel.filterSearchQuery()
 
         recyclerView = binding.stockIdNameRecyclerview
         recyclerView.adapter = adapter
@@ -62,6 +64,7 @@ class AddStockFragment: Fragment() {
         listViewModel.stockIdsInCurrentList.observe(viewLifecycleOwner) { listOfStockIds ->
             // stock ids in current following list
             addStockViewModel.followingStockIds = listOfStockIds
+            addStockViewModel.filterSearchQuery()
         }
 
     }
