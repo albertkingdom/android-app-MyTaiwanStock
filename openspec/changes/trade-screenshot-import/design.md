@@ -69,7 +69,7 @@ Out of scope：`db/` 底下任何檔案、`ListViewModel` 的邏輯、其他分�
 
 時區：手動新增的紀錄是裝置本地時間，重複判斷用台北日曆日。裝置不在 UTC+8 時，晚上手動輸入的紀錄可能落在台北的隔天而不被判為重複；這與 iOS 相同，記錄為已知限制。
 
-編輯輸入規則：代號去頭尾空白並轉大寫（例如 00635U），空字串視為沒有代號；價格與股數去頭尾空白與千分位逗號後解析，無法解析就視為沒有值（交易變成不完整）；日期用日期挑選器，不接受文字輸入。
+編輯對話框按確定時一次套用所有欄位再計算狀態（`TradeImportSession.applyEdit`），中間值不影響勾選。編輯輸入規則：代號去頭尾空白並轉大寫（例如 00635U），空字串視為沒有代號；價格與股數去頭尾空白與千分位逗號後解析，無法解析就視為沒有值（交易變成不完整）；日期用日期挑選器，不接受文字輸入。
 
 替代方案：價格以 Double 精確比對。不採用，原因如上。
 
@@ -81,7 +81,7 @@ Out of scope：`db/` 底下任何檔案、`ListViewModel` 的邏輯、其他分�
 
 ### 加入清單（Android 的資料模型限制）
 
-清單以 `ListChoice(id: Int, name: String)` 傳入核心，因為清單名稱沒有唯一限制，而 `Stock` 需要清單 id；名稱只用於 Firestore 的上傳。預覽頁的選項是所有清單加「不加入清單」。預設：目前列表頁顯示的清單 id 若存在於清單中就選它，否則選第一個清單，沒有任何清單時選「不加入清單」（與 iOS 相同）。清單在開預覽時從 Room 直接讀取（`NewsRepository.allFollowingList.first()`），不依賴 `ListViewModel` 是否已載入；目前清單 id 從 activity 範圍的 `ListViewModel.currentSelectedFollowingListId` 讀，冷啟動時是 0，不會匹配，因此退回第一個清單。
+清單以 `ListChoice(id: Int, name: String)` 傳入核心，因為清單名稱沒有唯一限制，而 `Stock` 需要清單 id；名稱只用於 Firestore 的上傳。預覽頁的選項是所有清單加「不加入清單」。預設：目前列表頁顯示的清單 id 若存在於清單中就選它，否則選第一個清單，沒有任何清單時選「不加入清單」（與 iOS 相同）。清單在開預覽時從 Room 直接讀取（`NewsRepository.allFollowingList.first()`），不依賴 `ListViewModel` 是否已載入；目前清單 id 從 activity 範圍的 `ListViewModel.currentSelectedFollowingListId` 讀；由分享開啟時不用它（新視窗的列表頁沒有執行，它可能被重設成第一個清單），改用列表頁儲存在 SharedPreferences（`sharedPref` 的 `currentList`）的最後瀏覽位置，對應同一個 Room 查詢順序的清單；都沒有時退回第一個清單。
 
 因為 `Stock` 的主鍵只有代號，同一檔股票在本機只能在一個清單。確認匯入時，對每個不重複的已匯入代號：若它已在任何清單（包括選定的清單）就不動它，否則加入選定清單。「已在任何清單的代號」在按下匯入時重新讀取。這和 iOS 的差別是：已在別的清單時 iOS 會加入，Android 不搬移，避免從原清單消失；紀錄本身不屬於任何清單，仍能從原清單打開。選「不加入清單」時顯示提示「匯入的紀錄只能從含有該股票的清單打開」。
 
@@ -94,8 +94,10 @@ Out of scope：`db/` 底下任何檔案、`ListViewModel` 的邏輯、其他分�
 `TradeImportRepository`（Android 端）負責：
 
 - 讀快照：`NewsRepository.allHistory.first()`、`StockDao.getAllStocks().first()`、`NewsRepository.allFollowingList.first()`，在 IO dispatcher 執行。
-- 寫入：整個「本機寫入＋上傳」是一個在 app 範圍執行的工作，畫面關閉不會取消它。app 範圍是 `ui/tradeimport/TradeImportScope.kt` 的 `object TradeImportScope { val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO) }`（`MyApplication` 不修改）。工作內依序：對計畫裡每筆紀錄呼叫 `NewsRepository.insertHistory(InvestHistory(0, stockNo, date, price, amount, status))`，緊接著呼叫 `FirebaseManager.uploadHistoryToOnlineDB(...)`；對每個要加入的代號呼叫 `NewsRepository.upsert(Stock(stockNo, listId, "0"))`，緊接著在同一個 scope 另起一個工作呼叫 suspend 的 `FirebaseManager.uploadNewStockNoToOnlineDB(stockNo, listName)`。本機寫入全部完成時完成一個 `CompletableDeferred<Int>`（筆數），ViewModel 只等待這個結果再 Toast 並離開畫面；ViewModel 被清除時等待被取消，但 app 範圍的工作照常完成，上傳不會被略過。本機寫入丟出例外（例如儲存空間不足）時以 `completeExceptionally` 結束這個 deferred，ViewModel 清除「匯入中」狀態並顯示錯誤，已寫入的紀錄保留。和手動新增一樣不等待 Firestore 結果。
-- 連點保護：`TradeImportViewModel` 先呼叫 `buildImportPlan`，成功後才設定「匯入中」狀態並啟動寫入；`buildImportPlan` 丟出 `InvalidSelectionException` 時不設定，使用者修正後可以再確認。匯入中按鈕停用並忽略再次確認；同一個預覽只會執行一次寫入，完成後不能再確認。
+- 寫入：整個「本機寫入＋上傳」是一個在 app 範圍執行的工作，畫面關閉不會取消它。app 範圍是 `ui/tradeimport/TradeImportScope.kt` 的 `object TradeImportScope`（`MyApplication` 不修改）。工作內：讀紀錄與已在清單的代號 → 主執行緒建立計畫 → 重讀目標清單（被刪除就不加入清單）→ 在一個 Room 交易（`StockDatabase.withTransaction`）內寫入所有 `InvestHistory` 與 `Stock` → 交易提交後才呼叫 `FirebaseManager.uploadHistoryToOnlineDB` 與 `uploadNewStockNoToOnlineDB`（不等待、例外不影響本機）。交易失敗時什麼都沒寫，預覽解除鎖定可再確認。本機寫入完成時完成一個 `CompletableDeferred<Int>`（筆數），ViewModel 只等待這個結果；ViewModel 被清除時等待被取消，但 app 範圍的工作照常完成。
+- 連點保護：按下匯入時立刻把預覽鎖成「匯入中」（勾選、編輯、清單都停用），避免按下後到寫入前的變更被忽略；`buildImportPlan` 丟出 `InvalidSelectionException` 或讀取本機紀錄失敗時解除鎖定、重新顯示預覽並提示，使用者修正後可以再確認。
+- 串行寫入：`TradeImportScope.writeLock`（Mutex）讓匯入一次寫一個，即使分享開了第二個 `MainActivity` 實例也一樣；已用時間戳與已在清單的代號在鎖內讀取，計畫在鎖內於主執行緒建立，兩次匯入不會用到同一個毫秒時間戳。
+- 結果訊息：所有結果都由 `TradeImportRepository` 在主執行緒以 application context 的 Toast 顯示，匯入頁已被關閉或取代時也會顯示：成功「已匯入 N 筆」；勾選項目不合法或讀取本機紀錄失敗「沒有寫入任何紀錄」（預覽解除鎖定）；本機寫入失敗「寫入失敗，沒有寫入任何紀錄」（交易已回復，預覽解除鎖定）；目標清單已被刪除時「已匯入 N 筆；選擇的清單已被刪除，股票沒有加入清單」。上傳的例外不影響本機寫入。匯入中按鈕停用並忽略再次確認；同一個預覽只會執行一次寫入，完成後不能再確認。
 - 費稅待辦：費稅 change 合併後，在這裡填入費稅欄位，並在 `TradeImportSession` 加入估算。
 
 替代方案：在 fragment 範圍的 `viewModelScope` 內寫入。不採用：返回列表會清掉 ViewModel 並取消寫入，造成寫一半。在 `db/` 新增批次寫入的 DAO 方法也不採用，避免動到其他 change 擁有的檔案。
@@ -106,7 +108,7 @@ Out of scope：`db/` 底下任何檔案、`ListViewModel` 的邏輯、其他分�
 
 `TradeTextRecognizer`：`InputImage.fromFilePath(context, uri)` 讀圖（它會依 EXIF 旋轉，回傳的框對應轉正後的影像；寬高取轉正後的影像大小：`rotationDegrees` 為 90 或 270 時互換 `InputImage.width/height`，實作時以一張旋轉過的圖手動確認），`TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build())` 辨識，用完呼叫 `close()`。讀圖的 `IOException`、`SecurityException`（URI 權限失效）與 `OutOfMemoryError`（超長截圖）都轉成辨識錯誤。一次只辨識一張。
 
-分行粒度：ML Kit 的 `Text.Line` 可能把同一列的多個欄位合併成一行（例如「2026/ 元大台灣50 112.55 -563」），解析器去空白後會得到無法解析的字串。因此不直接用 Line，而是用 Line 底下的 `Text.Element`，交給 core 的 `TextLineSplitter.split(elements)`：`split` 先把同一行的 element 依 `left` 排序（ML Kit 不保證順序），相鄰 element 的水平間距不超過該行高度的 0.5 倍時合併成一個框（文字以一個空白相接），否則分成不同的框。這樣欄位之間的大間距會切開，名稱內的小間距會保留；解析器本身也能處理合併後的「2026/元大台灣50」與「09/30 盤中零股買進」。座標轉換 `toTextBox(text, left, top, right, bottom, width, height)` 也放在 core：`x = left / w`、`y = 1 - bottom / h`、`width = (right - left) / w`、`height = (bottom - top) / h`。
+分行粒度：ML Kit 的 `Text.Line` 可能把同一列的多個欄位合併成一行（例如「2026/ 元大台灣50 112.55 -563」），解析器去空白後會得到無法解析的字串。因此不直接用 Line，而是用 Line 底下的 `Text.Element`，交給 core 的 `TextLineSplitter.split(elements)`：`split` 先把同一行的 element 依 `left` 排序（ML Kit 不保證順序），相鄰 element 的水平間距不超過該行高度的 0.5 倍、且不是「中文接數字」或「數字接中文」時合併成一個框（例如交易類型與股數靠得很近時仍分開；被分開的股名如「元大台灣」「50」由解析器的名稱片段規則接回）（文字以一個空白相接），否則分成不同的框。這樣欄位之間的大間距會切開，名稱內的小間距會保留；解析器本身也能處理合併後的「2026/元大台灣50」與「09/30 盤中零股買進」。座標轉換 `toTextBox(text, left, top, right, bottom, width, height)` 也放在 core：`x = left / w`、`y = 1 - bottom / h`、`width = (right - left) / w`、`height = (bottom - top) / h`。
 
 取得 ML Kit 實際輸出：debug 版（`BuildConfig.DEBUG`）的預覽頁選單多一個「複製辨識結果」，把拆框之前的原始輸入（每張圖的寬高與每一行的 `PixelElement` 清單）以 Kotlin 測試資料的格式（可直接作為 `TextLineSplitter.split(...)` 的輸入）複製到剪貼簿，讓測試可以從拆框到解析整段重跑，也能用來調整 0.5 倍行高的門檻，讓開發者用真實截圖產生 JVM 測試資料。release 版沒有這個選單，也不寫任何 log。這是規格「不記錄辨識文字」的唯一例外，由使用者在 debug 版主動觸發，資料只到裝置本機的剪貼簿。
 
@@ -129,7 +131,7 @@ Out of scope：`db/` 底下任何檔案、`ListViewModel` 的邏輯、其他分�
 
 `AndroidManifest.xml` 在 `MainActivity` 加兩個 intent filter：`ACTION_SEND` 與 `ACTION_SEND_MULTIPLE`，`mimeType="image/*"`，category DEFAULT。`MainActivity` 維持 standard launchMode：從其他 App 分享時，系統會在分享來源 App 的工作堆疊上開一個新的 `MainActivity`；匯入完成後停在這個新實例的列表頁，從列表頁按返回回到分享來源。不改成 `singleTask`，避免影響桌面小工具與啟動器既有的開啟行為。
 
-`MainActivity.onCreate`（`savedInstanceState == null` 時）呼叫 `handleShareIntent`：用 `IntentCompat.getParcelableExtra`／`getParcelableArrayListExtra` 取出 `EXTRA_STREAM`，沒有時改讀 `ClipData` 的 URI；交給 `ShareIntentImages.select` 過濾；有 URI 時把底部分頁切到 `stock`，再以 global action 開 `tradeImportFragment` 並帶入 URI 字串。處理過的 intent 換成空的 `Intent()`，避免旋轉後重複開啟。`onNewIntent` 也呼叫同一個函式（standard launchMode 下很少發生）；若此時返回堆疊上已有 `tradeImportFragment` 且它尚未開始寫入，以 `popUpTo(tradeImportFragment, inclusive = true)` 取代它，舊的匯入不寫入任何紀錄；若它正在寫入，不取代，忽略這次分享並以 Toast 提示「匯入進行中，請稍後再分享」。URI 的讀取權限由系統授予接收的 Activity，同一 Activity 內的 fragment 讀取不需額外處理。
+`MainActivity.onCreate`（`savedInstanceState == null` 時）呼叫 `handleShareIntent`：intent 帶 `FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY`（從最近使用的 App 重開）時不處理。用 `IntentCompat.getParcelableExtra`／`getParcelableArrayListExtra` 取出 `EXTRA_STREAM`，沒有時改讀 `ClipData` 的 URI；交給 `ShareIntentImages.select` 過濾，再以 `ShareIntentImages.isAllowedSource` 只留下其他 App 的 `content:` URI（拒絕 `file:` 與本 App 自己的 provider，避免分享方借本 App 讀取私有檔案）；有 URI 時把底部分頁切到 `stock`，再以 global action 開 `tradeImportFragment` 並帶入 URI 字串。處理過的 intent 換成空的 `Intent()`，避免旋轉後重複開啟。`onNewIntent` 也呼叫同一個函式（standard launchMode 下很少發生）；先切到 stock 分頁（讓分頁保存的返回堆疊生效），若此時返回堆疊上已有 `tradeImportFragment`，以 `popUpTo(tradeImportFragment, inclusive = true)` 取代它：未確認的匯入不寫入任何紀錄；已確認的匯入即使被取代也會在 app 範圍寫完，並由 `TradeImportRepository` 自己顯示「已匯入 N 筆」，所以任何時候都可以取代。URI 的讀取權限由系統授予接收的 Activity，同一 Activity 內的 fragment 讀取不需額外處理。
 
 替代方案：`singleTask` launchMode。不採用，原因如上。另開透明的轉送 Activity 也不採用，需要轉送 URI 權限，較複雜。
 
@@ -158,11 +160,11 @@ Out of scope：`db/` 底下任何檔案、`ListViewModel` 的邏輯、其他分�
 - `data class StockEntry(code: String, name: String)`；`class StockNameResolver(entries: List<StockEntry>) { fun resolve(name: String): String? }`；`object StockDirectoryParser { fun parse(items: List<String>): List<StockEntry> }`。
 - `data class ListChoice(id: Int, name: String)`。
 - `data class ExistingTrade(stockNo: String, epochMillis: Long, price: Double, amount: Int, side: TradeSide)`。
-- `class TradeImportSession(trades, resolver, isKnownCode: (String) -> Boolean, existingTrades: List<ExistingTrade>, lists: List<ListChoice>, currentListId: Int?)`：`items`、`toggleSelection(id)`、`setStockNo/setPrice/setAmount/setDate/setSide(id, value)`、`selectList(id: Int?)`、`selectedList`、`isImportEnabled`、`showsNoListNotice`、`buildImportPlan(usedTimestamps: Set<Long>, stocksInAnyList: Set<String>): ImportPlan`。
+- `class TradeImportSession(trades, resolver, isKnownCode: (String) -> Boolean, existingTrades: List<ExistingTrade>, lists: List<ListChoice>, currentListId: Int?)`：`items`、`toggleSelection(id)`、`applyEdit(id, stockNoText, price, amount, date, side)`、`selectList(id: Int?)`、`selectedList`、`isImportEnabled`、`showsNoListNotice`、`buildImportPlan(existingTrades: List<ExistingTrade>, stocksInAnyList: Set<String>): ImportPlan`（以確認時重讀的紀錄計算已用時間戳；重讀的紀錄改變了狀態或勾選時更新預覽並丟 `PreviewChangedException`）。
 - `data class ImportPlan(records: List<NewRecord>, stocksToAdd: List<String>, list: ListChoice?)`；`data class NewRecord(stockNo, epochMillis, price, amount, side)`。
 
 失敗模式：
-- 有勾選項目不合法時 `buildImportPlan` 丟 `InvalidSelectionException`，畫面顯示錯誤，不寫入。
+- 有勾選項目不合法時 `buildImportPlan` 丟 `InvalidSelectionException`；預覽開啟後有相同交易被寫入時丟 `PreviewChangedException`；兩者都不寫入，預覽解除鎖定並提示。
 - 圖片讀不到、URI 權限失效、記憶體不足或 ML Kit 失敗：顯示錯誤，不寫入。
 - 名錄讀不到代號：該筆為不完整，使用者可手動輸入名錄內的代號。
 - 匯入中再次確認：忽略。
@@ -183,6 +185,9 @@ Out of scope：`db/` 底下任何檔案、`ListViewModel` 的邏輯、其他分�
 - [沒有費稅] → 匯入的紀錄沒有費稅，與現在手動新增一致。費稅 change 合併後補。
 - [雲端無法建置 Android] → 核心邏輯以 JVM 測試驗證，Android 任務在本機建置成功前不勾選，本機建置後再做一次 code review 才合併。
 - [台灣以外時區] → 重複判斷可能漏判，記錄為已知限制。
+- [超長的捲動截圖] → `InputImage.fromFilePath` 以原尺寸解碼，記憶體不足時轉成辨識錯誤並顯示訊息、不寫入；投資先生的明細截圖是一般螢幕截圖，先不做縮小解碼。
+- [目標清單在另一個視窗被刪除] → 紀錄照寫，股票不加入清單，完成訊息說明清單已被刪除。
+- [日期挑選器] → 最大值為台北的今天，以裝置時區換算給挑選器。
 
 ## Open Questions
 

@@ -6,7 +6,7 @@ Lets a user turn screenshots of the Yuanta "Investor Mr." (投資先生) trade d
 
 ### Requirement: Recognize trades from screenshots on device
 
-The system SHALL let the user pick one or more images with the system photo picker, or receive images shared through the system share sheet, and SHALL recognize the text in each image on the device with ML Kit Text Recognition using the bundled Chinese model, one image at a time. The system SHALL NOT upload the images or the recognized text to any server and SHALL NOT write the recognized text to logs. The only exception is a debug-build-only action in the preview that copies the raw recognizer output (image size and the words of each line with their pixel positions), formatted as test data, to the device clipboard when the developer selects it; release builds SHALL NOT offer this action. The words of each recognized line SHALL be ordered left to right and split into separate text boxes wherever the horizontal gap between neighbouring words is more than 0.5 times the line height.
+The system SHALL let the user pick one or more images with the system photo picker, or receive images shared through the system share sheet, and SHALL recognize the text in each image on the device with ML Kit Text Recognition using the bundled Chinese model, one image at a time. The system SHALL NOT upload the images or the recognized text to any server and SHALL NOT write the recognized text to logs. The only exception is a debug-build-only action in the preview that copies the raw recognizer output (image size and the words of each line with their pixel positions), formatted as test data, to the device clipboard when the developer selects it; release builds SHALL NOT offer this action. The words of each recognized line SHALL be ordered left to right and split into separate text boxes wherever the horizontal gap between neighbouring words is more than 0.5 times the line height, and wherever Chinese text meets a number.
 
 #### Scenario: Multiple screenshots are merged into one preview
 
@@ -186,12 +186,17 @@ The system SHALL resolve the stock number from the stock name by exact match aga
 
 ### Requirement: Mandatory preview with per-trade confirmation
 
-The system SHALL present every recognized trade in a preview before anything is written and SHALL NOT provide a way to import without the preview. The user SHALL be able to select or deselect each trade and to edit its stock number, price, shares, date and direction. A trade SHALL be incomplete when its stock number is missing or not in the stock directory, its date is missing, its price is missing or not greater than 0, or its shares are missing or not an integer from 1 to 32767. Only importable and duplicate trades SHALL be selectable. When a trade matches more than one status, the first applicable status in this order SHALL be shown: unsupported, incomplete, duplicate, importable. When the preview opens, exactly the importable trades SHALL be selected. After an edit changes a trade's status, the trade SHALL be selected when it became importable and deselected otherwise; a trade whose status did not change SHALL keep its selection. The import action SHALL be disabled while no trade is selected. In the editor, the stock number SHALL be trimmed and upper-cased and an empty stock number SHALL mean no stock number; the price and the shares SHALL be trimmed and stripped of thousands separators, and a value that cannot be parsed SHALL mean no value; the date SHALL be chosen with a date picker.
+The system SHALL present every recognized trade in a preview before anything is written and SHALL NOT provide a way to import without the preview. The user SHALL be able to select or deselect each trade and to edit its stock number, price, shares, date and direction. When the user enters a stock number found in the stock directory, the preview SHALL show that stock's directory name. The date picker SHALL NOT offer dates after today in the Asia/Taipei time zone. A trade SHALL be incomplete when its stock number is missing or not in the stock directory, its date is missing or after today in the Asia/Taipei time zone, its price is missing or not greater than 0, or its shares are missing or not an integer from 1 to 32767. Only importable and duplicate trades SHALL be selectable. When a trade matches more than one status, the first applicable status in this order SHALL be shown: unsupported, incomplete, duplicate, importable. When the preview opens, exactly the importable trades SHALL be selected. After an edit changes a trade's status, the trade SHALL be selected when it became importable and deselected otherwise; a trade whose status did not change SHALL keep its selection. The import action SHALL be disabled while no trade is selected. In the editor, the stock number SHALL be trimmed and upper-cased and an empty stock number SHALL mean no stock number; the price and the shares SHALL be trimmed and stripped of thousands separators, and a value that cannot be parsed SHALL mean no value; the date SHALL be chosen with a date picker.
 
 #### Scenario: Incomplete trade becomes selectable after editing
 
 - **WHEN** a trade has no date and the user enters a valid date
 - **THEN** the trade SHALL become importable and selected
+
+#### Scenario: Misread future year
+
+- **WHEN** a recognized trade is dated 2028-09-30 and today is 2026-11-02
+- **THEN** the preview SHALL mark it as incomplete and not selectable
 
 ##### Example: share count validation
 
@@ -214,7 +219,7 @@ The system SHALL present every recognized trade in a preview before anything is 
 
 ### Requirement: Detect duplicates
 
-The system SHALL treat two trades as duplicates when stock number, calendar date in the Asia/Taipei time zone, price compared as a single-precision float, shares and direction are all equal. Each previewed trade SHALL be compared with the existing local buy/sell records and with the earlier trades in the same preview. A duplicate SHALL be deselected by default and the user SHALL be able to select it manually.
+The system SHALL treat two trades as duplicates when stock number, calendar date in the Asia/Taipei time zone, price compared as a single-precision float, shares and direction are all equal. Each previewed trade SHALL be compared with the existing local buy/sell records and with the earlier trades in the same preview. The stored records SHALL be read again when the user confirms; when they change a status or a selection, the system SHALL update the preview and write nothing for that confirmation. A duplicate SHALL be deselected by default and the user SHALL be able to select it manually.
 
 ##### Example: duplicate key comparison
 
@@ -235,6 +240,12 @@ The system SHALL treat two trades as duplicates when stock number, calendar date
 - **WHEN** the preview contains the same trade twice
 - **THEN** the first SHALL be importable and selected and the second SHALL be duplicate and deselected
 
+#### Scenario: Same trades stored while the preview is open
+
+- **WHEN** the preview is open and the same trades are stored by another import before the user confirms
+- **THEN** the system SHALL NOT write any record for that confirmation
+- **AND** the system SHALL mark those trades as duplicate, deselect them, and ask the user to confirm again
+
 #### Scenario: Legitimate repeated trade
 
 - **WHEN** the user selects a duplicate trade and confirms the import
@@ -242,7 +253,7 @@ The system SHALL treat two trades as duplicates when stock number, calendar date
 
 ### Requirement: Write through the existing record flow
 
-When the user confirms the import, the system SHALL first validate every selected trade and SHALL write nothing when any selected trade is not importable or duplicate with a valid stock number, date, price and share count. After validation passes, the system SHALL write each selected trade the same way as manual entry: a local `InvestHistory` record with the stock number, date, price, shares and direction (0 buy, 1 sell), and an upload to the online database when the user is signed in. Shares SHALL be stored without unit conversion. The stored date SHALL be 12:00:00.000 on the trade's calendar date in the Asia/Taipei time zone; when that millisecond timestamp is already used by an existing local record or an earlier trade in the same import, the system SHALL add one millisecond at a time until it is unused. The used timestamps SHALL be read again when the user confirms. The local records SHALL be written completely before the import screen closes, and leaving the screen SHALL NOT cancel the local writes or the uploads. While an import is being written, the import action SHALL be disabled and a second confirmation SHALL be ignored, so one preview is written at most once. The system SHALL report the number of records submitted for writing. Fee and tax SHALL NOT be written by this capability.
+When the user confirms the import, the system SHALL first validate every selected trade and SHALL write nothing when any selected trade is not importable or duplicate with a valid stock number, date, price and share count. After validation passes, the system SHALL write each selected trade the same way as manual entry: a local `InvestHistory` record with the stock number, date, price, shares and direction (0 buy, 1 sell), and an upload to the online database when the user is signed in. Shares SHALL be stored without unit conversion. The stored date SHALL be 12:00:00.000 on the trade's calendar date in the Asia/Taipei time zone; when that millisecond timestamp is already used by an existing local record or an earlier trade in the same import, the system SHALL add one millisecond at a time until it is unused. The used timestamps SHALL be read again when the user confirms. The local records SHALL be written completely before the import screen closes, and leaving the screen SHALL NOT cancel the local writes or the uploads. While an import is being written, the import action SHALL be disabled and a second confirmation SHALL be ignored, so one preview is written at most once. Imports SHALL be written one at a time, and the used timestamps SHALL be read again inside that order, so two imports never store the same timestamp. The system SHALL report the number of records submitted for writing, also when the import screen was closed before the writing finished. The records and the list entries of one import SHALL be stored in one local transaction, so a failing local write stores nothing and the preview can be confirmed again. Fee and tax SHALL NOT be written by this capability.
 
 #### Scenario: Only selected trades are written
 

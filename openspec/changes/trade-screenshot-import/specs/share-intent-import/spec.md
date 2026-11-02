@@ -6,7 +6,7 @@ Lets a user send screenshots from the system share sheet straight into the trade
 
 ### Requirement: Accept shared images from the system share sheet
 
-The app SHALL appear in the system share sheet for images by declaring `ACTION_SEND` and `ACTION_SEND_MULTIPLE` intent filters with the MIME type `image/*`. When the app receives such an intent with at least one image URI, taken from `EXTRA_STREAM` or, when that is missing, from the intent's clip data, the system SHALL switch to the stock list tab and open the trade screenshot import with those images, skipping the photo picker. The system SHALL recognize, preview and write the shared images exactly as images chosen in the photo picker, and SHALL NOT write any record before the user confirms in the preview. The system SHALL NOT copy, store or upload the shared images.
+The app SHALL appear in the system share sheet for images by declaring `ACTION_SEND` and `ACTION_SEND_MULTIPLE` intent filters with the MIME type `image/*`. When the app receives such an intent with at least one image URI, taken from `EXTRA_STREAM` or, when that is missing, from the intent's clip data, the system SHALL switch to the stock list tab and open the trade screenshot import with those images, skipping the photo picker. The system SHALL recognize, preview and write the shared images exactly as images chosen in the photo picker, and SHALL NOT write any record before the user confirms in the preview. The system SHALL NOT copy, store or upload the shared images. The system SHALL read only `content:` URIs whose authority does not belong to this app, and SHALL ignore any other shared URI.
 
 #### Scenario: Two images are shared
 
@@ -18,6 +18,18 @@ The app SHALL appear in the system share sheet for images by declaring `ACTION_S
 
 - **WHEN** the received intent has another action, a MIME type that does not start with "image/", or no image URI
 - **THEN** the app SHALL NOT open the import
+
+#### Scenario: Shared URI points at the app's own files
+
+- **WHEN** a share carries a `file:` URI or a `content:` URI of one of this app's own providers
+- **THEN** the app SHALL ignore that URI and SHALL NOT read it
+- **AND** the app SHALL show a message that some shared images cannot be read
+- **AND** when no shared URI is left, the app SHALL NOT open the import
+
+#### Scenario: Reopened from the recent apps screen
+
+- **WHEN** a task that was started by a share is reopened from the recent apps screen
+- **THEN** the app SHALL NOT open the import again for that earlier share
 
 #### Scenario: Activity recreated after handling a share
 
@@ -36,13 +48,9 @@ The app SHALL appear in the system share sheet for images by declaring `ACTION_S
 - **WHEN** the intent carries the image URI in its clip data and not in `EXTRA_STREAM`
 - **THEN** the app SHALL open the import with that image
 
-#### Scenario: Share received while an import is open
+#### Scenario: Share received while the app is already open
 
-- **WHEN** the running app instance receives a shared image while an import screen is open and that import has not started writing
-- **THEN** the app SHALL replace that import screen with a new import for the shared images
-- **AND** the replaced import SHALL NOT write any record
-
-#### Scenario: Share received while an import is writing
-
-- **WHEN** the running app instance receives a shared image while an import is writing records
-- **THEN** the app SHALL keep that import, ignore the share and show a message to share again later
+- **WHEN** the user shares images while the app is already running, possibly with an import open
+- **THEN** the system SHALL open a new app window on top of the sharing app with an import for the shared images
+- **AND** an import already open in the other window SHALL stay unchanged
+- **AND** when both imports are confirmed, they SHALL be written one after the other and SHALL NOT store the same timestamp twice
