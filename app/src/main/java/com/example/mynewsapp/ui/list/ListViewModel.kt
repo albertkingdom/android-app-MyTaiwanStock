@@ -212,9 +212,9 @@ class ListViewModel(
         }
     }
     private fun getStockPriceInfoRx(stockList: List<String>): Single<Resource<StockPriceInfoResponse>> {
-        val stockListString: String = stockList.joinToString("|") {
-            "tse_${it}.tw"
-        }
+        val stockListString: String = getApplication<MyApplication>().stockListRepository
+            .marketLookup()
+            .exChannelQuery(stockList)
         return  repository.getStockPriceInfoRx(stockListString)
             .flatMap { response -> handleStockPriceInfoResponse(response) }
     }
