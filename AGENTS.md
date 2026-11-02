@@ -48,7 +48,7 @@ skill 與下列規則都以這張表為準。新專案的第一件事是填完�
 | 發版分支 | 無 |
 | 建置指令 | `./gradlew assembleDebug`（需 JDK 17，見「平台專屬規則」） |
 | 測試指令 | `./gradlew testDebugUnitTest` |
-| CI 必過檢查 | 無（尚未建立 CI，合併前改為本機執行建置與測試指令並通過） |
+| CI 必過檢查 | `build-and-test`（GitHub Actions，`.github/workflows/ci.yml`） |
 | 版號來源 | `app/build.gradle` 的 `versionName`（並同步遞增 `versionCode`） |
 
 ## Spectra 計畫審查
