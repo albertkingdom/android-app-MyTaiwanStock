@@ -59,7 +59,7 @@ The system SHALL load the stock list from the local cache file when it exists, c
 
 ### Requirement: Refresh the list in the background when stale
 
-The system SHALL check whether a refresh is needed each time the main activity starts (app launch and return to the foreground). A refresh SHALL start when no valid cached list exists (the cache file is missing, cannot be decoded, or is empty) or when at least 7 days have passed since the last successful refresh. The refresh SHALL run in a background WorkManager job that requires a network connection, and the staleness decision, file reads and downloads SHALL NOT run on the main thread. Each source request SHALL fail when connecting takes more than 30 seconds or when no data arrives for 30 seconds; the total download time SHALL NOT be limited.
+The system SHALL check whether a refresh is needed each time the main activity starts (app launch and return to the foreground). A refresh SHALL start when no valid cached list exists (the cache file is missing, cannot be decoded, or is empty) or when at least 7 days have passed since the last successful refresh. The refresh SHALL run in a background WorkManager job that requires a network connection, and the staleness decision, file reads and downloads SHALL NOT run on the main thread. Each source request SHALL fail when connecting takes more than 30 seconds, when no data arrives for 30 seconds, or when the whole download takes more than 5 minutes, and cancelling the refresh SHALL cancel the request. After an attempt that adopted no market or could not write the cache, the system SHALL NOT start another refresh until 24 hours have passed since that attempt, unless the recorded attempt time is later than the current time. A successful refresh SHALL clear the recorded failed attempt. A recorded last refresh time later than the current time SHALL make the refresh due.
 
 #### Scenario: Refresh timing
 
@@ -75,6 +75,13 @@ The system SHALL check whether a refresh is needed each time the main activity s
 | just now | no | yes |
 | never | no | yes |
 | 1 day ago | corrupted | yes |
+| 30 days in the future | yes | yes |
+
+#### Scenario: Back-off after a failed attempt
+
+- **WHEN** a refresh attempt adopted no market 23 hours ago
+- **THEN** the system SHALL NOT start a refresh
+- **AND** when 24 hours have passed since that attempt the refresh SHALL be due again
 
 ---
 

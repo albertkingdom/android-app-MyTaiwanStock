@@ -50,15 +50,15 @@ iOS 用 main actor 保證讀寫順序；Android 的讀取來自 UI thread、Work
 
 ### 背景執行：WorkManager 一次性 unique work，排入點只在 `MainActivity.onStart`
 
-`MainActivity.onStart` 一律以 `enqueueUniqueWork("stock_list_refresh", ExistingWorkPolicy.KEEP, ...)` 排入 `StockListRefreshWorker`（`NetworkType.CONNECTED`），主執行緒不讀檔也不讀 SharedPreferences。worker 在背景呼叫 `refreshIfNeeded()`（未過期時立即回傳 skipped），以 try/catch 包住，一律回傳 `Result.success()`（失敗不重試、不顯示錯誤，下次回到前景再判斷）。不用 `ProcessLifecycleOwner`，因為那需要新增 `lifecycle-process` 依賴；旋轉螢幕造成的重複 `onStart` 由 KEEP 與過期判斷吸收。下載使用 OkHttp，`connectTimeout` 與 `readTimeout` 各 30 秒，不設 `callTimeout`（對應 iOS 的 `timeoutInterval` 為閒置逾時），非 200 丟 `IOException`。
+失敗（兩市場都未採用或寫入失敗）時記錄 `lastFailedAttemptMillis`，24 小時內不再嘗試，避免每次回到前景都重新下載數 MB（iOS 沒有這個保護；24 小時為取捨，非量測值）；成功時清除。更新時間以 `commit()` 同步寫入，與快取檔一致。`MainActivity.onStart` 一律以 `enqueueUniqueWork("stock_list_refresh", ExistingWorkPolicy.KEEP, ...)` 排入 `StockListRefreshWorker`（`NetworkType.CONNECTED`），主執行緒不讀檔也不讀 SharedPreferences。worker 在背景呼叫 `refreshIfNeeded()`（未過期時立即回傳 skipped），以 try/catch 包住，一律回傳 `Result.success()`（失敗不重試、不顯示錯誤，下次回到前景再判斷）。不用 `ProcessLifecycleOwner`，因為那需要新增 `lifecycle-process` 依賴；旋轉螢幕造成的重複 `onStart` 由 KEEP 與過期判斷吸收。下載使用 OkHttp，`connectTimeout` 與 `readTimeout` 各 30 秒（對應 iOS 的 `timeoutInterval` 為閒置逾時），另設 `callTimeout` 5 分鐘作為上限（4.6 MB 約需 15 KB/s，估計值）；以 `enqueue` 加 `suspendCancellableCoroutine` 實作，協程取消時呼叫 `call.cancel()`，下載卡住不會讓 in-flight 永遠不結束；非 200 丟 `IOException`。
 
 ### 報價查詢依市場決定前綴，小工具直接讀 repository
 
-`StockMarketLookup(marketByCode)` 提供 `market(code)`、`exChannel(code)`、`exChannelQuery(codes)`。`StockListRepository.marketLookup()` 回傳目前快照的 lookup。`ListViewModel`（在 Rx io thread 組查詢字串）與 `UpdateWidgetPeriodicTask`（在 worker thread）透過 `MyApplication.stockListRepository` 取得。
+`StockMarketLookup(marketByCode)` 提供 `market(code)`、`exChannel(code)`、`exChannelQuery(codes)`。`StockListRepository.marketLookup()` 回傳目前快照的 lookup：目前清單的市場優先，目前清單沒有的代號用內建清單的市場（每日快照可能缺少停牌的追蹤股，否則會被當成上市而查不到報價），兩者都沒有才用 TSE。repository 每次 `reload` 都解析內建清單以建立這份備援對照。`ListViewModel`（在 Rx io thread 組查詢字串）與 `UpdateWidgetPeriodicTask`（在 worker thread）透過 `MyApplication.stockListRepository` 取得。
 
 ### 新增股票改讀 repository，對話框精確比對
 
-`StockSearch.filter(strings, query)` 是 `contains` 判斷的純函式；`StockSearch.codeFromInput(text)` 先 trim、取第一個空格（" "）前的字串並以 `uppercase()` 轉大寫（00981a 視為 00981A）。`AddStockViewModel` 改為持有 `stockNamesProvider: () -> List<String>`，每次 `filterSearchQuery` 都重新讀取；`init` 不再篩選，由 `AddStockFragment` 設定 provider 為 `{ stockListRepository.searchStrings }` 後呼叫一次。`AddStockDialogFragment` 的自動完成來源同上；輸入框改 `inputType="text"`；按下「新增」時 以 `codeFromInput` 取代號，`stockListRepository.contains(code)` 為真才加入並關閉，否則在 `TextInputLayout`（`outlinedTextField`）顯示「查無此股票代號」且不關閉（以 `setOnShowListener` 覆寫正向按鈕的 click listener，避免 AlertDialog 自動關閉）。
+`StockSearch.filter(strings, query)` 是 `contains` 判斷的純函式；`StockSearch.codeFromInput(text)` 先 trim、取第一個空格（" "）前的字串並以 `uppercase()` 轉大寫（00981a 視為 00981A）。`AddStockViewModel` 改為持有 `stockNamesProvider: () -> List<String>`，每次 `filterSearchQuery` 都重新讀取；`init` 不再篩選，由 `AddStockFragment` 設定 provider 為 `{ stockListRepository.searchStrings }` 後呼叫一次。`AddStockDialogFragment` 的自動完成來源同上；輸入框改 `inputType="textCapCharacters"`；按下「新增」時 以 `codeFromInput` 取代號，`stockListRepository.contains(code)` 為真才加入並關閉，否則在 `TextInputLayout`（`outlinedTextField`）顯示「查無此股票代號」且不關閉（以 `setOnShowListener` 覆寫正向按鈕的 click listener，避免 AlertDialog 自動關閉）。
 
 ### K 線無資料與均線
 
@@ -77,12 +77,12 @@ iOS 用 main actor 保證讀寫順序；Android 的讀取來自 UI thread、Work
 - `object StockListParser { fun parseTwse(json: String): List<StockListEntry>; fun parseOtc(json: String): List<StockListEntry>; fun isKeptOtcCode(code: String): Boolean; fun merge(tse: List<StockListEntry>, otc: List<StockListEntry>): List<StockListEntry>; fun encodeFile(entries: List<StockListEntry>): String; fun decodeFile(json: String): List<StockListEntry> }`；格式錯誤丟 `IOException`（含 Moshi 的 `JsonDataException`／`JsonEncodingException` 轉成的 `IOException`）。
 - `class StockListRepository(cacheFile: File, bundledSource: () -> InputStream?)`：建構時載入；`bundledSource` 丟例外或回 null、內容無法解碼時視為沒有內建清單（不丟例外）；`entries`、`searchStrings`、`hasCache`（目前快照來自快取）、`market(code): StockMarket?`、`contains(code)`、`marketLookup()`、`replace(newEntries)`（失敗丟 `IOException`，記憶體與原快取檔不變、不留暫存檔）、`reload()`。重複代號以第一筆為準。
 - `class StockListRefresher(repository, fetcher: StockListFetching, timeStore: RefreshTimeStore, now: () -> Long = System::currentTimeMillis, dispatcher: CoroutineDispatcher = Dispatchers.IO)`：`isRefreshDue()`、`suspend refreshIfNeeded(): RefreshResult`；`data class RefreshResult(tse: MarketOutcome, otc: MarketOutcome)`，`MarketOutcome { UPDATED, SKIPPED, KEPT_OLD_DATA }`；常數 `REFRESH_INTERVAL_MILLIS = 7 天`、`MINIMUM_RATIO = 0.8`。refresher 本身不寫 log；worker 依結果與 `repository.entries` 以 Timber 記錄 `stock list refreshed: tse=N otc=M`（至少一個市場 UPDATED 時）。
-- `interface StockListFetching { suspend fun fetchTwse(): String; suspend fun fetchOtc(): String }`；`interface RefreshTimeStore { var lastRefreshMillis: Long? }`。
-- `class OkHttpStockListFetcher(client: OkHttpClient = defaultClient(), twseUrl, otcUrl)`，`companion fun defaultClient()` 回傳 connect／read 30 秒、無 callTimeout 的 client：在 `Dispatchers.IO` 執行，非 200 丟 `IOException`。
+- `interface StockListFetching { suspend fun fetchTwse(): String; suspend fun fetchOtc(): String }`；`interface RefreshTimeStore { var lastRefreshMillis: Long?; var lastFailedAttemptMillis: Long? }`；常數 `FAILED_ATTEMPT_BACKOFF_MILLIS = 24 小時`。
+- `class OkHttpStockListFetcher(client: OkHttpClient = defaultClient(), twseUrl, otcUrl)`，`companion fun defaultClient()` 回傳 connect／read 30 秒、callTimeout 5 分鐘的 client；協程取消時取消 HTTP call：在 `Dispatchers.IO` 執行，非 200 丟 `IOException`。
 - `class StockMarketLookup(marketByCode: Map<String, StockMarket>)`：`market(code)`（未知回 TSE）、`exChannel(code)`、`exChannelQuery(codes)`。
 - `object StockSearch { fun filter(strings: List<String>, query: String): List<String>; fun codeFromInput(text: String): String }`：`contains` 比對，空字串回傳全部；`codeFromInput` 為 trim、取第一個空格前、以 `uppercase()` 轉大寫。
 - `object MovingAverage { fun compute(closes: List<Float>, window: Int): List<Pair<Int, Float>> }`，第 i 點（i ≥ window−1）為 closes[i−window+1..i] 的平均，x 為 i。
-- `object CandleRows { fun merge(lastMonth: List<List<String>>?, currentMonth: List<List<String>>?): List<List<String>>; fun sanitize(rows): List<List<String>>; fun priceChange(text: String): Float }`；STOCK_DAY 列格式：0 日期、2 成交股數、3 開、4 高、5 低、6 收、7 漲跌，數字可含千分位逗號。
+- `object CandleRows { fun merge(lastMonth: List<List<String>>?, currentMonth: List<List<String>>?): List<List<String>>; fun sanitize(rows): List<List<String>>; fun priceChange(text: String): Float }`；STOCK_DAY 列格式：0 日期、1 成交股數、2 成交金額（成交量長條使用）、3 開、4 高、5 低、6 收、7 漲跌，數字可含千分位逗號。
 - 失敗模式：refresher 與 worker 不讓任何例外（`CancellationException` 除外）離開；UI 不顯示更新錯誤。
 
 ## Risks / Trade-offs

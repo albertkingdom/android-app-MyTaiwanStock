@@ -6,7 +6,7 @@ The otc-stock-support capability lets over-the-counter stocks be tracked like li
 
 ### Requirement: Query quotes with the market prefix
 
-The system SHALL build each quote query code as "tse_{code}.tw" for a listed stock and "otc_{code}.tw" for an over-the-counter stock, based on the market recorded in the stock list. When the market of a code is unknown, the system SHALL use "tse_". Several codes SHALL be joined with "|" in the order given. This SHALL apply to the stock list screen and the home-screen widget.
+The system SHALL build each quote query code as "tse_{code}.tw" for a listed stock and "otc_{code}.tw" for an over-the-counter stock, based on the market recorded in the stock list. For a code missing from the current list, the system SHALL use the market recorded in the bundled list, so a followed stock that is absent from a refreshed daily snapshot keeps its prefix. When neither list has the code, the system SHALL use "tse_". Several codes SHALL be joined with "|" in the order given. This SHALL apply to the stock list screen and the home-screen widget.
 
 #### Scenario: Mixed list
 
@@ -20,6 +20,11 @@ The system SHALL build each quote query code as "tse_{code}.tw" for a listed sto
 | 2330 | tse | tse_2330.tw |
 | 6488 | otc | otc_6488.tw |
 | 9999 | unknown | tse_9999.tw |
+
+#### Scenario: Followed stock missing from the refreshed list
+
+- **WHEN** the bundled list records 6488 as over-the-counter and the refreshed list does not contain 6488
+- **THEN** the query code for 6488 SHALL be "otc_6488.tw"
 
 ---
 
@@ -36,7 +41,7 @@ The widget update job SHALL obtain the code-to-market lookup from the same stock
 
 ### Requirement: Show no data when candle data is unavailable
 
-When the candle data for a stock is empty, cannot be fetched, or the response has no data rows, the stock detail screen SHALL show the text "無資料" in the chart area, SHALL NOT crash, and SHALL still show the buy/sell records and the overview. When the candle data has fewer rows than a moving average window needs, the chart SHALL NOT crash, SHALL omit that moving average line, and SHALL draw the candles and volume bars that exist. The 5-day line SHALL be drawn only with at least 5 rows and the 10-day line only with at least 10 rows. A row whose open, high, low, close or volume is not a number (for example "--" on a suspended day) SHALL be left out of the chart, and a price change value that is not a number (for example "X0.00" on an ex-dividend day) SHALL be treated as 0. When one of the two requested months fails and the other returns rows, the chart SHALL show the rows that were returned. This SHALL apply to over-the-counter stocks, whose candle data is not supported, and to newly listed securities with few trading days.
+When the candle data for a stock is empty, cannot be fetched, or the response has no data rows, the stock detail screen SHALL show the text "無資料" in the chart area, SHALL NOT crash, and SHALL still show the buy/sell records and the overview. When the candle data has fewer rows than a moving average window needs, the chart SHALL NOT crash, SHALL omit that moving average line, and SHALL draw the candles and volume bars that exist. The 5-day line SHALL be drawn only with at least 5 rows and the 10-day line only with at least 10 rows. A row whose shares traded, trade value, open, high, low or close is not a number (for example "--" on a suspended day) SHALL be left out of the chart, and a price change value that is not a number (for example "X0.00" on an ex-dividend day) SHALL be treated as 0. When one of the two requested months fails and the other returns rows, the chart SHALL show the rows that were returned. This SHALL apply to over-the-counter stocks, whose candle data is not supported, and to newly listed securities with few trading days.
 
 #### Scenario: Over-the-counter stock detail
 
