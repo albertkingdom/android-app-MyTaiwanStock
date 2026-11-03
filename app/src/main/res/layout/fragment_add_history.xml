@@ -171,6 +171,7 @@
                 android:textSize="18sp" />
 
             <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.App.TextInputLayout.Labeled"
                 android:id="@+id/fee"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
@@ -226,6 +227,7 @@
                 android:textSize="18sp" />
 
             <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.App.TextInputLayout.Labeled"
                 android:id="@+id/tax"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
@@ -276,6 +278,7 @@
         </androidx.appcompat.widget.LinearLayoutCompat>
 
         <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.App.TextInputLayout.Labeled"
             android:id="@+id/memo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
