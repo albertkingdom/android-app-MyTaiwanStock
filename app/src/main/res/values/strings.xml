@@ -45,6 +45,8 @@
     <string name="stock_no_invalid">不可為空白</string>
     <string name="date_invalid">請選擇日期</string>
     <string name="save_failed">儲存失敗，請再試一次</string>
+    <string name="add_dividend_cash">現金股利</string>
+    <string name="add_dividend_stock">股票股利</string>
     <string name="fee_settings_title">手續費</string>
     <string name="fee_settings_save">儲存</string>
     <string name="fee_settings_discount">折數</string>

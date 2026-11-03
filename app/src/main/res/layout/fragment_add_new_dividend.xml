@@ -1,146 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingHorizontal="20dp"
-    tools:context=".ui.detail.AddHistoryFragment">
+    android:fillViewport="true"
+    tools:context=".ui.detail.AddDividendFragment">
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="16dp">
 
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <TextView
+            android:id="@+id/stockNoLabel"
             android:layout_width="match_parent"
-            android:layout_height="50dp">
+            android:layout_height="wrap_content"
+            android:text="@string/add_history_stockNo"
+            android:textColor="?android:textColorSecondary"
+            android:textSize="14sp" />
 
-            <TextView
-                android:id="@+id/stockNoLabel"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:text="@string/add_history_stockNo"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="18sp" />
-
-            <TextView
-                android:id="@+id/stockNo"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="2"
-                android:gravity="center"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="18sp"
-                tools:text="123" />
-        </androidx.appcompat.widget.LinearLayoutCompat>
-
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <TextView
+            android:id="@+id/stockNo"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/black"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            tools:text="2330" />
 
-            <TextView
-                android:id="@+id/amountLabel"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:text="現金股利"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="18sp" />
-
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/cash_dividend"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="2"
-                android:hint=""
-                app:errorEnabled="true"
-                >
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:textAlignment="center"
-                    />
-
-            </com.google.android.material.textfield.TextInputLayout>
-        </androidx.appcompat.widget.LinearLayoutCompat>
-
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/cash_dividend"
+            style="@style/Widget.App.TextInputLayout.Outlined"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/add_dividend_cash"
+            app:errorEnabled="true">
 
+            <com.google.android.material.textfield.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-            <TextView
-                android:id="@+id/priceLabel"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:text="股票股利"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="18sp" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/stock_dividend"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="2"
-                android:hint=""
-                app:errorEnabled="true"
-                app:prefixTextColor="@color/black"
-                >
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="numberDecimal"
-                    android:textAlignment="center"/>
-
-            </com.google.android.material.textfield.TextInputLayout>
-        </androidx.appcompat.widget.LinearLayoutCompat>
-
-
-
-
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/stock_dividend"
+            style="@style/Widget.App.TextInputLayout.Outlined"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/add_dividend_stock"
+            app:errorEnabled="true">
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:text="@string/add_history_date"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="18sp" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/date"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="2"
-                android:hint="YYYY-MM-DD"
-                app:errorEnabled="true"
-                android:textColorHint="@android:color/darker_gray">
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/date"
+            style="@style/Widget.App.TextInputLayout.Outlined"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/add_history_date"
+            app:errorEnabled="true"
+            app:placeholderText="YYYY-MM-DD">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/date_edit"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:focusable="false"
-                    android:inputType="none" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-        </androidx.appcompat.widget.LinearLayoutCompat>
-
-    </androidx.appcompat.widget.LinearLayoutCompat>
-
-</androidx.appcompat.widget.LinearLayoutCompat>
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/date_edit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:focusable="false" />
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
