@@ -46,11 +46,11 @@ class UpdateWidgetPeriodicTask(appContext: Context, workerParams: WorkerParamete
     private suspend fun fetchData(): List<WidgetStockData>? {
         val stockNoStrings = inputData.getString(WORKER_INPUT_DATA_KEY)
         val stockNoList = jsonAdapter.fromJson(stockNoStrings ?: "") // e.g. [2330, 0050]
-        val stockNoQuery = stockNoList?.joinToString("|") {
-            "tse_${it}.tw"
-        } // e.g. tse_2330.tw|tse_0050.tw
+        val application = applicationContext as MyApplication
+        // Same lookup as the stock list screen, e.g. otc_6488.tw|tse_2330.tw
+        val stockNoQuery = stockNoList?.let { application.stockListRepository.marketLookup().exChannelQuery(it) }
 
-        val newsRepository = NewsRepository((applicationContext as MyApplication).database.stockDao())
+        val newsRepository = NewsRepository(application.database.stockDao())
 
         val response = stockNoQuery?.let { newsRepository.getStockPriceInfo(it).body() }
 

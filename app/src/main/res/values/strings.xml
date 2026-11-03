@@ -87,4 +87,6 @@
     <string name="trade_import_edit_pick_date">選擇日期</string>
     <string name="trade_import_copy_fixture">複製辨識結果（debug）</string>
     <string name="trade_import_fixture_copied">已複製辨識結果</string>
+    <string name="stock_no_not_found">查無此股票代號</string>
+    <string name="candle_no_data">無資料</string>
 </resources>

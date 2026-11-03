@@ -21,6 +21,7 @@ import androidx.navigation.ui.*
 import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.R
 import com.example.mynewsapp.databinding.ActivityMainBinding
+import com.example.mynewsapp.stocklist.android.StockListRefreshWorker
 import com.example.mynewsapp.ui.list.ListFragmentDirections
 import com.example.mynewsapp.ui.list.ListViewModel
 import com.example.mynewsapp.ui.list.ListViewModelFactory
@@ -129,6 +130,13 @@ class MainActivity : AppCompatActivity() {
         val args = TradeImportFragmentArgs(allowed.map(Uri::toString).toTypedArray()).toBundle()
         val options = if (importOpen) navOptions { popUpTo(R.id.tradeImportFragment) { inclusive = true } } else null
         navController.navigate(R.id.action_global_tradeImportFragment, args, options)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // The only place the stock list refresh check is triggered; the worker decides whether
+        // the list is stale, so the staleness check reads no file or preference on the main thread.
+        StockListRefreshWorker.enqueue(applicationContext)
     }
 
     fun checkIntentExtra() {
