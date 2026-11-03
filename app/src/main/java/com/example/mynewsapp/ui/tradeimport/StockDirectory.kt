@@ -1,13 +1,13 @@
 package com.example.mynewsapp.ui.tradeimport
 
 import android.content.Context
-import com.example.mynewsapp.R
+import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.ui.tradeimport.core.StockDirectoryParser
 import com.example.mynewsapp.ui.tradeimport.core.StockEntry
 
 /**
- * The stocks the import can resolve names to. Today this is the listed-stock array the add-stock
- * screen uses; replace [load] when the OTC stock directory is available.
+ * The stocks the import can resolve names to: the app's stock list (listed and OTC), which can be
+ * refreshed while the app runs, so a directory is built from the list as it is when [load] is called.
  */
 class StockDirectory(val entries: List<StockEntry>) {
     private val codes = entries.map { it.code }.toSet()
@@ -15,14 +15,9 @@ class StockDirectory(val entries: List<StockEntry>) {
     fun isKnownCode(code: String): Boolean = code in codes
 
     companion object {
-        @Volatile
-        private var cached: StockDirectory? = null
-
-        /** Parsed once per process; the directory is a bundled resource. */
-        fun load(context: Context): StockDirectory = cached ?: synchronized(this) {
-            cached ?: StockDirectory(
-                StockDirectoryParser.parse(context.resources.getStringArray(R.array.countries_array).toList()),
-            ).also { cached = it }
+        fun load(context: Context): StockDirectory {
+            val repository = (context.applicationContext as MyApplication).stockListRepository
+            return StockDirectory(StockDirectoryParser.parse(repository.searchStrings))
         }
     }
 }

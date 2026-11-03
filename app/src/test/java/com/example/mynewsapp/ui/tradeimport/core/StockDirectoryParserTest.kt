@@ -1,5 +1,6 @@
 package com.example.mynewsapp.ui.tradeimport.core
 
+import com.example.mynewsapp.stocklist.StockListRepository
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.io.File
@@ -19,13 +20,14 @@ class StockDirectoryParserTest {
         assertEquals(emptyList<StockEntry>(), StockDirectoryParser.parse(listOf("", "0050", " ", "0050 ")))
     }
 
-    /** The real directory resource resolves the stocks of the sample screenshots. */
+    /** The bundled stock list resolves the stocks of the sample screenshots. */
     @Test
     fun real_directory_resolves_the_sample_stocks() {
-        val path = "src/main/res/values/stockNo_suggestions.xml"
-        val file = listOf(File(path), File("app/$path"), File(System.getProperty("stockDirectoryXml") ?: path))
-            .first { it.exists() }
-        val items = Regex("<item>([^<]*)</item>").findAll(file.readText()).map { it.groupValues[1] }.toList()
+        val path = "src/main/assets/StockList.json"
+        val file = listOf(File(path), File("app/$path")).first { it.exists() }
+        val cache = File.createTempFile("StockList", ".json").apply { delete(); deleteOnExit() }
+        val repository = StockListRepository(cache) { file.inputStream() }
+        val items = repository.searchStrings
         val resolver = StockNameResolver(StockDirectoryParser.parse(items))
 
         assertEquals("0050", resolver.resolve("元大台灣50"))
