@@ -71,4 +71,6 @@
 
     <string name="add_new_following_list">新增追蹤清單</string>
     <string name="add_new_stockNo">新增股票</string>
+    <string name="stock_no_not_found">查無此股票代號</string>
+    <string name="candle_no_data">無資料</string>
 </resources>

@@ -20,6 +20,8 @@ import com.example.mynewsapp.ui.adapter.StockHistoryAdapter
 import com.example.mynewsapp.databinding.FragmentCandleStickChartBinding
 import com.example.mynewsapp.tradecost.HoldingsCalculator
 import com.example.mynewsapp.tradecost.TradeInput
+import com.example.mynewsapp.use_case.chart.CandleRows
+import com.example.mynewsapp.use_case.chart.MovingAverage
 import com.example.mynewsapp.util.getColorThemeRes
 import com.github.mikephil.charting.charts.CombinedChart
 import com.github.mikephil.charting.components.XAxis
@@ -27,6 +29,7 @@ import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.formatter.LargeValueFormatter
 import com.github.mikephil.charting.highlight.Highlight
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -92,7 +95,15 @@ class CandleStickChartFragment: Fragment() {
 
         chartViewModel.originalCandleData.observe(viewLifecycleOwner) { data ->
             setupOnClickChart(data)
-            initOpenCloseHighLowValue(data.last()[7])
+            initOpenCloseHighLowValue(data.last()[CandleRows.CHANGE])
+        }
+
+        chartViewModel.candleDataUnavailable.observe(viewLifecycleOwner) { unavailable ->
+            if (unavailable) {
+                chart.setNoDataText(getString(R.string.candle_no_data))
+                chart.clear()
+                initOpenCloseHighLowValue("0")
+            }
         }
 
 
@@ -117,12 +128,15 @@ class CandleStickChartFragment: Fragment() {
         historyAdapter.setListener { targetDate ->
             // when clicked record, highlight the day of investing record on chart
 
+            // No chart data (for example the "無資料" state of an OTC stock): nothing to highlight.
+            val data = chart.data ?: return@setListener
             chartViewModel.xLabels.value?.forEachIndexed { index, dateString ->
 
                 if(dateString == targetDate){
                     try {
                         val highlight = Highlight(index.toFloat(), 0, -1)
-                        highlight.dataIndex = 1
+                        // Highlight on the volume bars; the data index shifts when no moving average is drawn.
+                        highlight.dataIndex = data.allData.indexOf(data.barData)
                         chart.highlightValue(highlight, false)
                     } catch (e: Exception) {
                         Log.e("touch history", e.toString())
@@ -143,24 +157,25 @@ class CandleStickChartFragment: Fragment() {
                 return@observe
             }
             val candleDatas: CandleData = pair.first as CandleData
-            val averageEntriesFiveDays = calculateAverageEntries((candleDatas.dataSets[0] as CandleDataSet).values)
-            val averageDataSetFiveDays = LineDataSet(averageEntriesFiveDays, "Average")
-            val averageEntriesTenDays = calculateAverageEntries((candleDatas.dataSets[0] as CandleDataSet).values, 10)
-            val averageDataSetTenDays = LineDataSet(averageEntriesTenDays, "Average")
-            averageDataSetFiveDays.color = Color.parseColor("#ffcc00")
-            averageDataSetTenDays.color = Color.parseColor("#e238ec")
-            averageDataSetFiveDays.setDrawCircles(false)// 禁用繪製數據點圓圈
-            averageDataSetTenDays.setDrawCircles(false)// 禁用繪製數據點圓圈
-
-            val lineData = LineData(averageDataSetFiveDays, averageDataSetTenDays)
-
-            lineData.setDrawValues(false)// 禁用顯示數據點值
-
+            val candleEntries = (candleDatas.dataSets[0] as CandleDataSet).values
+            // A moving average line is drawn only when there are enough rows for its window.
+            val averageDataSets: List<ILineDataSet> = listOf(5 to "#ffcc00", 10 to "#e238ec").mapNotNull { (window, color) ->
+                val entries = calculateAverageEntries(candleEntries, window)
+                if (entries.isEmpty()) return@mapNotNull null
+                LineDataSet(entries, "Average $window").apply {
+                    this.color = Color.parseColor(color)
+                    setDrawCircles(false)// 禁用繪製數據點圓圈
+                }
+            }
 
             val combinedData = CombinedData()
             combinedData.setData(pair.first)
             combinedData.setData(pair.second)
-            combinedData.setData(lineData)
+            if (averageDataSets.isNotEmpty()) {
+                val lineData = LineData(averageDataSets)
+                lineData.setDrawValues(false)// 禁用顯示數據點值
+                combinedData.setData(lineData)
+            }
 
 
 
@@ -172,18 +187,9 @@ class CandleStickChartFragment: Fragment() {
         }
     }
 
-    private fun calculateAverageEntries(candleEntries: List<CandleEntry>, windowSize: Int=5): List<Entry> {
-        val averageEntries = mutableListOf<Entry>()
-        // 定義移動平均數的窗口大小
-
-        for (i in windowSize - 1 until candleEntries.size) {
-            val sum = candleEntries.subList(i - windowSize + 1, i + 1).sumOf { it.close.toDouble() }
-            val average = sum / windowSize
-            averageEntries.add(Entry(i.toFloat(), average.toFloat()))
-        }
-
-        return averageEntries
-    }
+    private fun calculateAverageEntries(candleEntries: List<CandleEntry>, windowSize: Int): List<Entry> =
+        MovingAverage.compute(candleEntries.map { it.close }, windowSize)
+            .map { (index, average) -> Entry(candleEntries[index].x, average) }
 
     /**
      * format x label data
@@ -234,11 +240,11 @@ class CandleStickChartFragment: Fragment() {
             override fun onValueSelected(e: Entry?, h: Highlight?) {
                 //e : x:index,y: y value clicked
                 val index = e!!.x.toInt()
-                val openValue = allDatas[index][3]
-                val closeValue = allDatas[index][6]
-                val highValue = allDatas[index][4]
-                val lowValue = allDatas[index][5]
-                val selectedDate = allDatas[index][0]
+                val openValue = allDatas[index][CandleRows.OPEN]
+                val closeValue = allDatas[index][CandleRows.CLOSE]
+                val highValue = allDatas[index][CandleRows.HIGH]
+                val lowValue = allDatas[index][CandleRows.LOW]
+                val selectedDate = allDatas[index][CandleRows.DATE]
                 binding.apply {
                     open.text = getString(R.string.stockprice_open, openValue)
                     close.text = getString(R.string.stockprice_close, closeValue)
@@ -255,7 +261,8 @@ class CandleStickChartFragment: Fragment() {
         })
     }
     private fun initOpenCloseHighLowValue(stockpriceDiff:String){
-        val priceDiffFloat = stockpriceDiff.toFloat()
+        // "X0.00" (ex-dividend) and other non-numbers count as no change.
+        val priceDiffFloat = CandleRows.priceChange(stockpriceDiff)
         Timber.d("stockpriceDiff $priceDiffFloat")
         binding.apply {
             open.text = getString(R.string.stockprice_open, "")
@@ -265,13 +272,13 @@ class CandleStickChartFragment: Fragment() {
             date.text = getString(R.string.stockprice_date, "")
             priceDiff.text = "${abs(priceDiffFloat)}"
 
-            if (stockpriceDiff.toFloat() > 0f){
+            if (priceDiffFloat > 0f){
                 stockInfo.setBackgroundColor(getColor(requireContext(),R.color.light_red))
                 stockPrice.setTextColor(Color.RED)
                 priceDiff.setTextColor(Color.RED)
                 arrow.setColorFilter(Color.RED)
                 arrow.setImageDrawable(getDrawable(requireContext(),R.drawable.ic_arrow_drop_up))
-            } else if (stockpriceDiff.toFloat() < 0f) {
+            } else if (priceDiffFloat < 0f) {
                 val greenColor = getColor(requireContext(),R.color.green)
                 stockInfo.setBackgroundColor(getColor(requireContext(),R.color.celadon))
                 stockPrice.setTextColor(greenColor)
