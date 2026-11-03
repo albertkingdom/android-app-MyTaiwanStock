@@ -3,6 +3,8 @@ package com.example.mynewsapp.ui.detail
 import androidx.lifecycle.*
 import com.example.mynewsapp.db.InvestHistory
 import com.example.mynewsapp.repository.NewsRepository
+import com.example.mynewsapp.tradecost.HoldingsCalculator
+import com.example.mynewsapp.db.tradeLine
 import com.example.mynewsapp.use_case.CalculateChartDataUseCase
 import com.example.mynewsapp.use_case.chart.CandleRows
 import kotlinx.coroutines.CancellationException
@@ -11,6 +13,7 @@ import kotlinx.coroutines.coroutineScope
 import com.example.mynewsapp.util.GetDateString
 import com.github.mikephil.charting.data.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -18,6 +21,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.math.BigDecimal
 
 
 class CandleStickChartViewModel(val repository: NewsRepository): ViewModel() {
@@ -39,14 +43,9 @@ class CandleStickChartViewModel(val repository: NewsRepository): ViewModel() {
     private val _originalCandleData = MutableLiveData<List<List<String>>>()
     val originalCandleData: LiveData<List<List<String>>> = _originalCandleData
 
-    private val _totalHistoryAmount = MutableStateFlow<Int>(0)
-    val totalHistoryAmount = _totalHistoryAmount.asStateFlow()
-
-    private val _historyBuyAvgPrice = MutableStateFlow(0.0)
-    val historyBuyAvgPrice = _historyBuyAvgPrice.asStateFlow()
-
-    private val _historySellAvgPrice = MutableStateFlow(0.0)
-    val historySellAvgPrice = _historySellAvgPrice.asStateFlow()
+    private var historyJob: Job? = null
+    private val _holdingsSummary = MutableStateFlow(HoldingsSummary())
+    val holdingsSummary = _holdingsSummary.asStateFlow()
 
     // helper method to combine two liveData
     fun <A, B, C> combine(
@@ -109,39 +108,48 @@ class CandleStickChartViewModel(val repository: NewsRepository): ViewModel() {
 
 
 
-    fun queryHistoryByStockNo(stockNo: String) {
+    /** Keeps the overview in step with the records of the stock, including when no record is left. */
+    fun queryHistoryByStockNo(stockNo: String, currentPrice: BigDecimal?) {
         investHistoryList = repository.queryHistoryByStockNo(stockNo).asLiveData()
-        viewModelScope.launch {
+        // The screen asks again each time its view is created; only the latest query keeps running.
+        historyJob?.cancel()
+        historyJob = viewModelScope.launch {
             repository.queryHistoryByStockNo(stockNo)
                 .catch { exception -> Timber.w(exception) }
-                .collect { list ->
-                    if (list.isEmpty()) return@collect
-                    val totalBuyAmount = list.filter { it.status == 0 }.map { it.amount }
-                        .fold(0) { acc, i -> acc + i }
-                    val totalSellAmount = list.filter { it.status == 1 }.map { it.amount }
-                        .fold(0) { acc, i -> acc + i }
-                    val avgBuyPrice = if (totalBuyAmount > 0) {
-                        list.filter { it.status == 0 }.map { it.amount * it.price }
-                            .reduce { acc, d -> acc + d } / totalBuyAmount
-                    } else {
-                        0
-                    }
-                    val avgSellPrice = if (totalSellAmount > 0) {
-                        list.filter { it.status == 1 }.map { it.amount * it.price }
-                            .reduce { acc, d -> acc + d } / totalSellAmount
-                    } else {
-                        0
-                    }
-
-                    _totalHistoryAmount.value = totalBuyAmount - totalSellAmount
-                    _historyBuyAvgPrice.value = avgBuyPrice.toDouble()
-                    _historySellAvgPrice.value = avgSellPrice.toDouble()
-                }
+                .collect { list -> _holdingsSummary.value = HoldingsSummary.of(list, currentPrice) }
         }
 
     }
+    class Factory(private val repository: NewsRepository) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = CandleStickChartViewModel(repository) as T
+    }
+
     fun clearCandleStickData() {
         //candleStickData.value = null
     }
 
 }
+
+/** The overview of one stock as the detail screen shows it. */
+data class HoldingsSummary(
+    val amountText: String = "0",
+    val marketValueText: String = "-",
+    val averageBuyPriceText: String = "-",
+    val averageSellPriceText: String = "-",
+    val showsUnknownFeeNote: Boolean = false,
+) {
+    companion object {
+        fun of(records: List<InvestHistory>, currentPrice: BigDecimal?): HoldingsSummary {
+            val calculator = HoldingsCalculator(records.map { it.tradeLine() })
+            return HoldingsSummary(
+                amountText = calculator.amount.toString(),
+                marketValueText = HoldingsCalculator.formatMarketValue(calculator.marketValue(currentPrice)),
+                averageBuyPriceText = HoldingsCalculator.format(calculator.averageBuyPrice()),
+                averageSellPriceText = HoldingsCalculator.format(calculator.averageSellPrice()),
+                showsUnknownFeeNote = calculator.hasBuyWithUnknownFee,
+            )
+        }
+    }
+}
+

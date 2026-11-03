@@ -4,49 +4,63 @@ import android.app.DatePickerDialog
 import android.graphics.Color
 import android.os.Bundle
 import android.text.InputType
-import android.util.Log
-import android.view.*
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
 import android.widget.AdapterView
-import android.widget.DatePicker
+import android.widget.ArrayAdapter
+import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
-import androidx.preference.PreferenceManager
 import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.R
 import com.example.mynewsapp.databinding.FragmentAddHistoryBinding
-import com.example.mynewsapp.db.InvestHistory
-import com.example.mynewsapp.util.InputDataStatus
+import com.example.mynewsapp.tradecost.TaxCategory
+import com.example.mynewsapp.tradecost.TradeSide
+import com.example.mynewsapp.ui.setting.FeeSettingsStore
 import com.example.mynewsapp.util.hideKeyboard
-import timber.log.Timber
-import java.util.*
+import kotlinx.coroutines.launch
+import java.util.Calendar
 
-
-class AddHistoryFragment: Fragment(), AdapterView.OnItemSelectedListener {
-    private lateinit var binding: FragmentAddHistoryBinding
-    private lateinit var addHistoryViewModel: AddHistoryViewModel
+class AddHistoryFragment : Fragment() {
+    private var _binding: FragmentAddHistoryBinding? = null
+    private val binding get() = _binding!!
     private val args: AddHistoryFragmentArgs by navArgs()
-    var dateSelected: Long? = null
-    var defaultCustomFeeDiscount: String? = ""
-    var defaultCustomFee: String? = ""
+    private val addHistoryViewModel: AddHistoryViewModel by viewModels {
+        val repository = (requireActivity().application as MyApplication).repository
+        // The settings cannot change while this screen is open.
+        val settings = FeeSettingsStore(requireContext().applicationContext).load()
+        AddHistoryViewModel.Factory(repository) { settings }
+    }
+
+    /** True while the screen writes the view model's state into the views, so that no listener reacts to it. */
+    private var isRendering = false
+
+
+    private val priceField: EditText? get() = binding.price.editText
+    private val amountField: EditText? get() = binding.amount.editText
+    private val feeField: EditText? get() = binding.fee.editText
+    private val taxField: EditText? get() = binding.tax.editText
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentAddHistoryBinding.inflate(inflater, container, false)
-        val repository = (activity?.application as MyApplication).repository
-        addHistoryViewModel = AddHistoryViewModel(repository)
-        //viewModel =(activity as MainActivity).viewModel
-        //change toolbar title
+        _binding = FragmentAddHistoryBinding.inflate(inflater, container, false)
         (requireActivity() as AppCompatActivity).supportActionBar?.title = "新增一筆紀錄"
-
         setHasOptionsMenu(true)
-
-        loadSetting()
         return binding.root
     }
 
@@ -56,50 +70,154 @@ class AddHistoryFragment: Fragment(), AdapterView.OnItemSelectedListener {
         binding.stockNo.text = args.stockNo
 
         binding.date.editText?.inputType = InputType.TYPE_NULL
-
         binding.date.editText?.setOnClickListener {
-            println("click date picker")
             it.hideKeyboard()
             showDatePickerDialog()
         }
 
-        binding.feeOptionSpinner.onItemSelectedListener = this
-        //處理輸入任何前導零的情況,將其轉換為合法的數字:
-        binding.amount.editText?.doAfterTextChanged {
-            println("amount ${it.toString()}")
-            val inputText=it.toString().trim()
-            val newText = inputText.trimStart('0')
-            if (newText!=inputText) {
-                binding.amount.editText?.setText(newText)
-            } else {
-                println("amount $inputText")
+        binding.taxCategorySpinner.adapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_dropdown_item,
+            TaxCategory.values().map { it.title },
+        )
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch { addHistoryViewModel.state.collect { render(it) } }
+                launch {
+                    addHistoryViewModel.saveOutcome.collect { outcome ->
+                        if (outcome != null) {
+                            addHistoryViewModel.consumeSaveOutcome()
+                            show(outcome)
+                        }
+                    }
+                }
             }
         }
     }
-    private fun showDatePickerDialog(){
+
+    /**
+     * The views have their restored text and checked state by now. Listeners are attached only after that, so
+     * that restored values are not taken as typed by the user; the computed values are then drawn again.
+     */
+    override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        super.onViewStateRestored(savedInstanceState)
+        // After the process was ended the view model is new; what the views cannot keep comes from the saved state.
+        if (savedInstanceState != null && addHistoryViewModel.isNew) {
+            TradeSide.values().getOrNull(savedInstanceState.getInt(STATE_SIDE, -1))
+                ?.let { addHistoryViewModel.selectSide(it) }
+            TaxCategory.values().getOrNull(savedInstanceState.getInt(STATE_TAX_CATEGORY, -1))
+                ?.let { addHistoryViewModel.selectTaxCategory(it) }
+            if (savedInstanceState.containsKey(STATE_DATE)) addHistoryViewModel.date = savedInstanceState.getLong(STATE_DATE)
+            tradeInputChanged()
+            savedInstanceState.getString(STATE_MANUAL_FEE)?.let { addHistoryViewModel.editFee(it) }
+            savedInstanceState.getString(STATE_MANUAL_TAX)?.let { addHistoryViewModel.editTax(it) }
+        }
+        addHistoryViewModel.isNew = false
+        if (addHistoryViewModel.date == null) binding.date.editText?.setText("")
+
+        priceField?.doAfterTextChanged { if (!isRendering) tradeInputChanged(); binding.price.error = null }
+        amountField?.doAfterTextChanged { if (!isRendering) tradeInputChanged(); binding.amount.error = null }
+        feeField?.doAfterTextChanged {
+            if (!isRendering) addHistoryViewModel.editFee(it?.toString())
+            binding.fee.error = null
+        }
+        taxField?.doAfterTextChanged {
+            if (!isRendering) addHistoryViewModel.editTax(it?.toString())
+            binding.tax.error = null
+        }
+        feeField?.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) addHistoryViewModel.endEditingFee() }
+        taxField?.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) addHistoryViewModel.endEditingTax() }
+
+        binding.chipSell.setOnCheckedChangeListener { _, isChecked ->
+            if (isRendering) return@setOnCheckedChangeListener
+            endEditingFields()
+            addHistoryViewModel.selectSide(if (isChecked) TradeSide.SELL else TradeSide.BUY)
+        }
+        binding.taxCategorySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                // The spinner also reports the selection it was given; the view model ignores an unchanged one.
+                if (!isRendering) addHistoryViewModel.selectTaxCategory(TaxCategory.values()[position])
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
+        tradeInputChanged()
+        render(addHistoryViewModel.state.value)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        val state = addHistoryViewModel.state.value
+        outState.putInt(STATE_SIDE, state.side.ordinal)
+        outState.putInt(STATE_TAX_CATEGORY, state.taxCategory.ordinal)
+        addHistoryViewModel.date?.let { outState.putLong(STATE_DATE, it) }
+        addHistoryViewModel.manualFeeText?.let { outState.putString(STATE_MANUAL_FEE, it) }
+        addHistoryViewModel.manualTaxText?.let { outState.putString(STATE_MANUAL_TAX, it) }
+    }
+
+    private fun tradeInputChanged() {
+        addHistoryViewModel.changeTrade(priceField?.text?.toString(), amountField?.text?.toString())
+    }
+
+    private fun render(state: TradeEntryUiState) {
+        val binding = _binding ?: return
+        isRendering = true
+        try {
+            feeField?.setTextIfChanged(state.feeText)
+            taxField?.setTextIfChanged(state.taxText)
+            binding.chipBuy.isChecked = state.side == TradeSide.BUY
+            binding.chipSell.isChecked = state.side == TradeSide.SELL
+            if (binding.taxCategorySpinner.selectedItemPosition != state.taxCategory.ordinal) {
+                binding.taxCategorySpinner.setSelection(state.taxCategory.ordinal)
+            }
+            val taxVisibility = if (state.side == TradeSide.SELL) View.VISIBLE else View.GONE
+            binding.taxCategoryRow.visibility = taxVisibility
+            binding.taxRow.visibility = taxVisibility
+        } finally {
+            isRendering = false
+        }
+    }
+
+    private fun EditText.setTextIfChanged(value: String) {
+        if (text?.toString() == value) return
+        setText(value)
+        if (hasFocus()) setSelection(value.length)
+    }
+
+    /** A menu item or a chip does not take the focus, so the editing of the fee and the tax is ended here. */
+    private fun endEditingFields() {
+        addHistoryViewModel.endEditingFee()
+        addHistoryViewModel.endEditingTax()
+        val focused = activity?.currentFocus
+        if (focused == feeField || focused == taxField) {
+            focused?.clearFocus()
+            focused?.hideKeyboard()
+        }
+    }
+
+    private fun showDatePickerDialog() {
         val calendar = Calendar.getInstance()
         val year = calendar.get(Calendar.YEAR)
         val month = calendar.get(Calendar.MONTH)
         val day = calendar.get(Calendar.DAY_OF_MONTH)
-        val datePickerDialog = DatePickerDialog(requireContext(), object :DatePickerDialog.OnDateSetListener {
-            override fun onDateSet(p0: DatePicker?, year: Int, month: Int, day: Int) {
-                binding.date.editText?.setText(getString(R.string.add_stock_date_string, year, month+1, day))
-                // set selected date in milliseconds
-                calendar.set(year,month,day)
-                dateSelected = calendar.timeInMillis
-            }
-
+        val datePickerDialog = DatePickerDialog(requireContext(), { _, pickedYear, pickedMonth, pickedDay ->
+            binding.date.editText?.setText(getString(R.string.add_stock_date_string, pickedYear, pickedMonth + 1, pickedDay))
+            binding.date.error = null
+            calendar.set(pickedYear, pickedMonth, pickedDay)
+            addHistoryViewModel.date = calendar.timeInMillis
         }, year, month, day)
         datePickerDialog.show()
-        datePickerDialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(Color.BLACK);
-        datePickerDialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(Color.BLACK);
+        datePickerDialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(Color.BLACK)
+        datePickerDialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(Color.BLACK)
     }
+
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.add_history_fragment_option_menu, menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-
         return when (item.itemId) {
             R.id.finishButton -> {
                 addHistoryToDB()
@@ -110,90 +228,40 @@ class AddHistoryFragment: Fragment(), AdapterView.OnItemSelectedListener {
     }
 
     private fun addHistoryToDB() {
-        val stockNo = binding.stockNo.text.toString()
-        val amount = binding.amount.editText?.text.toString().toIntOrNull()
-        val price = binding.price.editText?.text.toString().toDoubleOrNull()
-        val date = dateSelected
-
-        val isBuy = if (binding.chipBuy.isChecked) 0 else 1
-
-        val dataStatus = addHistoryViewModel.checkDataInput(stockNo = stockNo, amount = amount, price = price , date = date)
-
-        when (dataStatus) {
-            InputDataStatus.InvalidStockNo -> {
-                binding.stockNo.error = "不可為空白"
-                return
-            }
-            InputDataStatus.InvalidAmount -> {
-                binding.amount.error = "必須大於0"
-                return
-            }
-            InputDataStatus.InvalidPrice -> {
-                binding.price.error = "必須大於0"
-                return
-            }
-            InputDataStatus.InvalidDate -> {
-                binding.date.error = "請選擇日期"
-                return
-            }
-            else -> {
-                val newHistory = InvestHistory(0, stockNo = stockNo, amount = amount!!, price = price!!, status = isBuy, date = date!!)
-
-                addHistoryViewModel.insertHistory(newHistory)
-                addHistoryViewModel.uploadHistoryToOnlineDB(price = price, amount = amount, date = date, stockNo = stockNo, status = isBuy)
-                findNavController().popBackStack()
-            }
-        }
-
+        endEditingFields()
+        view?.hideKeyboard()
+        addHistoryViewModel.save(
+            stockNo = binding.stockNo.text.toString(),
+            memo = binding.memo.editText?.text?.toString().orEmpty(),
+        )
     }
-    // For spinner
-    override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
-        Timber.d("spinner onItemSelected pos $pos")
-        binding.feeDiscountSpinner.visibility = View.GONE
-        binding.feeOneDollar.visibility = View.GONE
-        binding.feeCustom.visibility = View.GONE
-        when(pos) {
-            0 -> {
-                binding.feeDiscountSpinner.visibility = View.VISIBLE
-            }
-            1 -> {
-                binding.feeOneDollar.visibility = View.VISIBLE
-            }
-            2 -> {
-                binding.feeCustom.visibility = View.VISIBLE
+
+    private fun show(outcome: SaveOutcome) {
+        when (outcome) {
+            is SaveOutcome.Saved -> findNavController().popBackStack()
+            is SaveOutcome.Failed -> Toast.makeText(requireContext(), R.string.save_failed, Toast.LENGTH_SHORT).show()
+            is SaveOutcome.Invalid -> {
+                val errors = outcome.errors
+                binding.stockNo.error = if (errors.stockNo) getString(R.string.stock_no_invalid) else null
+                binding.amount.error = if (errors.shares) getString(R.string.shares_invalid) else null
+                binding.price.error = if (errors.price) getString(R.string.price_invalid) else null
+                binding.fee.error = if (errors.fee) getString(R.string.fee_or_tax_invalid) else null
+                binding.tax.error = if (errors.tax) getString(R.string.fee_or_tax_invalid) else null
+                binding.date.error = if (errors.date) getString(R.string.date_invalid) else null
             }
         }
     }
 
-    override fun onNothingSelected(parent: AdapterView<*>?) {
-
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
-    // load preference
-    private fun loadSetting() {
-        val sp = PreferenceManager.getDefaultSharedPreferences(requireContext())
-
-        defaultCustomFeeDiscount = sp.getString("fee_discount", "")
-        defaultCustomFee = sp.getString("fee_custom", "")
-        Timber.d("fee discount index $defaultCustomFeeDiscount")
-        Timber.d("fee custom $defaultCustomFee")
-
-
-        binding.feeDiscountSpinner.post(object: Runnable{
-            override fun run() {
-                // set spinner default value
-                Timber.d("defaultCustomFeeDiscount $defaultCustomFeeDiscount")
-                defaultCustomFeeDiscount?.let { str ->
-                    if (str.isNotEmpty()) {
-                        binding.feeDiscountSpinner.setSelection(str.toInt() / 10 - 1)
-                    }
-                }
-            }
-        })
-        binding.feeCustom.post(object : Runnable {
-            override fun run() {
-                defaultCustomFee?.let { str -> binding.feeCustom.setText(str) }
-            }
-        })
+    private companion object {
+        const val STATE_SIDE = "side"
+        const val STATE_TAX_CATEGORY = "taxCategory"
+        const val STATE_DATE = "date"
+        const val STATE_MANUAL_FEE = "manualFee"
+        const val STATE_MANUAL_TAX = "manualTax"
     }
 }

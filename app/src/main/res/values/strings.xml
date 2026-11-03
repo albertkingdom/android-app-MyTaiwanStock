@@ -34,8 +34,28 @@
     <string name="widget_update_time">%1$s</string>
 <!--    fee -->
     <string name="fee">手續費</string>
-    <string name="fee_custom_hint">自訂手續費</string>
-    <string name="fee_one_dollar">1元</string>
+    <string name="tax">交易稅</string>
+    <string name="tax_category">稅別</string>
+    <string name="memo">備註</string>
+    <string name="memo_hint">請輸入投資筆記</string>
+    <string name="dollar_unit">元</string>
+    <string name="fee_or_tax_invalid">請輸入 0 到 2147483647 的整數</string>
+    <string name="shares_invalid">請輸入 1 到 2147483647 的整數</string>
+    <string name="price_invalid">請輸入大於 0 的數字</string>
+    <string name="stock_no_invalid">不可為空白</string>
+    <string name="date_invalid">請選擇日期</string>
+    <string name="save_failed">儲存失敗，請再試一次</string>
+    <string name="fee_settings_title">手續費</string>
+    <string name="fee_settings_save">儲存</string>
+    <string name="fee_settings_discount">折數</string>
+    <string name="fee_settings_discount_unit">折</string>
+    <string name="fee_settings_whole_lot_minimum">整股最低手續費</string>
+    <string name="fee_settings_odd_lot_minimum">零股最低手續費</string>
+    <string name="fee_settings_footer">折數 10 代表無折扣。最低手續費是算出來的手續費不足時改收的金額，整股指 1000 股以上，0 代表沒有最低收費。</string>
+<!--    stock detail -->
+    <string name="avg_buy_price_including_fees">買入均價(含費用)</string>
+    <string name="unknown_fee_note">部分買進紀錄沒有手續費資料，均價可能偏低</string>
+    <string name="history_fee_and_tax">手續費 %1$s・稅 %2$s</string>
 
 <!--    google signIn in web client id-->
     <string name="google_signin_client_id">735156971903-i0gu6itqm3frijgnvtms8d4vbgo5h86r.apps.googleusercontent.com</string>

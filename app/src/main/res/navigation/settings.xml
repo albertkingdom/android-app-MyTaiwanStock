@@ -16,11 +16,20 @@
                     app:destination="@id/accountFragment"
                     app:enterAnim="@android:anim/slide_in_left"
                     app:exitAnim="@android:anim/fade_out" />
+                <action
+                    android:id="@+id/action_settingFragment_to_feeSettingsFragment"
+                    app:destination="@id/feeSettingsFragment"
+                    app:enterAnim="@android:anim/slide_in_left"
+                    app:exitAnim="@android:anim/fade_out" />
         </fragment>
         <fragment
             android:id="@+id/accountFragment"
             android:name="com.example.mynewsapp.ui.setting.AccountFragment"
             android:label="帳號" />
+        <fragment
+            android:id="@+id/feeSettingsFragment"
+            android:name="com.example.mynewsapp.ui.setting.FeeSettingsFragment"
+            android:label="@string/fee_settings_title" />
 
 
 </navigation>
