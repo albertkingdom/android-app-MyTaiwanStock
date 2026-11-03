@@ -4,7 +4,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.*
-import java.text.NumberFormat
+import com.example.mynewsapp.use_case.chart.CandleRows
 
 class CalculateChartDataUseCase {
     fun generateCandleDataSet(data: List<List<String>>, stockNo: String): CandleData {
@@ -12,10 +12,10 @@ class CalculateChartDataUseCase {
 
             CandleEntry(
                 index.toFloat(),
-                day[4].replace(",", "").toFloat(),//high
-                day[5].replace(",", "").toFloat(), //low
-                day[3].replace(",", "").toFloat(), //open
-                day[6].replace(",", "").toFloat() //close
+                CandleRows.number(day[CandleRows.HIGH])!!,
+                CandleRows.number(day[CandleRows.LOW])!!,
+                CandleRows.number(day[CandleRows.OPEN])!!,
+                CandleRows.number(day[CandleRows.CLOSE])!! // rows are sanitized by CandleRows.merge
             )
 
         }
@@ -35,7 +35,7 @@ class CalculateChartDataUseCase {
 
     fun generateBarData(data: List<List<String>>): BarData {
         val barEntries = data.mapIndexed { index, day ->
-            BarEntry(index.toFloat(), NumberFormat.getInstance().parse(day[2]).toFloat())
+            BarEntry(index.toFloat(), CandleRows.number(day[CandleRows.VALUE])!!)
         }
         val barDataSet = BarDataSet(barEntries, "volume")
         barDataSet.apply {
@@ -50,7 +50,7 @@ class CalculateChartDataUseCase {
     fun generateXLabels(data: List<List<String>>):List<String> {
 
         return data.map { day->
-            day[0]
+            day[CandleRows.DATE]
         }
     }
 }

@@ -3,6 +3,7 @@ package com.example.mynewsapp.ui.list
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.mynewsapp.model.StockIdNameStar
+import com.example.mynewsapp.stocklist.StockSearch
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Observer
 import io.reactivex.rxjava3.disposables.CompositeDisposable
@@ -12,14 +13,11 @@ import timber.log.Timber
 class AddStockViewModel: ViewModel() {
 
     private var searchQuery = ""
-    var stockNames = mutableListOf<String>()
+    /** Read on every filter so a list refreshed while this screen is open is used right away. */
+    var stockNamesProvider: () -> List<String> = { emptyList() }
     var followingStockIds = listOf<String>()
     val filteredStockNames = MutableLiveData<List<StockIdNameStar>>()
     val compositeDisposable = CompositeDisposable()
-
-    init {
-        filterSearchQuery()
-    }
     fun updateSearchQuery(query: String) {
         searchQuery = query
     }
@@ -34,7 +32,7 @@ class AddStockViewModel: ViewModel() {
             override fun onNext(listOfString: List<String>) {
 
                 val stockNameAndStarList = listOfString.map { stockIdName ->
-                    val stockId = stockIdName.split(" ").first()
+                    val stockId = StockSearch.codeFromInput(stockIdName)
                     if (followingStockIds.indexOf(stockId) != -1) {
                         return@map StockIdNameStar(stockIdName, true)
                     }
@@ -56,10 +54,8 @@ class AddStockViewModel: ViewModel() {
         }
         Observable
             .just(searchQuery)
-            .map {
-                stockNames.filter { string ->
-                   string.contains(searchQuery)
-               }
+            .map { query ->
+                StockSearch.filter(stockNamesProvider(), query)
             }
             .subscribe(observer)
     }

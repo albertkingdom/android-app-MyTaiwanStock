@@ -4,6 +4,10 @@ import androidx.lifecycle.*
 import com.example.mynewsapp.db.InvestHistory
 import com.example.mynewsapp.repository.NewsRepository
 import com.example.mynewsapp.use_case.CalculateChartDataUseCase
+import com.example.mynewsapp.use_case.chart.CandleRows
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import com.example.mynewsapp.util.GetDateString
 import com.github.mikephil.charting.data.*
 import kotlinx.coroutines.Dispatchers
@@ -59,44 +63,49 @@ class CandleStickChartViewModel(val repository: NewsRepository): ViewModel() {
             }
         }
     }
+    /** True when no candle rows could be loaded (for example an over-the-counter stock). */
+    private val _candleDataUnavailable = MutableLiveData(false)
+    val candleDataUnavailable: LiveData<Boolean> = _candleDataUnavailable
+
     fun getCandleStickData(currentDate: String, stockNo: String) {
-
-            viewModelScope.launch(Dispatchers.IO) {
-                //candleStickData.postValue(Resource.Loading())
-
-                val currentMonthStr = GetDateString.outputCurrentDateString()
-                val lastMonthStr = GetDateString.outputLastMonthDateString()
-                val responseCurrentMonth =
-                    repository.getCandleStickData(currentMonthStr, stockNo)
-                val responseLastMonth = repository.getCandleStickData(lastMonthStr, stockNo)
-
-                println("responseCurrentMonth ${responseCurrentMonth.body()}")
-
-                // concat multiple month candle stick data
-                val candleStickDataList = mutableListOf<List<String>>()
-
-                candleStickDataList.addAll(responseLastMonth.body()?.data!!)
-
-                if (responseCurrentMonth.body()?.data != null) {
-                    candleStickDataList.addAll(responseCurrentMonth.body()?.data!!)
-                }
-
-                    if (!responseCurrentMonth.isSuccessful || !responseLastMonth.isSuccessful) {
-                        //candleStickData.value = Resource.Error("There's error in fetching candle stick data.")
-                    } else {
-                        withContext(Dispatchers.Main) {
-                            //candleStickData.value = Resource.Success(candleStickDataList)
-                            _candleData.value = calculateChartDataUseCase.generateCandleDataSet(candleStickDataList, stockNo)
-                            _barData.value = calculateChartDataUseCase.generateBarData(candleStickDataList)
-                            _xLabels.value = calculateChartDataUseCase.generateXLabels(candleStickDataList)
-                            _originalCandleData.value = candleStickDataList
-                        }
-                    }
-
-
+        viewModelScope.launch(Dispatchers.IO) {
+            val currentMonthStr = GetDateString.outputCurrentDateString()
+            val lastMonthStr = GetDateString.outputLastMonthDateString()
+            val (lastMonthRows, currentMonthRows) = coroutineScope {
+                val lastMonth = async { fetchCandleRows(lastMonthStr, stockNo) }
+                val currentMonth = async { fetchCandleRows(currentMonthStr, stockNo) }
+                lastMonth.await() to currentMonth.await()
             }
 
+            // One sanitized list feeds candles, bars, x labels and the tap handlers so their
+            // indices always line up.
+            val candleStickDataList = CandleRows.merge(lastMonthRows, currentMonthRows)
+
+            withContext(Dispatchers.Main) {
+                if (candleStickDataList.isEmpty()) {
+                    _candleDataUnavailable.value = true
+                    return@withContext
+                }
+                _candleDataUnavailable.value = false
+                _candleData.value = calculateChartDataUseCase.generateCandleDataSet(candleStickDataList, stockNo)
+                _barData.value = calculateChartDataUseCase.generateBarData(candleStickDataList)
+                _xLabels.value = calculateChartDataUseCase.generateXLabels(candleStickDataList)
+                _originalCandleData.value = candleStickDataList
+            }
+        }
     }
+
+    /** Rows of one month, or null when the request fails or has no data (e.g. OTC stocks). */
+    private suspend fun fetchCandleRows(date: String, stockNo: String): List<List<String>>? =
+        try {
+            val response = repository.getCandleStickData(date, stockNo)
+            if (response.isSuccessful) response.body()?.data else null
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "candle data request failed for $stockNo")
+            null
+        }
 
 
 
