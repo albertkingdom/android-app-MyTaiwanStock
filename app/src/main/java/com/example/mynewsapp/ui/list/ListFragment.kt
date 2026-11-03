@@ -249,6 +249,11 @@ class ListFragment : Fragment() {
         navToNewStockNoBtn.setOnClickListener {
             findNavController().navigate(ListFragmentDirections.actionStockListFragmentToAddStockFragment())
         }
+        binding.importTradeScreenshot.setOnClickListener {
+            // A quick second tap must not open a second import screen.
+            if (findNavController().currentDestination?.id != R.id.stockListFragment) return@setOnClickListener
+            findNavController().navigate(R.id.action_global_tradeImportFragment)
+        }
     }
     private val getStockNameToGetRelatedNews:(stockContent: MsgArray)->Unit = { stockContent->
 
