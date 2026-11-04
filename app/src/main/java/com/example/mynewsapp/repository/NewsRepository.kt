@@ -8,7 +8,6 @@ import com.example.mynewsapp.db.*
 
 
 import com.example.mynewsapp.model.CandleStickData
-import com.example.mynewsapp.util.Constant.Companion.API_KEY
 import com.example.mynewsapp.util.Constant.Companion.BASE_URL_CANDLE_STICK_DATA
 import com.example.mynewsapp.util.Constant.Companion.BASE_URL_NEWS
 import com.example.mynewsapp.util.Constant.Companion.BASE_URL_STOCK_PRICE

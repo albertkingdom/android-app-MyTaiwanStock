@@ -2,7 +2,6 @@ package com.example.mynewsapp.api
 
 import com.example.mynewsapp.model.NewsResponse
 import com.example.mynewsapp.util.Constant
-import com.example.mynewsapp.util.Constant.Companion.API_KEY
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -21,12 +20,10 @@ interface NewsAPI {
         @Query("sortBy")
         sortBy: String = "publishedAt",
         @Query("page")
-        page:Int=1,
-        @Query("apiKey")
-        apiKey:String = API_KEY
+        page:Int=1
     ):Response<NewsResponse>
 
-    //${ Constant.BASE_URL_NEWS }v2/top-headlines?country=$country&page=$page&category=$category&apiKey=$API_KEY
+    //${ Constant.BASE_URL_NEWS }v2/top-headlines?country=$country&page=$page&category=$category
     @GET
     suspend fun getHeadlines(
         @Url
@@ -36,8 +33,6 @@ interface NewsAPI {
         @Query("category")
         category: String = "business",
         @Query("page")
-        page:Int=1,
-        @Query("apiKey")
-        apiKey:String = API_KEY
+        page:Int=1
     ):Response<NewsResponse>
 }
