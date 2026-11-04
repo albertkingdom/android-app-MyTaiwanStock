@@ -13,7 +13,13 @@ interface NewsAPI {
     @GET("v2/everything")
     suspend fun searchForNews(
         @Query("q")
-        stockName:String = "台積電",
+        q: String? = null,
+        @Query("qInTitle")
+        qInTitle: String? = null,
+        @Query("language")
+        language: String? = null,
+        @Query("sortBy")
+        sortBy: String = "publishedAt",
         @Query("page")
         page:Int=1,
         @Query("apiKey")
