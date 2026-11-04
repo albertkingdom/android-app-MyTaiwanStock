@@ -12,12 +12,14 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.R
 import com.example.mynewsapp.ui.adapter.StockHistoryAdapter
 import com.example.mynewsapp.databinding.FragmentCandleStickChartBinding
+import com.example.mynewsapp.ui.news.NewsFragment
 import com.example.mynewsapp.tradecost.HoldingsCalculator
 import com.example.mynewsapp.tradecost.TradeInput
 import com.example.mynewsapp.use_case.chart.CandleRows
@@ -297,6 +299,12 @@ class CandleStickChartFragment: Fragment() {
 
         findNavController().navigate(CandleStickChartFragmentDirections.actionCandleStickChartFragmentToChatFragment(args.stockNo))
     }
+    private fun navigateToNewsFragment() {
+        findNavController().navigate(
+            R.id.action_candleStickChartFragment_to_stockNewsFragment,
+            bundleOf(NewsFragment.ARG_STOCK_NAME to args.stockName),
+        )
+    }
     private fun navigateToNewDividendFragment() {
         val stockNo = args.stockNo
         findNavController().navigate(CandleStickChartFragmentDirections.actionCandleStickChartFragmentToAddDividendFragment(stockNo))
@@ -319,6 +327,10 @@ class CandleStickChartFragment: Fragment() {
             }
             R.id.go_to_chatRoom -> {
                 navigateToChatFragment()
+                true
+            }
+            R.id.go_to_news -> {
+                navigateToNewsFragment()
                 true
             }
             else -> super.onOptionsItemSelected(item)
