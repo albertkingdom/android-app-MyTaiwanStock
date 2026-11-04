@@ -72,6 +72,14 @@ export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-$(dpkg --print-architecture) && /o
 echo "sdk.dir=/opt/android-sdk" > local.properties
 ```
 
+這個指令會覆寫整個檔案。檔案也是新聞功能金鑰的存放處：要在雲端環境使用新聞功能時，先執行上面的指令，再附加一次金鑰（由人手動或從環境機密提供，不要寫進共用的 setup script，以免留在腳本或 shell 歷史）：
+
+```bash
+echo "NEWS_API_KEY=<你的 NewsAPI 金鑰>" >> local.properties
+```
+
+沒有這一行也能建置與跑單元測試，只是新聞分頁會顯示「尚未設定新聞 API 金鑰」的提示，不會送出請求。金鑰會被編進 APK，它不進版控也不會出現在 logcat，但不是保密機制。
+
 ## 4. 建置與測試
 
 在專案根目錄執行：

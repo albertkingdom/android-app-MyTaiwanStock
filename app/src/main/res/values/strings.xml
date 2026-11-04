@@ -7,6 +7,7 @@
     <string name="news_empty">沒有相關新聞</string>
     <string name="news_connection_error">無法連線到新聞伺服器</string>
     <string name="news_format_error">新聞資料格式錯誤</string>
+    <string name="news_api_key_missing">尚未設定新聞 API 金鑰，請在 local.properties 加入 NEWS_API_KEY</string>
     <string name="news_title_for_stock">%1$s 新聞</string>
     <string name="dialog_addStockNo">加入追蹤</string>
     <string name="dialog_cancel">取消</string>

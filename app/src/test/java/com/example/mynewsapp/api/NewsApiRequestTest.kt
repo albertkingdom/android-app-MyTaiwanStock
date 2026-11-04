@@ -7,7 +7,6 @@ import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import retrofit2.Retrofit
@@ -55,6 +54,7 @@ class NewsApiRequestTest {
         assertEquals("publishedAt", url.queryParameter("sortBy"))
         assertFalse(url.queryParameterNames.contains("q"))
         assertFalse(url.queryParameterNames.contains("language"))
+        assertFalse(url.queryParameterNames.contains("apiKey"))
     }
 
     @Test
@@ -67,6 +67,6 @@ class NewsApiRequestTest {
         assertEquals("zh", url.queryParameter("language"))
         assertEquals("publishedAt", url.queryParameter("sortBy"))
         assertFalse(url.queryParameterNames.contains("qInTitle"))
-        assertTrue(url.queryParameterNames.contains("apiKey"))
+        assertFalse(url.queryParameterNames.contains("apiKey"))
     }
 }
