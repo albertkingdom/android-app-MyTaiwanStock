@@ -17,6 +17,6 @@ class NewsArticleFragment:Fragment(R.layout.fragment_news_article) {
 
         val article = args.article
         binding.webView.webViewClient = WebViewClient()
-        binding.webView.loadUrl(article.url)
+        article.url?.let { binding.webView.loadUrl(it) }
     }
 }

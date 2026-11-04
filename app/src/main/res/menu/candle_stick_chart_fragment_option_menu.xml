@@ -9,6 +9,10 @@
         app:iconTint="?android:textColorPrimary"
         />
     <item
+        android:id="@+id/go_to_news"
+        android:title="@string/title_businessNewsList"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/addButton"
         android:title="新增"
         app:showAsAction="always"

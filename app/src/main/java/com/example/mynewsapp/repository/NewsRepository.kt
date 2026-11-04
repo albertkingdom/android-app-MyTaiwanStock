@@ -22,8 +22,14 @@ import retrofit2.Response
 import timber.log.Timber
 
 class NewsRepository(val stockDao: StockDao) {
-    suspend fun searchNews(stockName:String="台積電", page:Int):Response<NewsResponse>{
-        return RetrofitInstance.retrofitService.searchForNews(stockName, page)
+    suspend fun searchNews(query: NewsQuery, page: Int): Response<NewsResponse> {
+        return RetrofitInstance.retrofitService.searchForNews(
+            q = query.q,
+            qInTitle = query.qInTitle,
+            language = query.language,
+            sortBy = query.sortBy,
+            page = page,
+        )
     }
 
     suspend fun getHeadlines(country:String = "tw", page: Int = 1, category: String ="business"):Response<NewsResponse>{

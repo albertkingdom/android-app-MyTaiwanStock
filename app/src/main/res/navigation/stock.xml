@@ -30,6 +30,9 @@
         <action
             android:id="@+id/action_candleStickChartFragment_to_chatFragment"
             app:destination="@id/chatFragment" />
+        <action
+            android:id="@+id/action_candleStickChartFragment_to_stockNewsFragment"
+            app:destination="@id/stockNewsFragment" />
         <argument android:name="stockNo" />
         <argument android:name="stockName" />
         <argument android:name="stockPrice" />
@@ -51,6 +54,10 @@
         tools:layout="@layout/fragment_add_history">
         <argument android:name="stockNo" />
     </fragment>
+    <fragment
+        android:id="@+id/stockNewsFragment"
+        android:name="com.example.mynewsapp.ui.news.NewsFragment"
+        android:label="@string/title_businessNewsList" />
     <fragment
         android:id="@+id/chatFragment"
         android:name="com.example.mynewsapp.ui.chat.ChatFragment"

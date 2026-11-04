@@ -17,6 +17,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
 class NewsAdapter : ListAdapter<Article, NewsAdapter.ArticleViewHolder>(DiffCallback) {
 
@@ -50,7 +51,7 @@ class NewsAdapter : ListAdapter<Article, NewsAdapter.ArticleViewHolder>(DiffCall
         val currentArticle = getItem(position)
 
         holder.apply {
-            titleView.text = currentArticle.title
+            titleView.text = currentArticle.title.orEmpty()
 
             Glide
                 .with(this.itemView)
@@ -71,7 +72,11 @@ class NewsAdapter : ListAdapter<Article, NewsAdapter.ArticleViewHolder>(DiffCall
             // format publishedAt time
             val inputPattern = DateTimeFormatter.ISO_INSTANT.withZone(ZoneId.systemDefault())
             val outputPattern = DateTimeFormatter.ofPattern("yyyy/MM/dd kk:mm")
-            publishedAtView.text = ZonedDateTime.parse(currentArticle.publishedAt, inputPattern).format(outputPattern)
+            publishedAtView.text = try {
+                currentArticle.publishedAt?.let { ZonedDateTime.parse(it, inputPattern).format(outputPattern) }.orEmpty()
+            } catch (e: DateTimeParseException) {
+                ""
+            }
 
             itemView.setOnClickListener {
 
