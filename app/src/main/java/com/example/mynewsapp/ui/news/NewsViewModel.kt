@@ -2,6 +2,7 @@ package com.example.mynewsapp.ui.news
 
 import android.app.Application
 import androidx.lifecycle.*
+import com.example.mynewsapp.BuildConfig
 import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.R
 import com.example.mynewsapp.model.*
@@ -19,7 +20,8 @@ import java.io.IOException
 class NewsViewModel(
     val newsRepository: NewsRepository,
     application: Application,
-    private val query: NewsQuery = NewsQuery.TaiwanStock
+    private val query: NewsQuery = NewsQuery.TaiwanStock,
+    private val apiKey: String = BuildConfig.NEWS_API_KEY
 ) :AndroidViewModel(application) {
 
     val news: MutableLiveData<Resource<NewsResponse>> = MutableLiveData()
@@ -33,7 +35,9 @@ class NewsViewModel(
 
 
     fun getNews(page: Int = 1) {
-        if (isNetworkAvailable(getApplication())) {
+        if (apiKey.isBlank()) {
+            news.postValue(Resource.Error(getApplication<Application>().getString(R.string.news_api_key_missing)))
+        } else if (isNetworkAvailable(getApplication())) {
             // a newer request replaces the one still running, so an older answer cannot overwrite it
             loadJob?.cancel()
             loadJob = viewModelScope.launch {
@@ -71,9 +75,10 @@ class NewsViewModel(
 class NewsViewModelFactory(
     val newsRepository: NewsRepository,
     val application: MyApplication,
-    val query: NewsQuery = NewsQuery.TaiwanStock
+    val query: NewsQuery = NewsQuery.TaiwanStock,
+    val apiKey: String = BuildConfig.NEWS_API_KEY
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return NewsViewModel(newsRepository, application, query) as T
+        return NewsViewModel(newsRepository, application, query, apiKey) as T
     }
 }
