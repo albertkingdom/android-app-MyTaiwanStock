@@ -45,13 +45,18 @@
     <string name="stock_no_invalid">不可為空白</string>
     <string name="date_invalid">請選擇日期</string>
     <string name="save_failed">儲存失敗，請再試一次</string>
+    <string name="add_dividend_cash">現金股利</string>
+    <string name="add_dividend_stock">股票股利</string>
     <string name="fee_settings_title">手續費</string>
     <string name="fee_settings_save">儲存</string>
     <string name="fee_settings_discount">折數</string>
     <string name="fee_settings_discount_unit">折</string>
     <string name="fee_settings_whole_lot_minimum">整股最低手續費</string>
     <string name="fee_settings_odd_lot_minimum">零股最低手續費</string>
-    <string name="fee_settings_footer">折數 10 代表無折扣。最低手續費是算出來的手續費不足時改收的金額，整股指 1000 股以上，0 代表沒有最低收費。</string>
+    <string name="fee_settings_section_discount">手續費折扣</string>
+    <string name="fee_settings_discount_helper">10 代表無折扣</string>
+    <string name="fee_settings_section_minimum">最低手續費</string>
+    <string name="fee_settings_minimum_helper">算出來的手續費不足時改收這個金額。整股指 1000 股以上，0 代表沒有最低收費。</string>
 <!--    stock detail -->
     <string name="avg_buy_price_including_fees">買入均價(含費用)</string>
     <string name="unknown_fee_note">部分買進紀錄沒有手續費資料，均價可能偏低</string>

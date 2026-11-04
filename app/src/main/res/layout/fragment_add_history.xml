@@ -7,296 +7,193 @@
     android:fillViewport="true"
     tools:context=".ui.detail.AddHistoryFragment">
 
-<androidx.appcompat.widget.LinearLayoutCompat
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:paddingHorizontal="20dp">
-
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="16dp">
 
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <TextView
+            android:id="@+id/stockNoLabel"
             android:layout_width="match_parent"
-            android:layout_height="50dp">
+            android:layout_height="wrap_content"
+            android:text="@string/add_history_stockNo"
+            android:textColor="?android:textColorSecondary"
+            android:textSize="14sp" />
 
-            <TextView
-                android:id="@+id/stockNoLabel"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:text="@string/add_history_stockNo"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="18sp" />
-
-            <TextView
-                android:id="@+id/stockNo"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="2"
-                android:gravity="center"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="18sp"
-                tools:text="123" />
-        </androidx.appcompat.widget.LinearLayoutCompat>
-
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <TextView
+            android:id="@+id/stockNo"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/black"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            tools:text="2330" />
 
-            <TextView
-                android:id="@+id/amountLabel"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:text="@string/add_history_amount"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="18sp" />
-
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/amount"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="2"
-                android:hint=""
-                app:errorEnabled="true"
-                >
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/amount_edit"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:textAlignment="center"
-                    />
-
-            </com.google.android.material.textfield.TextInputLayout>
-        </androidx.appcompat.widget.LinearLayoutCompat>
-
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/amount"
+            style="@style/Widget.App.TextInputLayout.Outlined"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/add_history_amount"
+            app:errorEnabled="true">
 
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/amount_edit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-            <TextView
-                android:id="@+id/priceLabel"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:text="@string/add_history_price"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="18sp" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/price"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="2"
-                android:hint=""
-                app:errorEnabled="true"
-                app:prefixText="NT$"
-                app:prefixTextColor="@color/black"
-                >
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/price_edit"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="numberDecimal"
-                    android:textAlignment="center"/>
-
-            </com.google.android.material.textfield.TextInputLayout>
-        </androidx.appcompat.widget.LinearLayoutCompat>
-
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/price"
+            style="@style/Widget.App.TextInputLayout.Outlined"
             android:layout_width="match_parent"
-            android:layout_height="50dp">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/add_history_price"
+            app:errorEnabled="true"
+            app:prefixText="NT$">
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:text="@string/add_history_status"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="18sp" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/price_edit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/side_chip_group"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="2"
-                android:orientation="horizontal"
-
-                app:selectionRequired="true"
-                app:singleSelection="true">
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_buy"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:checkable="true"
-                    android:text="買進" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_sell"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checkable="true"
-                    android:text="賣出" />
-            </com.google.android.material.chip.ChipGroup>
-
-        </androidx.appcompat.widget.LinearLayoutCompat>
-
-        <androidx.appcompat.widget.LinearLayoutCompat
-            android:id="@+id/fee_row"
+        <TextView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/add_history_status"
+            android:textColor="?android:textColorSecondary"
+            android:textSize="14sp" />
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:text="@string/fee"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="18sp" />
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/side_chip_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            app:selectionRequired="true"
+            app:singleSelection="true">
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.App.TextInputLayout.Labeled"
-                android:id="@+id/fee"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="2"
-                app:errorEnabled="true"
-                app:suffixText="@string/dollar_unit">
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_buy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                android:checked="true"
+                android:text="買進" />
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/fee_edit"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:textAlignment="center" />
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_sell"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                android:text="賣出" />
+        </com.google.android.material.chip.ChipGroup>
 
-            </com.google.android.material.textfield.TextInputLayout>
-        </androidx.appcompat.widget.LinearLayoutCompat>
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/fee"
+            style="@style/Widget.App.TextInputLayout.Outlined"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="@string/fee"
+            app:errorEnabled="true"
+            app:suffixText="@string/dollar_unit">
 
-        <androidx.appcompat.widget.LinearLayoutCompat
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/fee_edit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <LinearLayout
             android:id="@+id/tax_category_row"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
             android:visibility="gone">
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:text="@string/tax_category"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="18sp" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/tax_category"
+            android:textColor="?android:textColorSecondary"
+            android:textSize="14sp" />
 
             <androidx.appcompat.widget.AppCompatSpinner
                 android:id="@+id/tax_category_spinner"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="2" />
-        </androidx.appcompat.widget.LinearLayoutCompat>
+                android:layout_width="match_parent"
+                android:layout_height="48dp" />
+        </LinearLayout>
 
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <FrameLayout
             android:id="@+id/tax_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:visibility="gone">
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:text="@string/tax"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="18sp" />
-
             <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.App.TextInputLayout.Labeled"
                 android:id="@+id/tax"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="2"
+                style="@style/Widget.App.TextInputLayout.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="@string/tax"
                 app:errorEnabled="true"
-                app:suffixText="@string/dollar_unit">
+                    app:suffixText="@string/dollar_unit">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/tax_edit"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:textAlignment="center" />
-
+                    android:inputType="number" />
             </com.google.android.material.textfield.TextInputLayout>
-        </androidx.appcompat.widget.LinearLayoutCompat>
-
-        <androidx.appcompat.widget.LinearLayoutCompat
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:text="@string/add_history_date"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="18sp" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/date"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="2"
-                android:hint="YYYY-MM-DD"
-                app:errorEnabled="true"
-                android:textColorHint="@android:color/darker_gray">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/date_edit"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:focusable="false"
-                    android:inputType="none" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-        </androidx.appcompat.widget.LinearLayoutCompat>
+        </FrameLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.App.TextInputLayout.Labeled"
-            android:id="@+id/memo"
+            android:id="@+id/date"
+            style="@style/Widget.App.TextInputLayout.Outlined"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/add_history_date"
+            app:errorEnabled="true"
+            app:placeholderText="YYYY-MM-DD">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/date_edit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:focusable="false" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/memo"
+            style="@style/Widget.App.TextInputLayout.Outlined"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:hint="@string/memo"
+            app:errorEnabled="true"
             app:placeholderText="@string/memo_hint">
 
             <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/memo_edit"
+                android:id="@+id/memo_edit"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="top|start"
                 android:inputType="textMultiLine|textCapSentences"
+                android:gravity="top|start"
                 android:minLines="3" />
-
         </com.google.android.material.textfield.TextInputLayout>
-
-    </androidx.appcompat.widget.LinearLayoutCompat>
-
-</androidx.appcompat.widget.LinearLayoutCompat>
-
+    </LinearLayout>
 </androidx.core.widget.NestedScrollView>
