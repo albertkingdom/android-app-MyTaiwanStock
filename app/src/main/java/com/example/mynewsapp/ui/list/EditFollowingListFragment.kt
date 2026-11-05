@@ -44,6 +44,8 @@ import androidx.compose.material3.SwipeToDismiss
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.rememberDismissState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -88,7 +90,10 @@ class EditFollowingListFragment: Fragment(R.layout.fragment_edit_following_list)
         super.onViewCreated(view, savedInstanceState)
 
         view.findViewById<ComposeView>(R.id.compose_view).setContent {
-            MyContent(viewModel = listViewModel)
+            // Follow the system theme so the rename dialog and buttons are readable in dark mode.
+            MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
+                MyContent(viewModel = listViewModel)
+            }
         }
     }
 //    private fun swipeToDelete() {
@@ -200,23 +205,26 @@ class EditFollowingListFragment: Fragment(R.layout.fragment_edit_following_list)
             val dialog = AddFollowingListDialogFragment()
             dialog.show(parentFragmentManager,"a")
         }
+        val isDarkTheme = isSystemInDarkTheme()
+        // Light mode keeps its grey page; dark mode uses the app's dark window color.
+        val pageColor = if (isDarkTheme) DarkPageColor else Color.LightGray
         Scaffold(
             floatingActionButton = {
                 FloatingActionButton(
                     onClick = { clickAddBtn() },
-                    containerColor = Color.Black,
-                    contentColor = Color.White
+                    containerColor = if (isDarkTheme) Color.White else Color.Black,
+                    contentColor = if (isDarkTheme) Color.Black else Color.White
                 ) {
                     Icon(Icons.Filled.Add, contentDescription = "Add")
                 }
             },
-            containerColor = Color.LightGray
+            containerColor = pageColor
         ) { innerPadding ->
             Box(
                 modifier = Modifier
                     .padding(innerPadding)
                     .clip(MaterialTheme.shapes.medium)
-                    .background(Color.LightGray)  // Background color for the Box
+                    .background(pageColor)
             ) {
                 MyList(viewModel)
             }
@@ -377,7 +385,7 @@ class EditFollowingListFragment: Fragment(R.layout.fragment_edit_following_list)
                             painter = painterResource(id = R.drawable.baseline_edit),  // Assume ic_edit is your pen icon
                             contentDescription = null,  // Decorative icon: null content description
                             modifier = Modifier.size(24.dp),
-                            tint = Color.DarkGray
+                            tint = if (isDarkTheme) Color.LightGray else Color.DarkGray
                         )
                     }
 
@@ -385,6 +393,11 @@ class EditFollowingListFragment: Fragment(R.layout.fragment_edit_following_list)
             })
     }
 
+
+    private companion object {
+        /** MaterialComponents' dark window background, which the rest of the app shows. */
+        val DarkPageColor = Color(0xFF121212)
+    }
 
     @Preview
     @Composable
