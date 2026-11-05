@@ -40,7 +40,6 @@ object TradeEditDialog {
             val initial = date ?: LocalDate.now(TAIPEI)
             datePicker = DatePickerDialog(
                 context,
-                R.style.Theme_App_TradeDatePicker,
                 { _, year, month, day ->
                     date = LocalDate.of(year, month + 1, day)
                     showDate()

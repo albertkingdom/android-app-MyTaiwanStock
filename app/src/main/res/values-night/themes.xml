@@ -14,6 +14,7 @@
         <!-- Customize your theme here. -->
 
         <item name="android:dialogTheme">@style/CustomDialog</item>
+        <item name="android:datePickerDialogTheme">@style/CustomDialog</item>
         <!--    preference page dialog -->
         <item name="alertDialogTheme">@style/MyPreferenceDialogTheme</item>
         <item name="android:textColorPrimary">@color/white</item>
@@ -22,8 +23,9 @@
         <item name="android:tint">@null</item>
     </style>
 
-    <style name="CustomDialog" parent="@style/Theme.AppCompat.Light.Dialog">
-        <item name="android:windowNoTitle">false</item>
+    <!-- Framework dialogs such as DatePickerDialog; the light version is in values/themes.xml -->
+    <style name="CustomDialog" parent="android:Theme.Material.Dialog.Alert">
+        <item name="android:colorAccent">@color/dialog_accent</item>
     </style>
 
     <style name="AddFollowingListDialogTheme" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
@@ -34,11 +36,11 @@
     </style>
     <style name="MyPositiveTextStyle" parent="Widget.MaterialComponents.Button.TextButton">
 
-        <item name="android:textColor">@color/black</item>
+        <item name="android:textColor">@color/dialog_action</item>
         <item name="android:textAppearance">@style/TextAppearance.AppCompat.Button</item>
     </style>
     <style name="MyNegativeTextStyle" parent="Widget.MaterialComponents.Button.TextButton">
-        <item name="android:textColor">@color/black</item>
+        <item name="android:textColor">@color/dialog_action</item>
     </style>
     <!--    text input border color-->
     <style name="TextInputLayoutStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
@@ -57,11 +59,6 @@
         <item name="colorPrimary">@color/white</item>
         <item name="android:layout_width">match_parent</item>
         <item name="android:windowMinWidthMinor">80%</item>
-    </style>
-
-    <!-- Trade import date picker; the light version is in values/themes.xml -->
-    <style name="Theme.App.TradeDatePicker" parent="android:Theme.Material.Dialog.Alert">
-        <item name="android:colorAccent">@color/date_picker_accent</item>
     </style>
 
     <style name="MyPreference" parent="@style/PreferenceThemeOverlay">

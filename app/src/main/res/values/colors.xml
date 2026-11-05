@@ -15,7 +15,7 @@
     <color name="celadon">#AFE1AF</color>
     <color name="gold">#F9A602</color>
     <color name="recyclerview_background">#FFF</color>
-    <!-- Dialog buttons, focused fields and the date picker accent; night values in values-night -->
+    <!-- Dialog buttons, focused fields and the dialog accent; night values in values-night -->
     <color name="dialog_action">#FF000000</color>
-    <color name="date_picker_accent">#FF018786</color>
+    <color name="dialog_accent">#FF018786</color>
 </resources>
