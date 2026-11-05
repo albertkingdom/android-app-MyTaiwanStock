@@ -26,7 +26,6 @@ import com.example.mynewsapp.model.WidgetStockData
 import com.example.mynewsapp.util.Constant.Companion.NO_INTERNET_CONNECTION
 import com.example.mynewsapp.util.Resource
 import com.example.mynewsapp.ui.widget.WidgetUtil.Companion.updateWidget
-import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.delay
@@ -44,7 +43,6 @@ class ListFragment : Fragment() {
     private lateinit var stockAdapter: StockInfoAdapter
     private lateinit var swipeBackground: ColorDrawable
     private lateinit var deleteIcon: Drawable
-    private lateinit var shimmerLayout: ShimmerFrameLayout
     private var isShowAsPercent = false
         set(value) {
             Timber.d("isShowAsPercent ->$value")
@@ -67,8 +65,6 @@ class ListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val recyclerView: RecyclerView = binding.stockListRecyclerview
-
-        shimmerLayout = binding.shimmerFrameLayout
 
 
         stockAdapter = StockInfoAdapter(
@@ -272,14 +268,15 @@ class ListFragment : Fragment() {
 
     private fun toggleShimmerLoadingEffect(show:Boolean) {
         if (!show) {
-            lifecycleScope.launch {
+            // The view's scope: the delayed update must not run after the view is gone.
+            viewLifecycleOwner.lifecycleScope.launch {
                 delay(500) // show shimmer animation fo 0.5s
-                shimmerLayout.stopShimmer()
-                shimmerLayout.visibility = View.GONE
+                binding.shimmerFrameLayout.stopShimmer()
+                binding.shimmerFrameLayout.visibility = View.GONE
                 binding.swipeRefresh.visibility = View.VISIBLE
             }
         } else {
-            shimmerLayout.startShimmer()
+            binding.shimmerFrameLayout.startShimmer()
             binding.swipeRefresh.visibility = View.GONE
         }
     }
@@ -350,6 +347,13 @@ class ListFragment : Fragment() {
     }
 
     override fun onDestroyView() {
+        // The view lifecycle removes these observers only if it reached CREATED. A view torn down
+        // before that (a cold start from the share sheet replaces this screen in onCreate) would
+        // otherwise stay registered on the activity-scoped ViewModel and keep this view alive.
+        listViewModel.stockPriceInfo.removeObservers(viewLifecycleOwner)
+        listViewModel.currentSelectedFollowingListId.removeObservers(viewLifecycleOwner)
+        // The adapter outlives the view in this field; detach it so it does not keep the RecyclerView.
+        binding.stockListRecyclerview.adapter = null
         super.onDestroyView()
         _binding = null
     }
