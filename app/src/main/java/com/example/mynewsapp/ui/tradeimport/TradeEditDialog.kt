@@ -40,6 +40,7 @@ object TradeEditDialog {
             val initial = date ?: LocalDate.now(TAIPEI)
             datePicker = DatePickerDialog(
                 context,
+                R.style.Theme_App_TradeDatePicker,
                 { _, year, month, day ->
                     date = LocalDate.of(year, month + 1, day)
                     showDate()
@@ -56,7 +57,7 @@ object TradeEditDialog {
             }
         }
 
-        return MaterialAlertDialogBuilder(context)
+        return MaterialAlertDialogBuilder(context, R.style.ThemeOverlay_App_TradeEditDialog)
             .setTitle(R.string.trade_import_edit_title)
             .setView(binding.root)
             .setNegativeButton(R.string.dialog_cancel, null)

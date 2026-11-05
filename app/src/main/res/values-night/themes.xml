@@ -59,6 +59,11 @@
         <item name="android:windowMinWidthMinor">80%</item>
     </style>
 
+    <!-- Trade import date picker; the light version is in values/themes.xml -->
+    <style name="Theme.App.TradeDatePicker" parent="android:Theme.Material.Dialog.Alert">
+        <item name="android:colorAccent">@color/date_picker_accent</item>
+    </style>
+
     <style name="MyPreference" parent="@style/PreferenceThemeOverlay">
         <item name="android:tint">@color/white</item>
     </style>

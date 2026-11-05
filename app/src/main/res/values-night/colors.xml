@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="recyclerview_background">#808080</color> <!-- 黑色背景 -->
+    <color name="dialog_action">#FFFFFFFF</color>
+    <color name="date_picker_accent">#FF03DAC5</color>
 </resources>
