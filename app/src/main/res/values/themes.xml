@@ -15,6 +15,7 @@
         <!-- Customize your theme here. -->
         <item name="android:textColorPrimary">@color/black</item>
         <item name="android:dialogTheme">@style/CustomDialog</item>
+        <item name="android:datePickerDialogTheme">@style/CustomDialog</item>
 <!--        <item name="android:colorBackground">#f5f5f5</item>-->
         <!--    preference page dialog -->
         <item name="alertDialogTheme">@style/MyPreferenceDialogTheme</item>
@@ -37,8 +38,9 @@
         <item name="backgroundTint">#c6c6c6</item>
 
     </style>
-    <style name="CustomDialog" parent="@style/Theme.AppCompat.Light.Dialog">
-        <item name="android:windowNoTitle">false</item>
+    <!-- Framework dialogs such as DatePickerDialog; the night version is in values-night -->
+    <style name="CustomDialog" parent="android:Theme.Material.Light.Dialog.Alert">
+        <item name="android:colorAccent">@color/dialog_accent</item>
     </style>
 
     <style name="AddFollowingListDialogTheme" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
@@ -79,6 +81,16 @@
     <style name="ThemeOverlay.App.TextInputLayout.Outlined" parent="">
         <item name="colorPrimary">@color/black</item>
         <item name="editTextStyle">@style/Widget.MaterialComponents.TextInputEditText.OutlinedBox</item>
+    </style>
+    <!-- Trade import edit dialog: readable in light and dark mode -->
+    <style name="ThemeOverlay.App.TradeEditDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="colorPrimary">@color/dialog_action</item>
+    </style>
+    <style name="Widget.App.TextInputLayout.Outlined.Dialog">
+        <item name="materialThemeOverlay">@style/ThemeOverlay.App.TextInputLayout.Outlined.Dialog</item>
+    </style>
+    <style name="ThemeOverlay.App.TextInputLayout.Outlined.Dialog">
+        <item name="colorPrimary">@color/dialog_action</item>
     </style>
     <style name="Widget.App.TextInputLayout.Edit" parent="@style/Widget.MaterialComponents.TextInputEditText.FilledBox">
 

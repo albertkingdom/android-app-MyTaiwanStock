@@ -384,4 +384,67 @@ class TradeScreenshotParserTest {
 
         assertEquals(listOf("元大台灣50 買 5 112.55 2026-09-30"), parse(boxes(pixels, collapsedPage)).map(::summary))
     }
+
+
+    // OCR misreads seen with ML Kit on the expanded 2026/11/05 screenshot
+
+    @Test
+    fun ml_kit_output_with_a_dropped_first_character_of_the_trade_type() {
+        val trades = parse(TextLineSplitter.boxes(fixtures.mlKitExpandedTwoBuys))
+
+        assertEquals(
+            listOf("元大台灣50 買 11 97.0 2026-11-05", "台積電 買 1 2240.0 2026-11-05"),
+            trades.map(::summary),
+        )
+        assertEquals(listOf("盤中零股買進", "盤中零股買進"), trades.map { it.tradeTypeText })
+        assertTrue(trades.all { it.isSupportedType })
+    }
+
+    @Test
+    fun misread_first_character_of_an_odd_lot_type_is_corrected() {
+        val cases = mapOf(
+            "歸中零股買進" to "盤中零股買進",
+            "艦中零股買進" to "盤中零股買進",
+            "中零股賣出" to "盤中零股賣出",
+            "般後零股買進" to "盤後零股買進",
+            "後零股賣出" to "盤後零股賣出",
+        )
+        for ((misread, expected) in cases) {
+            val pixels = row0Upper + listOf(
+                px("09/30", 40, 585, 158, 632), px(misread, 197, 585, 443, 632),
+                px("5", 665, 585, 688, 632), px("--", 936, 585, 960, 632),
+            )
+
+            val trade = parse(boxes(pixels, collapsedPage)).single()
+            assertEquals(misread, expected, trade.tradeTypeText)
+            assertTrue(misread, trade.isSupportedType)
+        }
+    }
+
+    @Test
+    fun row_chevron_read_as_another_character_does_not_hide_the_upper_line() {
+        // The expanded row's "^" chevron sits at the right edge between the two lines.
+        for (chevron in listOf("へ", "人", "八", "^")) {
+            val pixels = row0Upper + listOf(px(chevron, 975, 560, 1005, 585)) + row0Lower
+
+            assertEquals(
+                chevron,
+                listOf("元大台灣50 買 5 112.55 2026-09-30"),
+                parse(boxes(pixels, collapsedPage)).map(::summary),
+            )
+        }
+    }
+
+
+    @Test
+    fun ml_kit_output_on_a_phone_with_misread_types_and_chevron_lines() {
+        val trades = parse(TextLineSplitter.boxes(fixtures.mlKitPhoneExpandedTwoBuys))
+
+        assertEquals(
+            listOf("元大台灣50 買 11 97.0 2026-11-05", "台積電 買 1 2240.0 2026-11-05"),
+            trades.map(::summary),
+        )
+        assertEquals(listOf("盤中零股買進", "盤中零股買進"), trades.map { it.tradeTypeText })
+        assertTrue(trades.all { it.isSupportedType })
+    }
 }

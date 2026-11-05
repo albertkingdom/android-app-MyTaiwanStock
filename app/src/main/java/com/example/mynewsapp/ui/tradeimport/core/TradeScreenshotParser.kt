@@ -42,7 +42,14 @@ object TradeScreenshotParser {
     private const val UPPER_MIN = 0.5
     private const val UPPER_MAX = 2.5
 
-    private val arrowTexts = setOf("V", "v", "^", "∨", "∧", "⌄", "⌃")
+    /** Longest text a recognized disclosure chevron is taken to be ("^" read as "へ", "人", "八"...). */
+    private const val MAX_ARROW_LENGTH = 2
+
+    /**
+     * The first character of 盤中／盤後 is sometimes misread ("歸中零股買進") or dropped ("中零股買進").
+     * The 中／後 before 零股 still tells the session apart.
+     */
+    private val oddLotTypeRegex = Regex("(中|後)零股(買進|賣出)$")
 
     private val anchorRegex = Regex("[\\u4E00-\\u9FFF]*(買進|賣出)$")
     private val numberRegex = Regex("^[-+]?(?=[\\d,]*\\d)[\\d,]+(\\.\\d+)?$")
@@ -102,7 +109,7 @@ object TradeScreenshotParser {
     private fun typeAnchor(line: Line): Anchor? {
         for (box in line.boxes) {
             val match = anchorRegex.find(stripped(box.text)) ?: continue
-            return Anchor(box, match.value)
+            return Anchor(box, correctedType(match.value))
         }
         return null
     }
@@ -116,13 +123,21 @@ object TradeScreenshotParser {
             val candidate = lines[candidateIndex]
             val distance = (candidate.midY - lower.midY) / anchorHeight
             if (distance > UPPER_MAX) return null
-            // The row's right-hand chevron can be recognized as a separate line of "V". Only skip
-            // arrow-only lines beyond the data columns; never skip another trade.
-            if (candidate.boxes.all { it.x > dataRightEdge && stripped(it.text) in arrowTexts }) continue
+            // The row's right-hand chevron can be recognized as a separate line of "V", "へ" or
+            // similar. Only skip such short lines beyond the data columns; never skip another trade.
+            if (candidate.boxes.all { it.x > dataRightEdge && isArrow(stripped(it.text)) }) continue
             if (distance < UPPER_MIN || candidate.boxes.none { yearFragment(stripped(it.text)) != null }) return null
             return candidate
         }
         return null
+    }
+
+    private fun isArrow(text: String): Boolean =
+        text.isNotEmpty() && text.length <= MAX_ARROW_LENGTH && text.none { it.isDigit() }
+
+    private fun correctedType(type: String): String {
+        val match = oddLotTypeRegex.find(type) ?: return type
+        return "盤" + match.value
     }
 
     // building a trade

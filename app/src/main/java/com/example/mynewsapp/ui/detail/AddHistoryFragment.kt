@@ -1,7 +1,6 @@
 package com.example.mynewsapp.ui.detail
 
 import android.app.DatePickerDialog
-import android.graphics.Color
 import android.os.Bundle
 import android.text.InputType
 import android.view.LayoutInflater
@@ -209,8 +208,6 @@ class AddHistoryFragment : Fragment() {
             addHistoryViewModel.date = calendar.timeInMillis
         }, year, month, day)
         datePickerDialog.show()
-        datePickerDialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(Color.BLACK)
-        datePickerDialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(Color.BLACK)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

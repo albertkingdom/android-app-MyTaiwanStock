@@ -56,7 +56,7 @@ object TradeEditDialog {
             }
         }
 
-        return MaterialAlertDialogBuilder(context)
+        return MaterialAlertDialogBuilder(context, R.style.ThemeOverlay_App_TradeEditDialog)
             .setTitle(R.string.trade_import_edit_title)
             .setView(binding.root)
             .setNegativeButton(R.string.dialog_cancel, null)

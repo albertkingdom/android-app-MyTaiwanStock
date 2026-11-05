@@ -1,7 +1,6 @@
 package com.example.mynewsapp.ui.detail;
 
 import android.app.DatePickerDialog;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -135,7 +134,5 @@ public class AddDividendFragment extends Fragment {
             }
         }, year, month, day);
         datePickerDialog.show();
-        datePickerDialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(Color.BLACK);
-        datePickerDialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(Color.BLACK);
     }
 }
