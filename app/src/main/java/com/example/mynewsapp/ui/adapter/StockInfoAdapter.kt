@@ -65,8 +65,8 @@ class StockInfoAdapter(
         ItemStockinfoBinding.bind(holder.itemView).apply {
             stockNo.text = currentStock.stockNo
             stockName.text = currentStock.stockName
-            stockPrice.text = String.format("%.2f",handleStockPrice(currentStock).toFloat())
-            val diff = handleStockPrice(currentStock).toFloat() - currentStock.lastDayPrice.toFloat()
+            stockPrice.text = currentStock.displayPrice?.let { String.format("%.2f", it) } ?: "-"
+            val diff = currentStock.diff
 
             stockPriceDiff.setTextColor(getColor(this.stockPriceDiff.context, R.color.white))
             val drawable =( ContextCompat.getDrawable(this.stockPriceDiff.context, R.drawable.price_diff_background) as GradientDrawable)
@@ -102,7 +102,10 @@ class StockInfoAdapter(
                 toCandleStickChart(currentStock)
 
             }
-            if (showAsPercent) {
+            if (currentStock.displayPrice == null) {
+                // No price at all: show no change rather than an unchanged 0.00.
+                stockPriceDiff.text = "-"
+            } else if (showAsPercent) {
                 stockPriceDiff.text = holder.itemView.context.getString(
                     R.string.stockPriceDiffPercent,
                     currentStock.diffPercent
@@ -118,13 +121,6 @@ class StockInfoAdapter(
         }
 
 
-    }
-    private fun handleStockPrice(currentStock: MsgArray):String{
-        return if(currentStock.currentPrice == "-"){
-            currentStock.lastDayPrice
-        }else{
-            currentStock.currentPrice
-        }
     }
 
 // to filter with searchview in list fragment

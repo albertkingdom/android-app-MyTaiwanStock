@@ -97,16 +97,14 @@ class WidgetService: RemoteViewsService() {
         }
 
         private fun calculateDiff(stock: WidgetStockData): String {
-            if (stock.stockPrice != "-") {
-                return String.format("%.2f", (stock.stockPrice.toFloat() - stock.yesterDayPrice.toFloat()))
-            }
-            return "-"
+            // The quote API sends "-" for a price it does not have.
+            val price = stock.stockPrice.toFloatOrNull() ?: return "-"
+            val yesterday = stock.yesterDayPrice.toFloatOrNull() ?: return "-"
+            return String.format("%.2f", price - yesterday)
         }
         private fun handlePrice(stock: WidgetStockData): String {
-            if (stock.stockPrice != "-") {
-                return String.format("%.2f", stock.stockPrice.toFloat())
-            }
-            return "-"
+            val price = stock.stockPrice.toFloatOrNull() ?: return "-"
+            return String.format("%.2f", price)
         }
 
     }

@@ -33,9 +33,9 @@ class CalculateAssetUseCase {
             }
         }
 
-        priceInfo.value?.data?.msgArray?.map {
-
-            mapOfStockNoToCurrentPrice[it.stockNo] = (if (it.currentPrice != "-") it.currentPrice else it.lastDayPrice).toFloat()
+        priceInfo.value?.data?.msgArray?.forEach { stock ->
+            // A stock without any price is left out, like one missing from the response.
+            stock.displayPrice?.let { mapOfStockNoToCurrentPrice[stock.stockNo] = it }
         }
 
         mapOfStockNoToAmount.map { entry ->
