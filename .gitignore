@@ -27,3 +27,6 @@ __pycache__/
 /app/release/
 *.keystore
 *.jks
+
+# A global gitignore may ignore *.xml; Android sources (resources, manifests) are XML and must be tracked.
+!app/src/**/*.xml

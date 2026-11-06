@@ -6,24 +6,120 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".ui.list.ListFragment">
 
+    <!-- One tab per following list; the add button stays in place while the tabs scroll. -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/listTabs"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:tabMode="scrollable"
+        app:tabGravity="start"
+        app:tabIndicatorHeight="3dp"
+        app:tabTextAppearance="?attr/textAppearanceTitleSmall"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/tabDivider"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/tabDivider"
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        android:layout_marginVertical="10dp"
+        android:background="?attr/colorOutlineVariant"
+        app:layout_constraintEnd_toStartOf="@id/addListButton"
+        app:layout_constraintTop_toTopOf="@id/listTabs"
+        app:layout_constraintBottom_toBottomOf="@id/listTabs" />
+
+    <ImageButton
+        android:id="@+id/addListButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/watchlist_add_list"
+        android:src="@drawable/ic_add"
+        app:tint="?attr/colorOnSurfaceVariant"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/listTabs"
+        app:layout_constraintBottom_toBottomOf="@id/listTabs" />
+
+    <com.google.android.material.divider.MaterialDivider
+        android:id="@+id/tabRowDivider"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/listTabs" />
+
+    <!-- Header row: name on the left; price and change, with the amount/percent toggle, on the right. -->
+    <TextView
+        android:id="@+id/headerName"
+        android:layout_width="wrap_content"
+        android:layout_height="32dp"
+        android:layout_marginStart="16dp"
+        android:gravity="center_vertical"
+        android:text="@string/watchlist_header_name"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textSize="11sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tabRowDivider" />
+
+    <LinearLayout
+        android:id="@+id/headerToggle"
+        android:layout_width="wrap_content"
+        android:layout_height="32dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:contentDescription="@string/watchlist_toggle_change_mode"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tabRowDivider">
+
+        <TextView
+            android:id="@+id/headerPriceChange"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/watchlist_header_price_change"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="11sp" />
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="4dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_swap_horiz_24" />
+    </LinearLayout>
+
+    <!-- Content area: list, loading placeholder and no-network view, all below the header row. -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefresh"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        >
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/headerName"
+        app:layout_constraintBottom_toBottomOf="parent">
 
+        <!-- Bottom padding keeps the last row clear of the add button. -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/stockListRecyclerview"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
+            android:clipToPadding="false"
+            android:paddingBottom="88dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
     <com.facebook.shimmer.ShimmerFrameLayout
         android:id="@+id/shimmerFrameLayout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/headerName"
+        app:layout_constraintBottom_toBottomOf="parent">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -41,16 +137,17 @@
             <include layout="@layout/shimmer_placeholder_layout"/>
         </LinearLayout>
     </com.facebook.shimmer.ShimmerFrameLayout>
+
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/network_not_available"
         android:layout_width="0dp"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:orientation="vertical"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/headerName"
         android:gravity="center">
 
         <ImageView
@@ -69,54 +166,14 @@
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/addStockButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="@string/watchlist_add_stock"
+        app:icon="@drawable/ic_add"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_margin="20sp"
-        android:id="@+id/floatingBtn"
-        android:src="@drawable/ic_add"
-        app:tint="?attr/colorPrimary"
-        app:backgroundTint="?attr/colorOnPrimary"
-        />
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-
-        <LinearLayout
-            android:id="@+id/buttonContainer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_above="@id/floatingBtn"
-            android:layout_marginBottom="20dp"
-            app:layout_constraintBottom_toTopOf="@id/floatingBtn"
-
-            app:layout_constraintEnd_toEndOf="@id/floatingBtn"
-            android:gravity="end"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/add_new_following_list"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:cornerRadius="30px"
-                android:text="@string/add_new_following_list" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/add_new_stockNo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:cornerRadius="30px"
-                android:text="@string/add_new_stockNo" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/import_trade_screenshot"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:cornerRadius="30px"
-                android:text="@string/trade_import_entry" />
-
-
-
-        </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

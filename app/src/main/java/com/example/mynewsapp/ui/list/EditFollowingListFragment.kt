@@ -74,7 +74,6 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mynewsapp.R
 import com.example.mynewsapp.ui.adapter.FollowingListAdapter
-import com.example.mynewsapp.databinding.FragmentEditFollowingListBinding
 import com.example.mynewsapp.db.FollowingList
 import com.example.mynewsapp.ui.list.AddFollowingListDialogFragment
 import com.example.mynewsapp.ui.list.ListViewModel
@@ -83,7 +82,6 @@ import com.google.android.material.snackbar.Snackbar
 class EditFollowingListFragment: Fragment(R.layout.fragment_edit_following_list) {
 
     private val listViewModel: ListViewModel by activityViewModels()
-    lateinit var binding: FragmentEditFollowingListBinding
     val adapter: FollowingListAdapter = FollowingListAdapter()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -315,15 +313,14 @@ class EditFollowingListFragment: Fragment(R.layout.fragment_edit_following_list)
                         .fillMaxWidth()
                         .background(color = Color.Red)// Fill the width of the parent
                 ) {
-                    items(items) { item ->
+                    // Keyed by list: after a delete, each row keeps its own swipe state.
+                    items(items, key = { it.followingListId }) { item ->
                         Column {
                             MyItemRow(item = item, onClick = onClickListName, onDelete = { id, name ->
                                 listViewModel.deleteFollowingList(id)
-                                Snackbar.make(
-                                    binding.root,
-                                    "追蹤清單${name}已刪除",
-                                    Snackbar.LENGTH_LONG
-                                ).show()
+                                // The screen is a ComposeView, so the fragment's own view hosts the Snackbar.
+                                // The swipe settles after an animation; the view may be gone by then.
+                                view?.let { Snackbar.make(it, "追蹤清單${name}已刪除", Snackbar.LENGTH_LONG).show() }
                             })
                             Divider(color = Color.Gray, thickness = 0.5.dp)
                         }
