@@ -23,6 +23,10 @@ Write a clean, developer-authored commit message following the Conventional Comm
 - Body: explain motivation and context, not mechanics
 - Scope: optional, name of the module/area changed
 
+## Bug fix commits
+
+A `fix` commit's body — or any commit that also contains a bug fix — ends with the test evidence that `AGENTS.md` (Bug Fix Workflow) asks for, in one short paragraph: the test that failed before the fix and its failure, the test that failed when the fix was broken on purpose, and the passing result with the test count. When the fix could not be tested automatically, write why and how it was verified by hand instead. Use real results from this work; never invent them. Test names and failure messages may be quoted verbatim even when they are not in English.
+
 ## What NOT to include
 
 Never add any of the following to commit messages or pull request descriptions:
@@ -57,7 +61,13 @@ reused across requests.
 ```
 
 ```
-fix(parser): replace manual JSON parsing with structured output
+fix(parser): keep quotes whose price is "-"
+
+The quote API sends "-" when a stock has no last trade, and parsing
+the whole response threw, so the list stayed empty.
+
+Tested: QuoteParsingTest failed before the fix (NumberFormatException:
+"-"); reverting the fix makes it fail again; 6 tests pass after it.
 ```
 
 ```

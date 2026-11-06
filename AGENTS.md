@@ -78,11 +78,16 @@ Spectra 規劃（propose，或之後修改 proposal、design、tasks、delta spe
 
 修 bug（含 crash report、tester 回報）必須依序：
 
-1. 先寫一個能重現問題的測試，並執行確認它在修正前會失敗或 crash
-2. 再修改程式碼
-3. 重新執行該測試（以及同檔案的其他測試）確認通過，才算修復完成
+寫測試前先讀 `android-test` skill（測試放哪一層、怎麼只跑一個測試、常見的坑）。
 
-無法寫自動化測試重現時（例如純 UI、系統行為），需在回報中說明原因與手動驗證方式。純排版（margin、間距）調整不必先寫失敗測試。
+1. 先寫一個能重現問題的測試，並執行確認它在修正前會失敗或 crash，且失敗原因是該 bug：斷言不成立或重現了 crash。編譯錯誤、打錯名稱、找不到元件都不算；測試需要的新類別或函式，先以「修正前的行為」補上讓測試能編譯，再看它失敗
+2. 再修改程式碼
+3. 重新執行該測試（以及同檔案的其他測試）確認通過
+4. 把修正的關鍵改回去或改壞，確認該測試會失敗，再還原；仍然通過代表測試沒測到 bug，要補強測試
+
+回報與修正的 commit 內文都要記錄測試證據：修正前的失敗訊息、第 4 步改壞時失敗的測試、修正後通過的結果與測試數量。缺少任何一項，不算修復完成。
+
+例外：無法寫自動化測試重現時（例如純 UI、系統行為），改為記錄原因與手動驗證步驟，不必提供上面三項；純排版（margin、間距）調整不必先寫失敗測試，記錄「純排版，未寫測試」即可。
 
 ## Code Review Workflow
 
@@ -95,6 +100,7 @@ Spectra 規劃（propose，或之後修改 proposal、design、tasks、delta spe
 3. 純文件、純設定（不影響行為）的改動可以略過，但需在回報中說明略過
 4. 尚未執行 code review 時，不得 commit，也不得提議 push 或開 PR
 5. 若發現 commit 時漏審，立即補審整個分支相對基底分支的差異，修復後才能 push
+6. review 範圍包含測試：斷言是否具體、程式寫錯時測試是否仍會通過、測試資料是否有清理；測試不足算一項發現
 
 ### 記錄方式
 
@@ -160,5 +166,22 @@ Code review（含 subagent review）的結果必須記錄成 Markdown：
 
 #### 測試
 
+- 寫或執行測試前先讀 `android-test` skill。
 - 純邏輯（費稅計算、截圖解析、清單解析）寫在 `app/src/test`（JVM unit test），不依賴 Android framework。
 - 需要裝置的測試放 `app/src/androidTest`，執行 `./gradlew connectedDebugAndroidTest`（需模擬器）。
+- 改動碰到資料庫（DAO、migration）、Compose 畫面或 Activity／Fragment 生命週期時，code review 之前要在模擬器上跑對應的 instrumented test，只跑相關的類別：
+
+  ```bash
+  ./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=<完整類別名稱>
+  ```
+
+  | 改到的地方 | 要跑的測試（`com.example.mynewsapp` 底下） |
+  |---|---|
+  | `db/`（DAO、migration、Entity） | `db.FollowingListOrderTest`、`db.StockDatabaseMigrationTest` |
+  | Compose 畫面（例如 `EditFollowingListFragment`） | `ui.list.EditFollowingListDeleteTest` |
+  | Activity／Fragment 生命週期、觀察者、分享 intent 冷啟動 | `ui.list.ListFragmentObserverLeakTest` |
+
+  原因：這些行為無法在 JVM 上測，而 CI（`build-and-test`）只跑 `testDebugUnitTest`，不跑 instrumented test，沒人手動跑就不會被驗證。
+- 沒有對應測試，或無法執行（沒有模擬器、在沒有裝置的環境）時，回報中如實寫「未執行」或「無對應測試」與原因，不要宣稱通過。改到的 Compose 畫面沒有測試時，評估是否補一個，優先補曾經壞過的行為。
+- `connectedDebugAndroidTest` 跑完會解除安裝 App，模擬器上的 App 資料會被清掉；不要在自己的手機上跑，除非接受資料被清掉。
+- `ExampleInstrumentedTest`（範本產生）在 `rx` 上就已失敗：它預期套件名稱是 `com.example.mynewsapp`，但 applicationId 是 `com.albertkingdom.mystockapp`。跑全部 instrumented test 時這個失敗與改動無關。
