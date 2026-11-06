@@ -42,7 +42,8 @@ interface StockDao {
     suspend fun deleteAllHistory(stockNo:String)
 
     // Following List
-    @Query("SELECT * FROM followingList")
+    // In id order: the watchlist tabs and the saved tab position depend on a stable order.
+    @Query("SELECT * FROM followingList ORDER BY followingListId")
     fun getAllFollowingList(): Flow<List<FollowingList>>
 
     @Insert

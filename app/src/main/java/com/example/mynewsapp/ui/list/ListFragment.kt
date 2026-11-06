@@ -5,7 +5,6 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.*
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -16,7 +15,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
-import com.example.mynewsapp.ui.MainActivity
 import com.example.mynewsapp.R
 import com.example.mynewsapp.databinding.FragmentCandleStickChartBinding
 import com.example.mynewsapp.ui.adapter.StockInfoAdapter
@@ -27,14 +25,14 @@ import com.example.mynewsapp.util.Constant.Companion.NO_INTERNET_CONNECTION
 import com.example.mynewsapp.util.Resource
 import com.example.mynewsapp.ui.widget.WidgetUtil.Companion.updateWidget
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.divider.MaterialDividerItemDecoration
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-interface ShowAsPercentListener {
-    fun setShowAsPercent(showAsPercent: Boolean)
-}
 class ListFragment : Fragment() {
     private var _binding: FragmentListBinding? = null
     private val binding get() = _binding!!
@@ -43,11 +41,12 @@ class ListFragment : Fragment() {
     private lateinit var stockAdapter: StockInfoAdapter
     private lateinit var swipeBackground: ColorDrawable
     private lateinit var deleteIcon: Drawable
-    private var isShowAsPercent = false
-        set(value) {
-            Timber.d("isShowAsPercent ->$value")
-            field = value
-        }
+    /** Selects the tapped list; removed while the tabs are changed from code. */
+    private val tabSelectedListener = object : TabLayout.OnTabSelectedListener {
+        override fun onTabSelected(tab: TabLayout.Tab) = listViewModel.selectList(tab.position)
+        override fun onTabUnselected(tab: TabLayout.Tab) = Unit
+        override fun onTabReselected(tab: TabLayout.Tab) = Unit
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -68,17 +67,16 @@ class ListFragment : Fragment() {
 
 
         stockAdapter = StockInfoAdapter(
-            getStockNameToGetRelatedNews,
             navigateToCandleStickChartFragment,
-            object : ShowAsPercentListener {
-                override fun setShowAsPercent(showAsPercent: Boolean) {
-                    Timber.d(showAsPercent.toString())
-                    toggleShowMode(showAsPercent)
-                }
-            }
+            onToggleChangeMode = listViewModel::toggleShowAsPercent,
         )
         recyclerView.adapter = stockAdapter
-        changeToLastViewedList()
+        recyclerView.addItemDecoration(
+            MaterialDividerItemDecoration(requireContext(), MaterialDividerItemDecoration.VERTICAL).apply { isLastItemDecorated = false }
+        )
+        setupListTabs()
+        binding.headerToggle.setOnClickListener { listViewModel.toggleShowAsPercent() }
+        listViewModel.showAsPercent.observe(viewLifecycleOwner) { stockAdapter.setMode(it) }
         listViewModel.stockPriceInfo.observe(viewLifecycleOwner, Observer { response ->
             Timber.d("Observe TestStockPrice $response")
             when (response) {
@@ -113,12 +111,6 @@ class ListFragment : Fragment() {
 
         })
 
-
-        // observe selected list id and get
-        listViewModel.currentSelectedFollowingListId.observe(viewLifecycleOwner) { listId ->
-            Timber.d("currentSelectedFollowingListId $listId")
-
-        }
 
         /**
          * swipe to delete a stockNo from db
@@ -196,16 +188,11 @@ class ListFragment : Fragment() {
 
         }).attachToRecyclerView(recyclerView)
 
-        setupOnClickFab()
+        setupAddStockButton()
 
         setupSwipeRefresh()
 
 
-    }
-
-    override fun onStart() {
-        super.onStart()
-        (activity as MainActivity).showMenuSelectorBtn()
     }
 
     override fun onResume() {
@@ -213,11 +200,44 @@ class ListFragment : Fragment() {
         Timber.d("onResume")
         toggleShimmerLoadingEffect(true)
     }
-    fun toggleShowMode(show: Boolean) {
-        Timber.d(show.toString())
-        isShowAsPercent = show
-        stockAdapter.setMode(show)
-        stockAdapter.notifyItemRangeChanged(0, stockAdapter.itemCount)
+
+    /**
+     * One tab per list, following the ViewModel: the names rebuild or rename the tabs, and the
+     * selected position (the list whose stocks are shown) picks the tab. Code changes to the tabs run
+     * without the listener, so only a tap selects a list.
+     */
+    private fun setupListTabs() {
+        val tabs = binding.listTabs
+        tabs.addOnTabSelectedListener(tabSelectedListener)
+        listViewModel.followingListNames.observe(viewLifecycleOwner) { names ->
+            tabs.removeOnTabSelectedListener(tabSelectedListener)
+            if (tabs.tabCount == names.size) {
+                names.forEachIndexed { index, name -> tabs.getTabAt(index)?.text = name }
+            } else {
+                tabs.removeAllTabs()
+                names.forEach { tabs.addTab(tabs.newTab().setText(it), false) }
+                listViewModel.selectedListPosition.value?.let { selectTab(it) }
+            }
+            tabs.addOnTabSelectedListener(tabSelectedListener)
+        }
+        listViewModel.selectedListPosition.observe(viewLifecycleOwner) { position ->
+            tabs.removeOnTabSelectedListener(tabSelectedListener)
+            selectTab(position)
+            tabs.addOnTabSelectedListener(tabSelectedListener)
+        }
+        binding.addListButton.setOnClickListener { showAddListDialog() }
+    }
+
+    /** Selects the tab and scrolls it into view; skipped while the tabs are not built yet. */
+    private fun selectTab(position: Int) {
+        val tabs = binding.listTabs
+        val tab = tabs.getTabAt(position) ?: return
+        tabs.selectTab(tab)
+        tabs.post { _binding?.listTabs?.setScrollPosition(position, 0f, true) }
+    }
+
+    private fun showAddListDialog() {
+        AddFollowingListDialogFragment().show(childFragmentManager, "addFollowingList")
     }
 
     private fun setupSwipeRefresh() {
@@ -226,33 +246,10 @@ class ListFragment : Fragment() {
         }
     }
 
-    private fun setupOnClickFab() {
-        val navToListsPageBtn = binding.addNewFollowingList
-        val navToNewStockNoBtn = binding.addNewStockNo
-        binding.floatingBtn.setOnClickListener {
-            val buttonContainer = binding.buttonContainer
-
-            if (buttonContainer.visibility == View.GONE) {
-                buttonContainer.visibility = View.VISIBLE
-            } else {
-                buttonContainer.visibility = View.GONE
-            }
-        }
-
-        navToListsPageBtn.setOnClickListener {
-            findNavController().navigate(ListFragmentDirections.actionStockListFragmentToEditFollowingListFragment())
-        }
-        navToNewStockNoBtn.setOnClickListener {
+    private fun setupAddStockButton() {
+        binding.addStockButton.setOnClickListener {
             findNavController().navigate(ListFragmentDirections.actionStockListFragmentToAddStockFragment())
         }
-        binding.importTradeScreenshot.setOnClickListener {
-            // A quick second tap must not open a second import screen.
-            if (findNavController().currentDestination?.id != R.id.stockListFragment) return@setOnClickListener
-            findNavController().navigate(R.id.action_global_tradeImportFragment)
-        }
-    }
-    private val getStockNameToGetRelatedNews:(stockContent: MsgArray)->Unit = { stockContent->
-
     }
 
     private val navigateToCandleStickChartFragment:(stockContent: MsgArray) -> Unit = {
@@ -283,7 +280,7 @@ class ListFragment : Fragment() {
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
-        inflater.inflate(R.menu.options_menu, menu)
+        inflater.inflate(R.menu.list_fragment_options_menu, menu)
         val searchView = menu.findItem(R.id.app_bar_search).actionView as SearchView
         searchView.apply {
             queryHint = "請輸入代號"
@@ -303,6 +300,57 @@ class ListFragment : Fragment() {
         }
 
 
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.menu_add_list -> showAddListDialog()
+            R.id.menu_rename_list -> showRenameListDialog()
+            R.id.menu_delete_list -> showDeleteListDialog()
+            R.id.menu_import_screenshot -> {
+                // A quick second tap must not open a second import screen.
+                if (findNavController().currentDestination?.id == R.id.stockListFragment) {
+                    findNavController().navigate(R.id.action_global_tradeImportFragment)
+                }
+            }
+            R.id.menu_manage_lists ->
+                findNavController().navigate(ListFragmentDirections.actionStockListFragmentToEditFollowingListFragment())
+            else -> return super.onOptionsItemSelected(item)
+        }
+        return true
+    }
+
+    /** Renames the selected list; a blank name or another list's name keeps the dialog open. */
+    private fun showRenameListDialog() {
+        val listId = listViewModel.currentSelectedFollowingListId.value ?: return
+        val currentName = listViewModel.currentListName() ?: return
+        val view = layoutInflater.inflate(R.layout.dialog_add_following_list, null)
+        val field = view.findViewById<TextInputLayout>(R.id.outlinedTextField)
+        field.editText?.setText(currentName)
+        val dialog = MaterialAlertDialogBuilder(requireContext(), R.style.AddFollowingListDialogTheme)
+            .setTitle(R.string.watchlist_rename_list)
+            .setView(view)
+            // The listener is replaced so a rejected name keeps the dialog open.
+            .setPositiveButton(R.string.watchlist_save, null)
+            .setNegativeButton(R.string.watchlist_cancel, null)
+            .create()
+        dialog.validateListNameOnConfirm(
+            field = field,
+            existingNames = { listViewModel.allFollowingList.value.orEmpty().map { it.listName } },
+            renamingFrom = currentName,
+        ) { name -> listViewModel.updateFollowingListName(name, listId) }
+        dialog.show()
+    }
+
+    /** Deletes the selected list and its stocks after a confirmation that names the list. */
+    private fun showDeleteListDialog() {
+        val listId = listViewModel.currentSelectedFollowingListId.value ?: return
+        val name = listViewModel.currentListName() ?: return
+        MaterialAlertDialogBuilder(requireContext(), R.style.AddFollowingListDialogTheme)
+            .setMessage(getString(R.string.watchlist_delete_list_message, name))
+            .setPositiveButton(R.string.watchlist_delete) { _, _ -> listViewModel.deleteFollowingList(listId) }
+            .setNegativeButton(R.string.watchlist_cancel, null)
+            .show()
     }
 
     private fun toggleNetworkConnectionLostIcon(isNetworkError: Boolean) {
@@ -340,27 +388,17 @@ class ListFragment : Fragment() {
         editor.apply()
     }
 
-    private fun changeToLastViewedList() {
-        val index = requireContext().getSharedPreferences("sharedPref", AppCompatActivity.MODE_PRIVATE).getInt("currentList", 0)
-        Timber.d("last viewed list: $index")
-        listViewModel.changeLastViewedListIndex(index = index)
-    }
-
     override fun onDestroyView() {
         // The view lifecycle removes these observers only if it reached CREATED. A view torn down
         // before that (a cold start from the share sheet replaces this screen in onCreate) would
         // otherwise stay registered on the activity-scoped ViewModel and keep this view alive.
         listViewModel.stockPriceInfo.removeObservers(viewLifecycleOwner)
-        listViewModel.currentSelectedFollowingListId.removeObservers(viewLifecycleOwner)
+        listViewModel.followingListNames.removeObservers(viewLifecycleOwner)
+        listViewModel.selectedListPosition.removeObservers(viewLifecycleOwner)
+        listViewModel.showAsPercent.removeObservers(viewLifecycleOwner)
         // The adapter outlives the view in this field; detach it so it does not keep the RecyclerView.
         binding.stockListRecyclerview.adapter = null
         super.onDestroyView()
         _binding = null
-    }
-    override fun onStop() {
-        super.onStop()
-        Timber.d("onstop")
-
-        (activity as MainActivity).hideMenuSelectorBtn()
     }
 }

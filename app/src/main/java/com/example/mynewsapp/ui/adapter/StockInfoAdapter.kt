@@ -1,17 +1,11 @@
 package com.example.mynewsapp.ui.adapter
 
-
-
-
-import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
-import android.util.Log
+import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Filter
 import android.widget.Filterable
-import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getColor
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -19,15 +13,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.mynewsapp.R
 import com.example.mynewsapp.databinding.ItemStockinfoBinding
 import com.example.mynewsapp.model.MsgArray
-import com.example.mynewsapp.ui.list.ShowAsPercentListener
-import timber.log.Timber
-import java.util.Locale
+import com.example.mynewsapp.ui.list.StockRowFormatter
+import com.example.mynewsapp.ui.list.Trend
+import com.google.android.material.color.MaterialColors
 
 
 class StockInfoAdapter(
-    val onClick: (Stock: MsgArray)->Unit,
     val toCandleStickChart: (Stock: MsgArray)->Unit,
-    private val showAsPercentListener: ShowAsPercentListener
+    /** Called when a change label is tapped: switch between amount and percent. */
+    private val onToggleChangeMode: () -> Unit,
 ):ListAdapter<MsgArray, StockInfoAdapter.StockViewHolder>(DiffCallback), Filterable {
     private var list = listOf<MsgArray>()
     private var showAsPercent: Boolean = false
@@ -48,8 +42,12 @@ class StockInfoAdapter(
         this.list = list!!
         submitList(list)
     }
+
+    /** Shows the change labels as percent or amount; rebinds the rows when the mode changes. */
     fun setMode(showAsPercent: Boolean) {
+        if (this.showAsPercent == showAsPercent) return
         this.showAsPercent = showAsPercent
+        notifyItemRangeChanged(0, itemCount)
     }
     class StockViewHolder(view: View):RecyclerView.ViewHolder(view){
 
@@ -61,66 +59,26 @@ class StockInfoAdapter(
 
     override fun onBindViewHolder(holder: StockViewHolder, position: Int) {
         val currentStock = getItem(position)
+        val context = holder.itemView.context
+        val row = StockRowFormatter.format(currentStock, showAsPercent, context.getString(R.string.watchlist_previous_close))
 
         ItemStockinfoBinding.bind(holder.itemView).apply {
-            stockNo.text = currentStock.stockNo
             stockName.text = currentStock.stockName
-            stockPrice.text = currentStock.displayPrice?.let { String.format("%.2f", it) } ?: "-"
-            val diff = currentStock.diff
-
-            stockPriceDiff.setTextColor(getColor(this.stockPriceDiff.context, R.color.white))
-            val drawable =( ContextCompat.getDrawable(this.stockPriceDiff.context, R.drawable.price_diff_background) as GradientDrawable)
-
-
-            if(diff<0f) {
-                drawable.setColor(getColor(this.stockPriceDiff.context, R.color.green))
-                stockPriceDiff.background = drawable
-                stockPriceDiff.text = holder.itemView.context.getString(
-                    R.string.stockprice_diff,
-                    "",
-                    String.format("%.2f", diff)
-                )
-            }else if(diff>0f) {
-                drawable.setColor(getColor(this.stockPriceDiff.context, R.color.red))
-                stockPriceDiff.background = drawable
-                stockPriceDiff.text = holder.itemView.context.getString(
-                    R.string.stockprice_diff,
-                    "+",
-                    String.format("%.2f", diff)
-                )
-            }else{
-                stockPriceDiff.setBackgroundColor(Color.TRANSPARENT)
-                stockPriceDiff.setTextColor(Color.GRAY)
-                stockPriceDiff.text = holder.itemView.context.getString(
-                    R.string.stockprice_diff,
-                    "",
-                    "0.00"
-                )
+            stockSubtitle.text = row.subtitle
+            stockPrice.text = row.price
+            stockPriceDiff.text = row.change
+            val (background, text) = when (row.trend) {
+                Trend.UP -> getColor(context, R.color.stock_up_container) to getColor(context, R.color.on_stock_up_container)
+                Trend.DOWN -> getColor(context, R.color.stock_down_container) to getColor(context, R.color.on_stock_down_container)
+                Trend.FLAT -> MaterialColors.getColor(stockPriceDiff, com.google.android.material.R.attr.colorSurfaceContainerHighest) to
+                    MaterialColors.getColor(stockPriceDiff, com.google.android.material.R.attr.colorOnSurfaceVariant)
             }
+            stockPriceDiff.backgroundTintList = ColorStateList.valueOf(background)
+            stockPriceDiff.setTextColor(text)
 
-            root.setOnClickListener { _ ->
-                toCandleStickChart(currentStock)
-
-            }
-            if (currentStock.displayPrice == null) {
-                // No price at all: show no change rather than an unchanged 0.00.
-                stockPriceDiff.text = "-"
-            } else if (showAsPercent) {
-                stockPriceDiff.text = holder.itemView.context.getString(
-                    R.string.stockPriceDiffPercent,
-                    currentStock.diffPercent
-                )
-            }
-            stockPriceDiff.setOnClickListener {
-                if (!showAsPercent) {
-                    showAsPercentListener.setShowAsPercent(showAsPercent = true)
-                } else {
-                    showAsPercentListener.setShowAsPercent(showAsPercent = false)
-                }
-            }
+            root.setOnClickListener { toCandleStickChart(currentStock) }
+            stockPriceDiff.setOnClickListener { onToggleChangeMode() }
         }
-
-
     }
 
 // to filter with searchview in list fragment
@@ -148,7 +106,6 @@ class StockInfoAdapter(
         }
 
         override fun publishResults(p0: CharSequence?, filterResults: FilterResults?) {
-            println("publishResults ${filterResults?.values}")
             submitList(filterResults?.values as MutableList<MsgArray>)
         }
 

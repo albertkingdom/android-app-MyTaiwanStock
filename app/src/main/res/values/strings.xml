@@ -119,4 +119,21 @@
     <string name="trade_import_fixture_copied">已複製辨識結果</string>
     <string name="stock_no_not_found">查無此股票代號</string>
     <string name="candle_no_data">無資料</string>
+    <!-- Watchlist screen -->
+    <string name="watchlist_previous_close">昨收</string>
+    <string name="watchlist_header_name">名稱</string>
+    <string name="watchlist_header_price_change">成交價 · 漲跌</string>
+    <string name="watchlist_toggle_change_mode">切換漲跌顯示方式</string>
+    <string name="watchlist_add_list">新增清單</string>
+    <string name="watchlist_add_stock">新增</string>
+    <string name="watchlist_rename_list">重新命名</string>
+    <string name="watchlist_delete_list">刪除此清單</string>
+    <string name="watchlist_manage_lists">管理清單</string>
+    <string name="watchlist_delete_list_message">刪除「%1$s」及其中的股票？</string>
+    <string name="watchlist_delete">刪除</string>
+    <string name="watchlist_cancel">取消</string>
+    <string name="watchlist_save">儲存</string>
+    <!-- Watchlist list names -->
+    <string name="list_name_blank">請輸入清單名稱</string>
+    <string name="list_name_duplicate">已有同名清單</string>
 </resources>

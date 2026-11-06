@@ -47,7 +47,7 @@
             android:layout_alignParentEnd="true"
             android:background="@android:color/transparent"
             android:text="Send"
-            android:textColor="?attr/colorOnPrimary" />
+            android:textColor="?attr/colorOnSurface" />
 
     </RelativeLayout>
 

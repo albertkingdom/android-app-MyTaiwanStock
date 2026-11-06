@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/app_bar_search"
+        android:icon="@drawable/ic_baseline_search_24"
+        android:title="Search"
+        app:showAsAction="ifRoom|collapseActionView"
+        app:actionViewClass="androidx.appcompat.widget.SearchView" />
+
+    <item
+        android:id="@+id/menu_add_list"
+        android:title="@string/watchlist_add_list"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_rename_list"
+        android:title="@string/watchlist_rename_list"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_delete_list"
+        android:title="@string/watchlist_delete_list"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_import_screenshot"
+        android:title="@string/trade_import_entry"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_manage_lists"
+        android:title="@string/watchlist_manage_lists"
+        app:showAsAction="never" />
+</menu>

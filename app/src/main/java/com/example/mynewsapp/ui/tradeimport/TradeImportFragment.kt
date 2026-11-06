@@ -27,7 +27,6 @@ import androidx.navigation.fragment.navArgs
 import com.example.mynewsapp.BuildConfig
 import com.example.mynewsapp.R
 import com.example.mynewsapp.databinding.FragmentTradeImportBinding
-import com.example.mynewsapp.ui.MainActivity
 import com.example.mynewsapp.ui.list.ListViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -115,12 +114,6 @@ class TradeImportFragment : Fragment() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        // The list selector belongs to the list screen; its "edit lists" action only works from there.
-        (activity as? MainActivity)?.hideMenuSelectorBtn()
-    }
-
     override fun onPause() {
         super.onPause()
         if (viewModel.isPickerPending) checkPickerOnResume = true
@@ -139,9 +132,9 @@ class TradeImportFragment : Fragment() {
     // 0 is the list screen's "not chosen yet"; Room list ids start at 1.
     private fun currentListId(): Int? = listViewModel.currentSelectedFollowingListId.value?.takeIf { it > 0 }
 
-    /** The list position the list screen saves (see ListFragment.changeToLastViewedList). */
+    /** The selected list's tab position, saved by ListViewModel.selectList. */
     private fun lastViewedListIndex(): Int? =
-        requireContext().getSharedPreferences("sharedPref", Context.MODE_PRIVATE).getInt("currentList", -1).takeIf { it >= 0 }
+        requireContext().getSharedPreferences(ListViewModel.SHARED_PREF, Context.MODE_PRIVATE).getInt(ListViewModel.KEY_CURRENT_LIST, -1).takeIf { it >= 0 }
 
     private fun render(state: TradeImportState) {
         when (state) {

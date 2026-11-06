@@ -5,14 +5,11 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.MenuItem
-import android.view.View
-import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.core.content.IntentCompat
 import androidx.navigation.navOptions
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.ListPopupWindow
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
@@ -22,7 +19,6 @@ import com.example.mynewsapp.MyApplication
 import com.example.mynewsapp.R
 import com.example.mynewsapp.databinding.ActivityMainBinding
 import com.example.mynewsapp.stocklist.android.StockListRefreshWorker
-import com.example.mynewsapp.ui.list.ListFragmentDirections
 import com.example.mynewsapp.ui.list.ListViewModel
 import com.example.mynewsapp.ui.list.ListViewModelFactory
 import com.example.mynewsapp.ui.statistics.StatisticViewModel
@@ -77,7 +73,7 @@ class MainActivity : AppCompatActivity() {
 
         setupOnClickBottomNav()
 
-        setupAppBarMenu()
+        observeFollowingLists()
 
         checkIntentExtra()
 
@@ -173,68 +169,13 @@ class MainActivity : AppCompatActivity() {
             }
         })
         */
-        showMenuSelectorBtn()
     }
 
-
-    fun showMenuSelectorBtn() {
-        Timber.d("showMenuSelectorBtn")
-        binding.showListMenuButton.visibility = View.VISIBLE
-        setupAppBarMenu()
+    /**
+     * Keeps the list names observed for their side effects (a Default list for an empty database, and
+     * starting the price pipeline on the saved list), also when another screen opens first.
+     */
+    private fun observeFollowingLists() {
+        listViewModel.followingListNames.observe(this) { }
     }
-    fun hideMenuSelectorBtn() {
-        Timber.d("hideMenuSelectorBtn")
-
-        binding.showListMenuButton.visibility = View.GONE
-    }
-    private fun setupAppBarMenu() {
-        val menuSelectorButton = binding.showListMenuButton
-        val listPopupWindow = ListPopupWindow(this, null, R.attr.listPopupWindowStyle)
-
-        // Set button as the list popup's anchor
-        listPopupWindow.anchorView = menuSelectorButton
-
-
-
-        listViewModel.appBarMenuItemNameList.observe(this) { list ->
-
-            // setup adapter
-            val adapter = ArrayAdapter(this, R.layout.menu_list_selector_item, list)
-            listPopupWindow.setAdapter(adapter)
-            // setup click listener for app bar menu item
-            listPopupWindow.setOnItemClickListener { adapterView, view, position, id ->
-
-                // when click edit button
-                if (position == list.lastIndex) {
-                    Timber.d("click editing btn of following list")
-                    findNavController(R.id.StockNavHostFragment).navigate(ListFragmentDirections.actionStockListFragmentToEditFollowingListFragment())
-                    // Dismiss popup.
-                    listPopupWindow.dismiss()
-
-                } else {
-                    listViewModel.changeCurrentFollowingList(position)
-                    listPopupWindow.dismiss()
-                    saveCurrentViewedList(position = position)
-                }
-
-            }
-        }
-
-
-        // Show list popup window on button click.
-        menuSelectorButton.setOnClickListener { v: View? -> listPopupWindow.show() }
-
-        // title of app bar menu
-        listViewModel.appBarMenuButtonTitle.observe(this) { title ->
-            menuSelectorButton.text = title
-        }
-    }
-
-    private fun saveCurrentViewedList(position: Int) {
-
-        getSharedPreferences("sharedPref", MODE_PRIVATE).edit()
-            .putInt("currentList", position)
-            .apply()
-    }
-
 }

@@ -43,29 +43,55 @@ class ListViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private var lastViewedListIndex = 0
+    private val sharedPref = application.getSharedPreferences(SHARED_PREF, Application.MODE_PRIVATE)
+
+    /**
+     * The selected tab position; the only source of the selection. Read here (not in the list screen)
+     * so a cold start that opens another screen first still starts the price pipeline on this list.
+     */
+    private var lastViewedListIndex = sharedPref.getInt(KEY_CURRENT_LIST, 0)
     val currentSelectedFollowingListId: MutableLiveData<Int> = MutableLiveData(0)
+
+    private val _selectedListPosition = MutableLiveData<Int>()
+    /** The tab the list screen shows as selected; always the list whose stocks are shown. */
+    val selectedListPosition: LiveData<Int> = _selectedListPosition
 
     val allFollowingList: LiveData<List<FollowingList>> = repository.allFollowingList.asLiveData()
 
-    val appBarMenuButtonTitle = currentSelectedFollowingListId.map { listId ->
-        allFollowingList.value?.find { list -> list.followingListId == listId }?.listName
+    /**
+     * The list names, for the tabs. Observed by MainActivity for its side effects, so they also run
+     * when the list screen has no view: an empty database gets a "Default" list, and every new set of
+     * lists (added, renamed or deleted) keeps the selection (see [keepSelection]).
+     */
+    val followingListNames: LiveData<List<String>> = allFollowingList.map { lists ->
+        if (lists.isEmpty()) {
+            createFollowingList(FollowingList(followingListId = 0, listName = "Default"))
+        } else {
+            keepSelection(lists)
+        }
+        lists.map { it.listName }
     }
 
-    val appBarMenuItemNameList = allFollowingList.map { listOfFollowingLists ->
-        if (listOfFollowingLists.isEmpty()) {
-            val followingList = FollowingList(followingListId = 0, listName = "Default")
-            createFollowingList(followingList)
+    /**
+     * Keeps the selected list selected when the lists change. If it still exists only its position is
+     * updated (another list before it was added or deleted), without refetching prices. If it is gone
+     * (deleted) or nothing is selected yet, the saved position is selected, clamped to the lists.
+     */
+    private fun keepSelection(lists: List<FollowingList>) {
+        val position = lists.indexOfFirst { it.followingListId == currentSelectedFollowingListId.value }
+        if (position < 0) {
+            selectList(lastViewedListIndex, lists)
+        } else if (position != lastViewedListIndex || _selectedListPosition.value != position) {
+            savePosition(position)
         }
-        if (listOfFollowingLists.isNotEmpty()) {
-            changeCurrentFollowingList(lastViewedListIndex)
-        }
+    }
 
-        // Set list popup's content
-        val listNameArrayAndEdit = mutableListOf<String>()
-        listNameArrayAndEdit.addAll(listOfFollowingLists.map { followingList -> followingList.listName })
-        listNameArrayAndEdit.add("編輯列表")
-        return@map listNameArrayAndEdit
+    private val _showAsPercent = MutableLiveData(false)
+    /** Whether the change labels show percent instead of amount; kept while the list screen is rebuilt. */
+    val showAsPercent: LiveData<Boolean> = _showAsPercent
+
+    fun toggleShowAsPercent() {
+        _showAsPercent.value = !(_showAsPercent.value ?: false)
     }
 
     val stockPriceInfo = MutableLiveData<Resource<StockPriceInfoResponse>>()
@@ -77,15 +103,13 @@ class ListViewModel(
 //    val db = Firebase.firestore
     var auth: FirebaseAuth = FirebaseAuth.getInstance()
 
-    fun changeLastViewedListIndex(index: Int) {
-        lastViewedListIndex = index
-    }
     /*
     1. change following list id
     2. fetch single list -> followingListWithStocks
     3. stockPriceInfo
      */
     private fun setupGetStockPriceDataPipe(followingListId: Int) {
+        Timber.d("start price pipeline for list $followingListId")
         compositeDisposable.clear() // cancel existing subscription
         val observable = Observable.just(followingListId)
 
@@ -147,11 +171,29 @@ class ListViewModel(
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(observer)
     }
-    fun changeCurrentFollowingList(index: Int) {
-        val followingListId = allFollowingList.value?.get(index)?.followingListId!!
-        currentSelectedFollowingListId.value = allFollowingList.value?.get(index)?.followingListId
+    /**
+     * Selects the list at [position] (clamped to the lists), saves it as the last viewed list and
+     * starts its price pipeline. Does nothing while there is no list.
+     */
+    fun selectList(position: Int, lists: List<FollowingList>? = allFollowingList.value) {
+        lists ?: return
+        val clamped = ListTabSelection.selectedPosition(position, lists.size) ?: return
+        val followingListId = lists[clamped].followingListId
+        currentSelectedFollowingListId.value = followingListId
+        savePosition(clamped)
         setupGetStockPriceDataPipe(followingListId)
     }
+
+    private fun savePosition(position: Int) {
+        lastViewedListIndex = position
+        sharedPref.edit().putInt(KEY_CURRENT_LIST, position).apply()
+        _selectedListPosition.value = position
+    }
+
+    /** The selected list's name, read when needed so a renamed list syncs under its new name. */
+    fun currentListName(): String? =
+        allFollowingList.value?.find { it.followingListId == currentSelectedFollowingListId.value }?.listName
+
     fun createFollowingList(followingList: FollowingList) {
         viewModelScope.launch {
             repository.insertFollowingList(followingList)
@@ -294,7 +336,8 @@ class ListViewModel(
 
 
     fun uploadNewStockNoToOnlineDB(stockNo: String) {
-        val listName = appBarMenuButtonTitle.value ?: return
+        val listName = currentListName() ?: return
+        Timber.d("upload stock $stockNo to online list $listName")
         viewModelScope.launch {
             FirebaseManager.uploadNewStockNoToOnlineDB(stockNo, listName)
         }
@@ -373,7 +416,7 @@ class ListViewModel(
     }
 
     fun deleteStockNoFromOnlineDB(stockNo: String) {
-        val listName = appBarMenuButtonTitle.value ?: return
+        val listName = currentListName() ?: return
         viewModelScope.launch {
             FirebaseManager.deleteStockNo(stockNo, listName)
         }
@@ -386,6 +429,12 @@ class ListViewModel(
     fun getAllOnlineDBDataAndSaveToLocal() {
         syncFollowingList()
         syncInvestHistory()
+    }
+
+    companion object {
+        /** Also read by the trade import screen to preselect the last viewed list. */
+        const val SHARED_PREF = "sharedPref"
+        const val KEY_CURRENT_LIST = "currentList"
     }
 }
 
