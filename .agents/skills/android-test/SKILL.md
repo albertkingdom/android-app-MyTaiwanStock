@@ -1,6 +1,6 @@
 ---
 name: android-test
-description: 在 Android 專案寫或執行測試時使用：修 bug 前先寫重現測試、為新邏輯補單元測試、寫 Room／Compose／Espresso 的 instrumented test、把 spec 的範例表變成測試、或測試在 CI／模擬器上失敗要排查。涵蓋測試放哪一層、怎麼只跑一個測試、以及常見的坑。只用於 Android（Gradle）專案。
+description: 在 Android 專案寫或執行測試時使用：修 bug 前先寫重現測試、為新邏輯補單元測試、寫 Room／Compose／Espresso 的 instrumented test、把 spec 的範例表變成測試、測試在 CI／模擬器上失敗要排查、或改了畫面與生命週期後要在模擬器上手動驗證。涵蓋測試放哪一層、怎麼只跑一個測試、在模擬器上手動驗證畫面與生命週期，以及常見的坑。只用於 Android（Gradle）專案。
 ---
 
 # Android 測試
@@ -114,7 +114,155 @@ instrumented test 要模擬器、要安裝 APK，一次動輒數分鐘。讓它�
 
 **模擬器很慢時的時間值。** 冷啟動可能超過 10 秒。`waitUntil` 給足 timeout（10 秒起跳），不要用固定的 `Thread.sleep`。
 
-## 8. 回報
+## 8. 手動驗證（模擬器）
+
+instrumented test 抓得到的是「寫成斷言的行為」；畫面長什麼樣、使用者實際操作一輪會不會壞，要自己在模擬器上走一遍。這一節是 instrumented test 之外的最後一道確認，不取代測試。下面的指令都在 `emulator-5554`（Android 13）上實際跑過；角括號 `<…>` 是要換成專案值的地方。
+
+### 何時需要
+
+- 改到畫面（Fragment 的 view、圖表、列表）、生命週期（旋轉、返回、切 tab、退到背景再回來）、ViewModel 與畫面之間的資料流。
+- 修正「在模擬器上才看得到」的問題（顏色、版面、閃爍、標籤格式）。
+- 純邏輯、純資料、純文件的改動不需要。
+
+### 前置
+
+1. **只用模擬器，不要動實體手機。** 開發機常同時接著手機：每個 adb 指令都加 `-s emulator-5554`（`adb devices` 看序號），Gradle 用 `ANDROID_SERIAL=emulator-5554`。`installDebug` 會印 `Installed on 1 device.`，不是 1 就停下來看。
+2. **用 `installDebug` 安裝，不要用 `connectedDebugAndroidTest`。** connected 測試跑完會解除安裝 App、清掉資料。
+   ```bash
+   ANDROID_SERIAL=emulator-5554 ./gradlew installDebug   # JDK 前綴照 AGENTS.md
+   ```
+3. **資料被清掉就用 UI 重建。** 先前的 instrumented test、模擬器重啟（用 `-no-snapshot-save` 啟動的話，重啟前的安裝與資料都會消失）、重裝，都會讓 App 回到空白。要有資料才看得到的畫面，先把資料建好（見「建立測試資料」）。
+4. **模擬器要有網路，而且要能解析網域。** App 呼叫的 API 主機解析不了，畫面就沒有資料（見「常見的坑」的 DNS）。<!--ps--> **本專案：** 股價從 `mis.twse.com.tw` 查；沒有股價，自選股頁是空的、統計頁沒有扇形。<!--/ps-->
+
+### 啟動與操作（以下都實際跑過）
+
+在 zsh 裡用函式，不要把 `adb -s emulator-5554` 放進變數（不會被拆成多個參數）：
+
+```bash
+a() { adb -s emulator-5554 "$@"; }
+OUT=<repo 外的資料夾>; mkdir -p "$OUT"
+
+# 啟動：指定 MainActivity，不要用 monkey 或點 launcher 圖示（debug 版可能有第二個 launcher，見「常見的坑」）
+# 列出這個 App 的所有 launcher activity：
+a shell cmd package query-activities --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER <applicationId>
+a shell am start -S -n <applicationId>/<MainActivity 的完整類別名稱>   # -S：先強制停止
+# 等 splash 與第一次載入：冷啟動、剛安裝後要 5～10 秒；splash 期間 dump 看不到 App 的內容。
+```
+<!--ps-->**本專案：** applicationId 是 `com.albertkingdom.mystockapp`，Activity 類別在 namespace `com.example.mynewsapp` 底下，兩者不同：`a shell am start -S -n com.albertkingdom.mystockapp/com.example.mynewsapp.ui.MainActivity`。`query-activities` 會列出 `MainActivity` 與 `leakcanary.internal.activity.LeakLauncherActivity` 兩個。<!--/ps-->
+
+```bash
+# 截圖（放 repo 外，再用看圖工具打開）
+a exec-out screencap -p > "$OUT/01-screen.png"
+
+# 找元件座標：dump 出來解析 resource-id / text / content-desc 與 bounds，點中心
+a shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+a exec-out cat /sdcard/ui.xml | python3 -c "
+import sys,re
+x=sys.stdin.read()
+for m in re.finditer(r'<node [^>]*>',x):
+    n=m.group(0); g=lambda k:(re.search(r' '+k+r'=\"([^\"]*)\"',n) or [0,''])[1]
+    if g('text') or g('content-desc') or g('resource-id'):
+        print(g('bounds'), 'click' if g('clickable')=='true' else '', g('resource-id').split('/')[-1], repr(g('text')), repr(g('content-desc')))
+"
+
+a shell input tap <x> <y>            # 座標是 bounds 的中心
+a shell input text 12345             # 只試過數字
+a shell input keyevent KEYCODE_BACK  # 收鍵盤、返回上一頁；在最上層畫面按 BACK 會離開 App
+a shell input keyevent KEYCODE_HOME  # 退到背景
+```
+
+- 每個動作後等 2～5 秒再截圖或 dump；模擬器忙的時候要更久。
+- 圖表（自繪的 View）在 dump 裡只有一個節點，看不到圖形與標籤，**要看截圖**。
+- 表單、列表的文字（數量、金額）在 dump 裡有，可以直接比對，不必靠眼睛。
+
+#### 旋轉
+
+```bash
+a shell settings get system accelerometer_rotation   # 先記下原值
+a shell settings get system user_rotation            # 先記下原值
+a shell settings put system accelerometer_rotation 0
+a shell settings put system user_rotation 1          # 橫向；截圖寬高對調
+a shell settings put system user_rotation 0          # 回直向
+a shell settings put system accelerometer_rotation 1 # 還原成原值，別留著鎖定
+```
+
+#### 退到背景再回來
+
+```bash
+a shell input keyevent KEYCODE_HOME
+a shell am start -n <applicationId>/<MainActivity 的完整類別名稱>
+# 會印 "Warning: Activity not started, its current task has been brought to the front"，這是正常的：同一個 task 被帶到前景。
+```
+
+#### 查 crash 與 ANR
+
+```bash
+a logcat -c                                   # 操作前先清
+# …操作…
+a logcat -d -s AndroidRuntime:E               # 空的 = 沒有 crash
+a logcat -d | grep -c "FATAL EXCEPTION"       # 要是 0
+a logcat -d | grep -E "ANR in|has died"       # 要是空的
+a logcat -d | grep -c "UnknownHostException"  # 網路是否正常
+```
+
+### 建立測試資料（用 UI）
+
+先用 `uiautomator dump` 找到各個欄位與按鈕的 resource-id、文字或 content-desc，再依序點與輸入。表單的必填欄位（例如日期）沒填，儲存不會成功，錯誤訊息會出現在 dump 的 `text` 裡；日期選擇器的確定鈕在 dump 裡是 `button1`。沒有 resource-id 的欄位，用 content-desc 找。<!--ps-->
+
+**本專案的步驟（統計頁要有資料）：**
+
+1. 自選股頁 → `addStockButton`（新增）→ 點搜尋框輸入代號（`0050`）→ `star_icon` 加入；清除搜尋（`search_close_btn`）再輸入 `0056` → `star_icon`。按兩次 BACK 回自選股頁，等幾秒，列表出現價格才表示股價查得到。
+2. 點股票（`stockName`）→ 右上 `addButton`（＋）→ 「新增買/賣」→ `amount_edit` 輸入股數、`price_edit` 輸入價格，**成交日期必填**：`date_edit` → 日期選擇器的 OK（`button1`，預設今天）→ `finishButton`（完成）。手續費會自動帶出（例：1000 股 × 90 帶出 128）。
+3. 股利：同一個 ＋ → 「新增股利」→ 「現金股利」（沒有 id，用 content-desc 找）輸入金額 → 日期 → 完成。
+4. 資產頁：底部導覽「資產」（`statisticFragment`，content-desc 為「資產」）。「庫存」與「股利」兩個分頁各有資料才算建好。
+
+這次建的資料：0050 買 1000 股＠90（股價 92.50，市值 92,500）、0056 買 2000 股＠48（股價 49.91，市值 99,820）；現金股利 0050 2000、0056 1500。
+<!--/ps-->
+
+### 判讀
+
+- **標籤與數字用手算驗證。** 預期值不要來自畫面：先用手算（例如各項金額 ÷ 總金額），再和畫面上的標籤比對，連格式（單位、空格）一起看。<!--ps--> **本專案（統計頁）：** 92,500 ÷ (92,500 + 99,820) = 48.1%，99,820 ÷ 192,320 = 51.9%，圖上要看到 `48.1 %`、`51.9 %`（數字與 % 之間有空格）；分頁用 dump 比對（`1000 股`、`NT$92,500`、配發現金 `2000`）。<!--/ps-->
+- **分頁、列表的數字用 dump 比對**，不必靠眼睛。
+- **顏色是否變了，用像素取樣比較，不要憑眼睛。** 取兩個色塊裡的固定點，比較前後兩張截圖的 RGB：
+  ```bash
+  python3 -c "
+  import sys; from PIL import Image
+  for p in sys.argv[1:]:
+      im=Image.open(p).convert('RGB'); print(p, '#%02x%02x%02x'%im.getpixel((x1,y1)), '#%02x%02x%02x'%im.getpixel((x2,y2)))" a.png b.png
+  ```
+  `(x1,y1)`、`(x2,y2)` 換成畫面上各色塊裡的點；本機有 Pillow（`python3 -c "import PIL"` 不報錯）才能用。
+- **「預期」要先弄清楚再下結論。** 拿不準某個行為是不是這次改出來的，就把基底分支（上一個 commit 或基底分支）的 debug 版裝上去，用同樣步驟量一次再比較。<!--ps--> **本專案：** 統計頁圓餅圖的顏色是隨機的，在 view 重建時重新抽：切 tab 再回來、從股利細節返回、旋轉都會變色；只有「退到背景再回來」（view 沒重建）會保持。重構統計頁時，就是用基底版量一次，確認顏色行為與重構前一致。像素取樣點（1080 寬直向）：`(700,650)` 在 0050 扇形、`(380,420)` 在 0056 扇形。<!--/ps-->
+- logcat 的 crash、ANR、`UnknownHostException` 見上面；沒有就在回報寫出「0 個 FATAL EXCEPTION」。<!--ps--> **本專案：** 統計頁橫向時圓餅圖版面很小、標籤擠在一起，在基底版也是如此（版面問題，與該次改動無關）；看到時照實記錄，不要當成回歸。<!--/ps-->
+
+### 常見的坑
+
+- **打開的是別的 launcher，不是 App**：debug 版若有第二個 launcher（例如 LeakCanary 的 Leaks 畫面），用 `monkey` 或 launcher 圖示會打開那一個。一律用 `am start -n <applicationId>/<MainActivity 的完整類別名稱>`；`cmd package resolve-activity` 在有多個 launcher 時只會回 `ResolverActivity`，不能用，改用上面的 `query-activities` 列出全部。<!--ps--> **本專案：** debug 版有 LeakCanary 的第二個 launcher（`leakcanary.internal.activity.LeakLauncherActivity`），用 `monkey` 會打開 LeakCanary 的 Leaks 畫面（「0 Distinct Leaks」）。<!--/ps-->
+- **權限對話框吃掉點擊**：第一次進 App 可能跳出權限對話框（例如通知權限）。對話框在的時候點別處不會有效果。先處理掉再繼續；測試資料用不到的權限選不允許即可。<!--ps--> **本專案：** LeakCanary 會要求通知權限（`permission_deny_button`、「Don’t allow」）；這次前幾次加股票的點擊就是被這個對話框吃掉。<!--/ps-->
+- **畫面是空的，但其實已經建了資料**：先看是不是資料來源（網路、價格）沒回來，再看 DNS。
+- **DNS 壞了（模擬器指到 VPN 或 Tailscale 的 DNS）**：症狀是 logcat 一直有 `UnknownHostException: Unable to resolve host "<App 呼叫的網域>"`，畫面沒有資料；`a shell ping -c1 8.8.8.8` 通，`a shell ping -c1 <App 呼叫的網域>` 卻是 `unknown host`。查原因：`ps aux | grep netsimd` 看到 `--host-dns=100.100.100.100,...`（Tailscale MagicDNS），而 Tailscale 沒連線時這個位址不通（Mac 本身的 DNS 是好的）。處理二選一：(1) 把 Tailscale 連上線；(2) 關掉模擬器，用明確的 DNS 重開：
+  ```bash
+  adb -s emulator-5554 emu kill          # 約 3 秒結束
+  nohup ~/Library/Android/sdk/emulator/emulator -avd <AVD 名稱> -no-snapshot-save -no-boot-anim -dns-server 8.8.8.8,8.8.4.4 > <log 檔> 2>&1 &
+  # 等 adb -s emulator-5554 shell getprop sys.boot_completed 回 1（約 25 秒），再等幾秒讓網路就緒，
+  # 用 ping <App 呼叫的網域> 確認；ps 看到 netsimd --host-dns=8.8.8.8,8.8.4.4 才算換掉。
+  ```
+  重開後，重開前裝的 App 與資料都沒了（`-no-snapshot-save`），要重新 `installDebug` 與建資料。重開模擬器會關掉使用者正在用的那一台，先問。<!--ps--> **本專案：** 要 ping 的網域是 `mis.twse.com.tw`；本機模擬器的 AVD 是 `Pixel_8_API_33`。<!--/ps-->
+- **ANR 對話框（「… isn't responding」）**：這次出現在模擬器剛重開、host 負載很高（load average 約 10）時，截圖上看得到對話框，logcat 沒有 App 的例外。先看 `a shell dumpsys cpuinfo | head` 與 host 的 `uptime`；負載高就等幾分鐘、再做一次，不要急著判定是 App 的問題（這次對話框後來自己消失，App 回到上一個畫面，資料還在）。要確認是不是 App 造成，在負載低的時候用同樣步驟重做。
+- **BACK 按太多次**：在最上層畫面再按 BACK 會離開 App 回到桌面；回到桌面後 dump 出來的是 launcher，不是 App。每步先 `a shell dumpsys activity activities | grep topResumedActivity` 看目前在哪個 Activity。
+- **dump 抓不到畫面**：splash 期間、對話框或選單展開時，dump 只有對話框的元件。先截圖確認畫面，再 dump。
+- **沒有 root**：`adb root` 會回 `adbd cannot run as root in production builds`（Play 版映像），不能改 hosts 或 DNS 設定，只能重開模擬器帶參數。
+
+### 回報要附的證據
+
+- 在哪一台、哪個版本：`emulator-5554`（AVD 名稱、API 等級）、分支與 commit、debug 版是不是目前分支裝的。
+- 逐項的「預期 → 實際」，每項附截圖的完整路徑（放 repo 外）。預期的數字寫出手算過程。
+- 做過的操作順序（旋轉、返回、切 tab、退到背景…），以及每項有沒有通過。
+- logcat 結果：`FATAL EXCEPTION` 數量、有無 ANR、`UnknownHostException` 數量。
+- 與基底版的比較（若有）：同樣步驟在基底版量到什麼。
+- 沒驗證到的（例如沒測橫向的版面、沒測某個分頁）要明說，不要寫成通過。
+- 環境動過什麼：有沒有重開模擬器、改過旋轉設定並已還原、App 資料是否重建過。
+
+## 9. 回報
 
 完成時回報：
 
@@ -122,3 +270,4 @@ instrumented test 要模擬器、要安裝 APK，一次動輒數分鐘。讓它�
 - 修改前的失敗訊息（證明有重現）、故意改壞時失敗的測試，以及修改後的通過結果與測試數量。
 - 跑了哪些指令；instrumented test 用哪台裝置或模擬器（API 等級）。
 - 既有、與本次無關的失敗（例如 `ExampleInstrumentedTest`），註明它在基底分支上也失敗。
+- 手動驗證的證據（見第 8 節）。
