@@ -4,9 +4,8 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.example.mynewsapp.model.PieSlice
 import com.github.mikephil.charting.charts.PieChart
-import com.github.mikephil.charting.data.PieData
-import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -18,25 +17,30 @@ import java.util.Locale
 @RunWith(AndroidJUnit4::class)
 class PieChartRenderingLeakTest {
 
+    private val instrumentation = InstrumentationRegistry.getInstrumentation()
+
     /**
-     * StatisticViewModel is activity-scoped and outlives the chart across a configuration change.
-     * The PieData it holds must not keep the chart (and through it the destroyed activity) alive.
+     * StatisticViewModel is activity-scoped and outlives the chart across a configuration change,
+     * and the PieData built for a chart holds PercentFormatter(chart). So showPieData must not
+     * leave that PieData anywhere that outlives the chart (a static, a cache). That the ViewModel
+     * itself holds no chart types is checked by StatisticViewModelHoldsNoChartTest.
      */
     @Test
-    fun pieDataShownOnAChart_doesNotKeepTheChartAlive() {
-        val pieData = PieData(PieDataSet(listOf(PieEntry(25f, "2330"), PieEntry(75f, "0056")), "stockNo."))
-        val chartRef = showOnThrowawayChart(pieData)
+    fun slicesHeldByTheViewModel_doNotKeepAShownChartAlive() {
+        val slicesHeldByTheViewModel = listOf(PieSlice("2330", 25f), PieSlice("0056", 75f))
+        val chartRef = showOnThrowawayChart(slicesHeldByTheViewModel)
 
         var tries = 0
-        while (chartRef.get() != null && tries++ < 10) {
+        while (chartRef.get() != null && tries < 20) {
+            tries++
             Runtime.getRuntime().gc()
             System.runFinalization()
             Thread.sleep(100)
         }
 
-        assertNull("PieData still references the PieChart it was shown on", chartRef.get())
-        // Keep pieData reachable until after the check, as the ViewModel does.
-        assertEquals(1, pieData.dataSetCount)
+        assertNull("The slices still reference the PieChart they were shown on", chartRef.get())
+        // Keep the slices reachable until after the check, as the ViewModel does.
+        assertEquals(2, slicesHeldByTheViewModel.size)
     }
 
     @Test
@@ -45,26 +49,27 @@ class PieChartRenderingLeakTest {
         val original = Locale.getDefault()
         Locale.setDefault(Locale.US)
         try {
-            val pieData = PieData(PieDataSet(listOf(PieEntry(25f, "2330")), "stockNo."))
-            showOnThrowawayChart(pieData)
+            val chart = newChartShowing(listOf(PieSlice("2330", 25f), PieSlice("0056", 75f)))
 
-            val label = pieData.getDataSetByIndex(0).valueFormatter.getPieLabel(25f, PieEntry(25f, "2330"))
-
-            assertEquals("25.0 %", label)
+            val formatter = chart.data.getDataSetByIndex(0).valueFormatter
+            assertEquals("25.0 %", formatter.getPieLabel(25f, PieEntry(25f, "2330")))
+            assertEquals("75.0 %", formatter.getPieLabel(75f, PieEntry(75f, "0056")))
         } finally {
             Locale.setDefault(original)
         }
     }
 
+    private fun newChartShowing(slices: List<PieSlice>): PieChart = onMain {
+        PieChart(ApplicationProvider.getApplicationContext<Context>()).also { it.showPieData(slices) }
+    }
+
     /** Created in its own frame so no local in the test keeps the chart reachable. */
-    private fun showOnThrowawayChart(pieData: PieData): WeakReference<PieChart> {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        var ref: WeakReference<PieChart>? = null
-        InstrumentationRegistry.getInstrumentation().runOnMainSync {
-            val chart = PieChart(context)
-            chart.showPieData(pieData)
-            ref = WeakReference(chart)
-        }
-        return ref!!
+    private fun showOnThrowawayChart(slices: List<PieSlice>): WeakReference<PieChart> =
+        onMain { WeakReference(PieChart(ApplicationProvider.getApplicationContext<Context>()).also { it.showPieData(slices) }) }
+
+    private fun <T> onMain(block: () -> T): T {
+        var result: Result<T>? = null
+        instrumentation.runOnMainSync { result = runCatching(block) }
+        return result!!.getOrThrow()
     }
 }

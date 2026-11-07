@@ -77,11 +77,11 @@ class StatisticFragment: Fragment() {
         // Scoped to the view so each new view replaces, rather than adds to, the collector.
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                statisticViewModel.pieDataFlow.collect { pieData ->
-                    if (pieData.dataSetCount == 0){
+                statisticViewModel.pieDataFlow.collect { slices ->
+                    if (slices.isEmpty()) {
                         return@collect
                     }
-                    binding.pieChart.showPieData(pieData)
+                    binding.pieChart.showPieData(slices)
                 }
             }
         }
