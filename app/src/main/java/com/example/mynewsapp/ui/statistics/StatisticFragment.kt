@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.mynewsapp.R
 import com.example.mynewsapp.databinding.FragmentStatisticBinding
+import com.example.mynewsapp.model.PieSlice
 import com.example.mynewsapp.ui.adapter.StatisticRecyclerViewAdapter
 import com.example.mynewsapp.ui.list.ListViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -76,12 +77,16 @@ class StatisticFragment: Fragment() {
     private fun setupChart() {
         // Scoped to the view so each new view replaces, rather than adds to, the collector.
         viewLifecycleOwner.lifecycleScope.launch {
+            // What this view's chart shows. Collecting the same slices again (STARTED again after
+            // the app was in the background) must not repaint them in new random colors.
+            var shown: List<PieSlice>? = null
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                statisticViewModel.pieDataFlow.collect { pieData ->
-                    if (pieData.dataSetCount == 0){
+                statisticViewModel.pieDataFlow.collect { slices ->
+                    if (slices.isEmpty() || slices == shown) {
                         return@collect
                     }
-                    binding.pieChart.showPieData(pieData)
+                    shown = slices
+                    binding.pieChart.showPieData(slices)
                 }
             }
         }

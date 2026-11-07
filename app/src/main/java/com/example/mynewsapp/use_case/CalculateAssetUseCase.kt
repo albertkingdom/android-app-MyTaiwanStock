@@ -1,16 +1,12 @@
 package com.example.mynewsapp.use_case
 
-import android.graphics.Color
 import androidx.lifecycle.MutableLiveData
 import com.example.mynewsapp.db.InvestHistory
+import com.example.mynewsapp.model.PieSlice
 import com.example.mynewsapp.model.StockPriceInfoResponse
 import com.example.mynewsapp.model.StockStatistic
 import com.example.mynewsapp.util.Resource
-import com.github.mikephil.charting.data.PieData
-import com.github.mikephil.charting.data.PieDataSet
-import com.github.mikephil.charting.data.PieEntry
 import timber.log.Timber
-import kotlin.random.Random
 
 class CalculateAssetUseCase {
 
@@ -54,33 +50,14 @@ class CalculateAssetUseCase {
         return listOfStockStatistic
     }
 
-    fun calculatePieData(dataSource: List<StockStatistic>): PieData {
-
-        // entries -> pieDataset -> pieData -> pieChart
-        val colors = mutableListOf<Int>()
-        var entries: List<PieEntry>
-
+    /** Each stock's share of the total assets, in percent. Empty when there is nothing to show. */
+    fun calculatePieData(dataSource: List<StockStatistic>): List<PieSlice> {
         Timber.d("dataSource...${dataSource}")
 
-        if (dataSource.isEmpty()) {
-            return PieData()
-        }
+        val sumOfAsset: Float = dataSource.fold(0f) { sum, entry -> sum + entry.totalAssets }
+        // Nothing to divide by: the percentages would be NaN or infinite.
+        if (sumOfAsset == 0f) return emptyList()
 
-        dataSource.map { entry->
-            val randomColor = Color.argb(255, Random.nextInt(0, 255), Random.nextInt(0, 255), Random.nextInt(0, 255))
-            colors.add(randomColor)
-        }
-
-        val sumOfAsset: Float =
-            dataSource.map { stockStatistic -> stockStatistic.totalAssets }.reduce{ acc, item -> acc + item }
-
-        entries = dataSource.map{ entry -> PieEntry(entry.totalAssets / sumOfAsset * 100, entry.stockNo) }
-
-        val pieDataSet: PieDataSet = PieDataSet(entries, "stockNo.")
-        pieDataSet.colors = colors
-
-        val pieData: PieData = PieData(pieDataSet)
-
-        return pieData
+        return dataSource.map { entry -> PieSlice(entry.stockNo, entry.totalAssets / sumOfAsset * 100) }
     }
 }

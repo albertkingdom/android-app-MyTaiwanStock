@@ -4,13 +4,13 @@ import androidx.lifecycle.*
 import com.example.mynewsapp.db.CashDividend
 import com.example.mynewsapp.db.StockDividend
 import com.example.mynewsapp.model.DividendStatistic
+import com.example.mynewsapp.model.PieSlice
 import com.example.mynewsapp.model.StockPriceInfoResponse
 import com.example.mynewsapp.model.StockStatistic
 import com.example.mynewsapp.repository.NewsRepository
 import com.example.mynewsapp.use_case.CalculateAssetUseCase
 import com.example.mynewsapp.use_case.CalculateDividendUseCase
 import com.example.mynewsapp.util.Resource
-import com.github.mikephil.charting.data.PieData
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -24,8 +24,10 @@ class StatisticViewModel(val repository: NewsRepository): ViewModel() {
     private val _dividendsByStockNo = MutableLiveData<List<DividendStatistic>>()
     val dividendsByStockNo: LiveData<List<DividendStatistic>> = _dividendsByStockNo
 
-    private val _pieDataFlow = MutableStateFlow(PieData())
-    val pieDataFlow = _pieDataFlow.asStateFlow()
+    // Plain data only: this ViewModel outlives the activity across a configuration change, so it
+    // must not hold anything that references a chart (the fragment builds the PieData itself).
+    private val _pieDataFlow = MutableStateFlow<List<PieSlice>>(emptyList())
+    val pieDataFlow: StateFlow<List<PieSlice>> = _pieDataFlow.asStateFlow()
     // data for statistic page view pager
     private val _combineData = MutableStateFlow<Pair<List<DividendStatistic>,List<StockStatistic>>>(Pair(
         emptyList(), emptyList()
