@@ -11,6 +11,7 @@ import com.example.mynewsapp.use_case.CalculateAssetUseCase
 import com.example.mynewsapp.use_case.CalculateDividendUseCase
 import com.example.mynewsapp.util.Resource
 import com.github.mikephil.charting.data.PieData
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -36,27 +37,36 @@ class StatisticViewModel(val repository: NewsRepository): ViewModel() {
             calculateDividendUseCase.calculateDividend(cash, stock)
         }
 
+    private var collectJob: Job? = null
+
+    /**
+     * (Re)starts the collectors; the statistic screen calls this each time its view is created so
+     * the totals are recalculated with the latest prices. The previous run is cancelled first, or
+     * every new view would add collectors that live as long as the activity.
+     */
     fun collectData() {
-
-        val investHistoryFlow = repository.allHistory.map { listOfHistory ->
-            calculateAssetUseCase.calculatePieChartSourceData(listOfHistory, stockPriceInfo)
-        }
-
-        viewModelScope.launch {
-            dividendFlow.combine(investHistoryFlow) { dividendStatisticList: List<DividendStatistic>, stockStatisticList: List<StockStatistic> ->
-                Pair(dividendStatisticList, stockStatisticList)
-            }.collect {
-                _combineData.value = it
+        collectJob?.cancel()
+        collectJob = viewModelScope.launch {
+            val investHistoryFlow = repository.allHistory.map { listOfHistory ->
+                calculateAssetUseCase.calculatePieChartSourceData(listOfHistory, stockPriceInfo)
             }
-        }
 
-        viewModelScope.launch {
-            investHistoryFlow
-                .map {
-                    calculateAssetUseCase.calculatePieData(it)
+            launch {
+                dividendFlow.combine(investHistoryFlow) { dividendStatisticList: List<DividendStatistic>, stockStatisticList: List<StockStatistic> ->
+                    Pair(dividendStatisticList, stockStatisticList)
                 }.collect {
-                    _pieDataFlow.value = it
+                    _combineData.value = it
                 }
+            }
+
+            launch {
+                investHistoryFlow
+                    .map {
+                        calculateAssetUseCase.calculatePieData(it)
+                    }.collect {
+                        _pieDataFlow.value = it
+                    }
+            }
         }
     }
     fun setStockPriceInfo(stockPrice: Resource<StockPriceInfoResponse>) {

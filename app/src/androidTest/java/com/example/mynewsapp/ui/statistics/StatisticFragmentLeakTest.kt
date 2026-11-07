@@ -3,6 +3,7 @@ package com.example.mynewsapp.ui.statistics
 import android.content.Intent
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.test.core.app.ApplicationProvider
@@ -11,6 +12,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.example.mynewsapp.R
 import com.example.mynewsapp.ui.MainActivity
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.job
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -59,6 +61,7 @@ class StatisticFragmentLeakTest {
     fun roundTripsToDividendDetail_doNotAddCollectors() {
         val viewModel = activity.statisticViewModel
         assertEquals("pieDataFlow collectors before the round trips", 1, pieDataCollectors(viewModel))
+        val viewModelJobsAtStart = viewModelJobs(viewModel)
 
         repeat(3) {
             openDividendDetail()
@@ -67,6 +70,8 @@ class StatisticFragmentLeakTest {
         }
 
         assertEquals("pieDataFlow collectors after 3 round trips", 1, pieDataCollectors(viewModel))
+        // Each dividend detail also starts a short Room query in viewModelScope; let those finish.
+        assertEquals("viewModelScope jobs after 3 round trips", viewModelJobsAtStart, awaitViewModelJobs(viewModel, viewModelJobsAtStart))
     }
 
     private fun openDividendDetail() {
@@ -86,6 +91,20 @@ class StatisticFragmentLeakTest {
         // _pieDataFlow is private; its subscriber count is the number of live chart collectors.
         val field = StatisticViewModel::class.java.getDeclaredField("_pieDataFlow").apply { isAccessible = true }
         (field.get(viewModel) as MutableStateFlow<*>).subscriptionCount.value
+    }
+
+    private fun viewModelJobs(viewModel: StatisticViewModel): Int = onMain {
+        viewModel.viewModelScope.coroutineContext.job.children.count { it.isActive }
+    }
+
+    private fun awaitViewModelJobs(viewModel: StatisticViewModel, expected: Int): Int {
+        val deadline = System.currentTimeMillis() + 15_000
+        var jobs = viewModelJobs(viewModel)
+        while (jobs != expected && System.currentTimeMillis() < deadline) {
+            Thread.sleep(100)
+            jobs = viewModelJobs(viewModel)
+        }
+        return jobs
     }
 
     private fun awaitCollected(ref: WeakReference<View>) {
