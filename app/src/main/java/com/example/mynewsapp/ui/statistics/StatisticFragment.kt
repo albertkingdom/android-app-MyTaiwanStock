@@ -17,8 +17,6 @@ import com.example.mynewsapp.databinding.FragmentStatisticBinding
 import com.example.mynewsapp.ui.adapter.StatisticRecyclerViewAdapter
 import com.example.mynewsapp.ui.list.ListViewModel
 import com.github.mikephil.charting.charts.PieChart
-import com.github.mikephil.charting.components.Description
-import com.github.mikephil.charting.formatter.PercentFormatter
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.tabs.TabLayoutMediator
 import kotlinx.coroutines.launch
@@ -86,18 +84,7 @@ class StatisticFragment: Fragment() {
                     if (pieData.dataSetCount == 0){
                         return@collect
                     }
-                    pieChart.apply {
-                        data = pieData
-                        data.setDrawValues(true)
-                        data.setValueFormatter(PercentFormatter(this)) // display % on chart
-                        data.setValueTextSize(12f)
-                        setUsePercentValues(true) // display % on chart
-                        invalidate() //refresh
-                        legend.isEnabled = false
-                        val descriptions = Description() // @ bottom right of chart
-                        descriptions.text = "" // remove description
-                        description = descriptions
-                    }
+                    pieChart.showPieData(pieData)
                 }
             }
         }
