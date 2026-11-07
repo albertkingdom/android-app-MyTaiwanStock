@@ -88,6 +88,9 @@ spectra analyze <name> --json     # 只看 Critical / Warning，Suggestion 忽�
 | 3. Spectra 進行中的產物 | `openspec/changes/<name>/**`（或 `docs/spectra/changes/<name>/**`；proposal、design、tasks、delta specs，還沒 archive） | `docs(spectra)` |
 
 - 程式與它的測試放同一個 commit，確保該 commit 自己是綠的。
+- **bug 修正另開 `fix` commit**：change 裡順手修的 bug，以及步驟 5 code review 後才修的 bug，修正和它的測試另開一個 `fix` commit，不要併進批次 1 的 `feat`／`refactor` commit。同一個檔案混有修正與其他改動、分不開時，先提醒使用者；使用者同意合併成一個 commit 時，不論 type，該 commit 內文都要附測試證據。
+- **bug 修正的測試證據**：type 為 `fix` 的 commit，內文要有 `AGENTS.md` Bug Fix Workflow 要求的測試證據（或例外時的原因與手動驗證步驟）。本次對話中沒有這些資料（例如在新對話收尾），停下請使用者提供或重跑，不要編造。步驟 5 code review 之後才修的 bug 一樣適用。
+- 另外用 `git log <基底分支>..HEAD --format='%h %s%n%b'` 檢查分支上已經存在的 commit：`fix` commit，以及內文提到修正 bug 的其他 commit，缺測試證據的列進結束報告。
 - 不屬於這個 change 的 dirty 檔案**不要 commit**，在報告中列出，或問使用者要不要另開 commit。
 - 同一個檔案混有不相關的變更時，不要自動用 `git add -p`，提醒使用者。
 - 使用者觸發「收尾」就是對這些本機 commit 的授權，不需逐批詢問；有無關檔案或疑似機密時才停下確認。
@@ -120,6 +123,7 @@ archive 產生的變更逐檔 `git add`，一個 commit：`chore(spectra): archi
 - 每個 commit 的 hash 與標題（依序）
 - **code review 結果與 PR 狀態**：「通過，已歸檔，可開 PR」或「尚未歸檔，尚不可開 PR：<原因>」，以及各級問題數量
 - 未完成的任務、**沒有執行的測試**、無關的 dirty 檔案
+- 缺少測試證據的 commit（`fix`，或內文提到修正 bug 的 commit；見步驟 6）
 - 其他「任務全完成但還沒 archive」的 active change（只列出，不要自動處理）
 - 下一步（**不會自動做**）：review 通過並歸檔後，push 並開 PR；沒通過就先處理問題，再說一次「收尾」
 
