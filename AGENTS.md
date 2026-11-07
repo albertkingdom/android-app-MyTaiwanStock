@@ -180,7 +180,7 @@ Code review（含 subagent review）的結果必須記錄成 Markdown：
   | `db/`（DAO、migration、Entity） | `db.FollowingListOrderTest`、`db.StockDatabaseMigrationTest` |
   | Compose 畫面（例如 `EditFollowingListFragment`） | `ui.list.EditFollowingListDeleteTest` |
   | Activity／Fragment 生命週期、觀察者、分享 intent 冷啟動 | `ui.list.ListFragmentObserverLeakTest` |
-  | 統計頁（`ui/statistics/`）的 Fragment、`StatisticViewModel`、圓餅圖 | `ui.statistics.StatisticFragmentLeakTest`、`ui.statistics.PieChartRenderingLeakTest`、`ui.statistics.StatisticViewModelPriceTest` |
+  | 統計頁（`ui/statistics/`）的 Fragment、`StatisticViewModel`、圓餅圖 | `ui.statistics.StatisticFragmentLeakTest`、`ui.statistics.PieChartRenderingLeakTest`、`ui.statistics.StatisticViewModelPriceTest`、`ui.statistics.StatisticPieColorsTest` |
 
   原因：這些行為無法在 JVM 上測，而 CI（`build-and-test`）只跑 `testDebugUnitTest`，不跑 instrumented test，沒人手動跑就不會被驗證。
 - 沒有對應測試，或無法執行（沒有模擬器、在沒有裝置的環境）時，回報中如實寫「未執行」或「無對應測試」與原因，不要宣稱通過。改到的 Compose 畫面沒有測試時，評估是否補一個，優先補曾經壞過的行為。
