@@ -82,7 +82,7 @@ class StatisticFragment: Fragment() {
             var shown: List<PieSlice>? = null
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 statisticViewModel.pieDataFlow.collect { slices ->
-                    if (slices.isEmpty() || slices == shown) {
+                    if (slices == shown) {
                         return@collect
                     }
                     shown = slices

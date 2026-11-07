@@ -13,9 +13,15 @@ import kotlin.random.Random
 /**
  * Shows [slices] on this chart with a percentage label on each slice. The PieData is built here and
  * handed only to this chart, so it, and the PercentFormatter(chart) inside it, live and die with
- * the chart.
+ * the chart. With no slices there is nothing to show, so the chart is emptied rather than left
+ * showing the slices of holdings that are gone.
  */
 fun PieChart.showPieData(slices: List<PieSlice>) {
+    if (slices.isEmpty()) {
+        clear()
+        return
+    }
+
     val dataSet = PieDataSet(slices.map { PieEntry(it.percent, it.stockNo) }, "stockNo.")
     dataSet.colors = slices.map { Color.argb(255, Random.nextInt(0, 255), Random.nextInt(0, 255), Random.nextInt(0, 255)) }
 

@@ -9,6 +9,7 @@ import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.data.PieEntry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.lang.ref.WeakReference
@@ -57,6 +58,18 @@ class PieChartRenderingLeakTest {
         } finally {
             Locale.setDefault(original)
         }
+    }
+
+    /** No slices means nothing to show: back to a chart that was never given data, not a blank pie. */
+    @Test
+    fun showingNoSlices_emptiesAChartThatShowedSlices() {
+        val chart = newChartShowing(listOf(PieSlice("2330", 25f), PieSlice("0056", 75f)))
+        assertEquals("slices before", 2, chart.data.entryCount)
+
+        onMain { chart.showPieData(emptyList()) }
+
+        assertTrue("The chart still shows slices", chart.isEmpty)
+        assertNull("The chart keeps an empty PieData", chart.data)
     }
 
     private fun newChartShowing(slices: List<PieSlice>): PieChart = onMain {
