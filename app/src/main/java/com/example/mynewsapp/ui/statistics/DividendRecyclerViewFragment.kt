@@ -19,15 +19,16 @@ import timber.log.Timber
 class DividendRecyclerViewFragment: Fragment() {
     private val statisticViewModel: StatisticViewModel by activityViewModels()
 
-    lateinit var binding: FragmentDividendRecyclerviewBinding
-    lateinit var adapter: DividendAdapter
+    // Cleared in onDestroyView: on the back stack the fragment outlives its view.
+    private var _binding: FragmentDividendRecyclerviewBinding? = null
+    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = FragmentDividendRecyclerviewBinding.inflate(inflater)
+        _binding = FragmentDividendRecyclerviewBinding.inflate(inflater)
         return binding.root
     }
 
@@ -35,16 +36,17 @@ class DividendRecyclerViewFragment: Fragment() {
         super.onViewCreated(view, savedInstanceState)
         Timber.d("onViewCreated")
 
-        adapter = DividendAdapter()
+        // Local, not a field: the adapter holds its RecyclerView through its observers.
+        val adapter = DividendAdapter()
         adapter.clickDividendItemListener = { stockNo ->
             Timber.d("click on $stockNo")
             findNavController().navigate(StatisticFragmentDirections.actionStatisticFragmentToDividendDetailFragment(stockNo = stockNo))
         }
         binding.statisticRecyclerview.adapter = adapter
 
-        lifecycleScope.launch {
-            // collect flow value when state is at least STARTED
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            // collect flow value while the view is at least STARTED
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 statisticViewModel.combineData.collect {
                     val (listOfDividend,listOfStockStatistic) = it
 
@@ -57,5 +59,10 @@ class DividendRecyclerViewFragment: Fragment() {
     override fun onResume() {
         super.onResume()
         Timber.d("on resume")
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

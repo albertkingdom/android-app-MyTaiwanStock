@@ -17,8 +17,9 @@ import timber.log.Timber
 class StatisticRecyclerViewFragment: Fragment() {
     private val statisticViewModel: StatisticViewModel by activityViewModels()
 
-    lateinit var binding: FragmentStatisticRecyclerviewBinding
-    lateinit var adapter: StatisticAdapter
+    // Cleared in onDestroyView: on the back stack the fragment outlives its view.
+    private var _binding: FragmentStatisticRecyclerviewBinding? = null
+    private val binding get() = _binding!!
 
 
 
@@ -27,20 +28,21 @@ class StatisticRecyclerViewFragment: Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = FragmentStatisticRecyclerviewBinding.inflate(inflater)
+        _binding = FragmentStatisticRecyclerviewBinding.inflate(inflater)
 
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        adapter = StatisticAdapter()
+        // Local, not a field: the adapter holds its RecyclerView through its observers.
+        val adapter = StatisticAdapter()
         binding.statisticRecyclerview.adapter = adapter
 
 
-        lifecycleScope.launch {
-            // collect flow value when state is at least STARTED
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            // collect flow value while the view is at least STARTED
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 statisticViewModel.combineData.collect {
                     val (listOfDividend,listOfStockStatistic) = it
 
@@ -50,4 +52,8 @@ class StatisticRecyclerViewFragment: Fragment() {
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 }
