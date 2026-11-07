@@ -72,6 +72,9 @@ spec 裡的 `##### Example` 表格是約定好的規格：
 
 # 只跑一個 instrumented test 類別（用完整類別名稱）
 ./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.app.db.SomeDaoTest
+
+# 只跑一個 package 底下所有的 instrumented test
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.package=com.example.app.db
 ```
 
 結果在：
@@ -86,8 +89,8 @@ spec 裡的 `##### Example` 表格是約定好的規格：
 instrumented test 要模擬器、要安裝 APK，一次動輒數分鐘。讓它只在值得的時候跑：
 
 - **把邏輯抽成純 Kotlin，用 JVM 測試涵蓋。** 判斷、計算、格式化、狀態轉換都不需要裝置；instrumented test 只留給「接線」與真正依賴 Android 的行為。這是最有效的一招。
-- **只跑相關的類別。** 用 `-Pandroid.testInstrumentationRunnerArguments.class=<完整類別名稱>`，不要每次跑全部。
-- **只在改動碰到該碰的地方時跑**：資料庫（DAO、migration、Entity）、Compose 畫面、Activity／Fragment 生命週期與 intent。專案可以在 `AGENTS.md` 列一張「改到哪裡 → 跑哪個測試」的對照表。
+- **只跑相關的 package 或類別。** 測試放在跟原始碼對應的 package（改 `ui/statistics/` 就跑 `ui.statistics`），用 `-Pandroid.testInstrumentationRunnerArguments.package=<package>`；只想跑一個類別時用 `.class=<完整類別名稱>`。不要每次跑全部。新增測試放進同一個 package，就不用另外登記。
+- **只在改動碰到該碰的地方時跑**：資料庫（DAO、migration、Entity）、Compose 畫面、Activity／Fragment 生命週期與 intent。`AGENTS.md` 只放一句提醒，不列對照表，要跑哪個 package 照上一點對應原始碼的位置挑。
 - **Robolectric 是選項，不是預設。** 它在 JVM 上模擬 Android framework，可以跑部分 View、Activity、資源相關的測試，速度接近單元測試。代價是多一個依賴與設定、它是模擬不是真機（部分行為、Compose 動畫、廠商差異測不到），版本也要跟著 SDK 升級。
 - **交給 CI 或排程跑全部。** 在 CI 加一個用模擬器跑 `connectedDebugAndroidTest` 的 job（例如 `reactivecircus/android-emulator-runner`），或每晚排程跑一次；本機只跑相關類別。
 - **讓模擬器保持開著。** 冷開機比跑測試還久；開發期間不要關。
